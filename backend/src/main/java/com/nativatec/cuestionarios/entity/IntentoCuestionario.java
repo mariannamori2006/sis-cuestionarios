@@ -17,15 +17,19 @@ public class IntentoCuestionario {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
+    //Cuestionario que se está respondiendo
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cuestionario_id", nullable = false)
+    private Cuestionario cuestionario;
+
     //Alumno que realiza el intento
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
-    //Cuestionario que se está respondiendo
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cuestionario_id", nullable = false)
-    private Cuestionario cuestionario;
+    //Nombre o apodo del alumno sin registrarse
+    @Column(name = "nombre_invitado", length = 100)
+    private String nombreInvitado;
 
     @Column(name = "fecha_inicio", nullable = false)
     private LocalDateTime fechaInicio;
