@@ -1,19 +1,13 @@
 package com.nativatec.cuestionarios.entity;
 
-
 import jakarta.persistence.*;
-import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "usuarios")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Usuario {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
@@ -40,24 +34,104 @@ public class Usuario {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // Constructores obligatorios para que Spring pueda mapear el JSON
+    public Usuario() {
+    }
+
+    public Usuario(UUID id, String nombre, String email, String passwordHash, RolUsuario rol, Boolean activo,
+            LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.nombre = nombre;
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.rol = rol;
+        this.activo = activo;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
     @PrePersist
-    protected void onCreate(){
+    protected void onCreate() {
         LocalDateTime now = LocalDateTime.now();
-        if(createdAt == null){
+        if (createdAt == null) {
             createdAt = now;
         }
-        if(updatedAt == null){
+        if (updatedAt == null) {
             updatedAt = now;
         }
     }
 
     @PreUpdate
-    protected void onUpdate(){
+    protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
 
-    public enum RolUsuario {
-        PROFESOR, ALUMNO, ADMIN 
+    // Getters y Setters explícitos
+    public UUID getId() {
+        return id;
     }
 
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+    public RolUsuario getRol() {
+        return rol;
+    }
+
+    public void setRol(RolUsuario rol) {
+        this.rol = rol;
+    }
+
+    public Boolean getActivo() {
+        return activo;
+    }
+
+    public void setActivo(Boolean activo) {
+        this.activo = activo;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public enum RolUsuario {
+        PROFESOR, ALUMNO, ADMIN
+    }
 }

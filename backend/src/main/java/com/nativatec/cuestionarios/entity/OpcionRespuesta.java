@@ -1,23 +1,17 @@
 package com.nativatec.cuestionarios.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "opciones_respuesta")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class OpcionRespuesta {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    //Relacion con la pregunta a la que pertenece cada opción
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pregunta_id", nullable = false)
     private Pregunta pregunta;
@@ -35,18 +29,67 @@ public class OpcionRespuesta {
     private LocalDateTime updatedAt;
 
     @PrePersist
-    protected void onCreate(){
+    protected void onCreate() {
         LocalDateTime now = LocalDateTime.now();
-        if(createdAt == null){
+        if (createdAt == null) {
             createdAt = now;
         }
-        if(updatedAt == null){
+        if (updatedAt == null) {
             updatedAt = now;
         }
     }
 
     @PreUpdate
-    protected void onUpdate(){
+    protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    // Getters y Setters explícitos
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public Pregunta getPregunta() {
+        return pregunta;
+    }
+
+    public void setPregunta(Pregunta pregunta) {
+        this.pregunta = pregunta;
+    }
+
+    public String getTextoOpcion() {
+        return textoOpcion;
+    }
+
+    public void setTextoOpcion(String textoOpcion) {
+        this.textoOpcion = textoOpcion;
+    }
+
+    public Boolean getEsCorrecta() {
+        return esCorrecta;
+    }
+
+    public void setEsCorrecta(Boolean esCorrecta) {
+        this.esCorrecta = esCorrecta;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

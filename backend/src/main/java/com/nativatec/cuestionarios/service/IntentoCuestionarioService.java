@@ -12,6 +12,7 @@ import java.util.UUID;
 
 @Service
 public class IntentoCuestionarioService {
+
     @Autowired
     private IntentoCuestionarioRepository intentoRepository;
 
@@ -21,12 +22,18 @@ public class IntentoCuestionarioService {
     @Autowired
     private OpcionRespuestaRepository opcionRespuestaRepository;
 
-    // Iniciar un intento para un invitado o usuario
+    @Autowired
+    private CuestionarioRepository cuestionarioRepository;
+
     public IntentoCuestionario iniciarIntento(IntentoCuestionario intento) {
+        if (intento.getCuestionario() != null && intento.getCuestionario().getId() != null) {
+            Cuestionario cuestionarioDb = cuestionarioRepository.findById(intento.getCuestionario().getId())
+                    .orElseThrow(() -> new RuntimeException("Cuestionario no encontrado"));
+            intento.setCuestionario(cuestionarioDb);
+        }
         return intentoRepository.save(intento);
     }
 
-    // Registrar respuesta y calcular calificacion total
     @Transactional
     public IntentoCuestionario finalizarIntento(UUID intentoId, List<DetalleIntento> respuestas) {
         IntentoCuestionario intento = intentoRepository.findById(intentoId)
@@ -39,7 +46,6 @@ public class IntentoCuestionarioService {
             detalle.setIntento(intento);
             detalleRepository.save(detalle);
 
-            // Verificar respuesta
             if (detalle.getOpcionSeleccionada() != null) {
                 OpcionRespuesta opcion = opcionRespuestaRepository.findById(detalle.getOpcionSeleccionada().getId())
                         .orElse(null);
@@ -50,7 +56,6 @@ public class IntentoCuestionarioService {
             }
         }
 
-        // Calcular calificacion
         double calificacionFinal = totalPreguntas > 0 ? ((double) respuestasCorrectas / totalPreguntas) * 20 : 0.0;
 
         intento.setCalificacion(calificacionFinal);
