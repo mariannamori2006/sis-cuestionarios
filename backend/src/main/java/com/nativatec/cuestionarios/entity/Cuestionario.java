@@ -7,14 +7,13 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "cuestionarios")
-@Data 
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder 
-
+@Builder
 public class Cuestionario {
-    
-    @Id 
+
+    @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
@@ -24,7 +23,6 @@ public class Cuestionario {
     @Column(columnDefinition = "TEXT")
     private String descripcion;
 
-    // Relacion con el usuario profesor que creó e cuestionario
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creado_por", nullable = false)
     private Usuario creadoPor;
@@ -39,18 +37,26 @@ public class Cuestionario {
     private LocalDateTime updatedAt;
 
     @PrePersist
-    protected void onCreate(){
+    protected void onCreate() {
         LocalDateTime now = LocalDateTime.now();
-        if(createdAt == null){
+        if (createdAt == null) {
             createdAt = now;
         }
-        if(updatedAt == null){
+        if (updatedAt == null) {
             updatedAt = now;
         }
     }
 
     @PreUpdate
-    protected void onUpdate(){
+    protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
     }
 }
