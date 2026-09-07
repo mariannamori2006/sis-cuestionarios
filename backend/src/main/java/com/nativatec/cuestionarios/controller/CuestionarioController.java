@@ -1,10 +1,13 @@
 package com.nativatec.cuestionarios.controller;
 
 import com.nativatec.cuestionarios.entity.Cuestionario;
+import com.nativatec.cuestionarios.security.CustomUserDetails;
 import com.nativatec.cuestionarios.service.CuestionarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,7 +20,8 @@ public class CuestionarioController {
     @Autowired
     private CuestionarioService cuestionarioService;
 
-    // 1. Obtener todos los cuestionarios (GET: /api/cuestionarios)
+    // 1. Obtener todos los cuestionarios (GET: /api/cuestionarios) - Todos los
+    // autenticados
     @GetMapping
     public ResponseEntity<List<Cuestionario>> obtenerTodos() {
         List<Cuestionario> cuestionarios = cuestionarioService.obtenerTodos();
@@ -32,15 +36,24 @@ public class CuestionarioController {
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
-    // 3. Crear un cuestionario (POST: /api/cuestionarios)
+    // 3. Crear un cuestionario (POST: /api/cuestionarios) - Solo PROFESOR y ADMIN
     @PostMapping
-    public ResponseEntity<Cuestionario> guardarCuestionario(@RequestBody Cuestionario cuestionario) {
+    @PreAuthorize("hasAnyRole('PROFESOR', 'ADMIN')")
+    public ResponseEntity<Cuestionario> guardarCuestionario(
+            @RequestBody Cuestionario cuestionario,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        // Asignamos al usuario autenticado (Profesor o Admin) como creador
+        cuestionario.setCreadoPor(userDetails.getUsuario());
+
         Cuestionario nuevoCuestionario = cuestionarioService.guardarCuestionario(cuestionario);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoCuestionario);
     }
 
-    // 4. Eliminar un cuestionario (DELETE: /api/cuestionarios/{id})
+    // 4. Eliminar un cuestionario (DELETE: /api/cuestionarios/{id}) - Solo PROFESOR
+    // y ADMIN
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('PROFESOR', 'ADMIN')")
     public ResponseEntity<Void> eliminarCuestionario(@PathVariable UUID id) {
         if (cuestionarioService.obtenerPorId(id).isPresent()) {
             cuestionarioService.eliminarCuestionario(id);

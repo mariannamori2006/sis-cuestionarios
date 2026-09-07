@@ -2,19 +2,22 @@ package com.nativatec.cuestionarios.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
 
-    // Llave secreta para firmar el token
-    private final SecretKey jwtSecret = io.jsonwebtoken.Jwts.SIG.HS256.key().build();
+    // Clave secreta fija de 256 bits (32+ caracteres)
+    private static final String SECRET_STRING = "MiClaveSecretaSuperSeguraParaFirmarLosTokensJWT1234567890";
+    private final SecretKey jwtSecret = Keys.hmacShaKeyFor(SECRET_STRING.getBytes(StandardCharsets.UTF_8));
 
-    // Tiempo de expiracion en milisegundos (24 h)
+    // Expiración: 24 horas
     private final int jwtExpirationMs = 86400000;
 
     public String generateToken(Authentication authentication) {
@@ -46,7 +49,6 @@ public class JwtTokenProvider {
             Jwts.parser().verifyWith(jwtSecret).build().parseSignedClaims(token);
             return true;
         } catch (Exception e) {
-            // Token inválido, expirado o mal formado
             return false;
         }
     }

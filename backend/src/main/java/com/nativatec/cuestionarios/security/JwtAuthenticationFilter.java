@@ -35,6 +35,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String email = tokenProvider.obtenerEmailDelToken(jwt);
                 UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
 
+                // --- AGREGA ESTA LÍNEA PARA VER LOS ROLES EN LA CONSOLA ---
+                System.out.println("USUARIO AUTENTICADO: " + userDetails.getUsername() + " | ROLES: "
+                        + userDetails.getAuthorities());
+                // ----------------------------------------------------------
+
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
