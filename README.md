@@ -5,7 +5,7 @@ Backend desarrollado con **Spring Boot** y **Java**, utilizando **PostgreSQL (Ne
 
 ## Tecnologías Utilizadas
 * **Java** (JDK 17)
-* **Spring Boot**
+* **Spring Boot** (./mvnw spring-boot:run)
 * **Spring Data JPA** (Hibernate)
 * **Lombok**
 * **PostgreSQL** (Base de datos alojada en Neon)
