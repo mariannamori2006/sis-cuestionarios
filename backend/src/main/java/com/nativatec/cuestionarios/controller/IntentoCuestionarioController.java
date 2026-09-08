@@ -19,20 +19,28 @@ public class IntentoCuestionarioController {
     @Autowired
     private IntentoCuestionarioService intentoService;
 
-    // Iniciar nuevo intento (POST: /api/intentos/iniciar)
-    @PostMapping("/iniciar")
+    // Iniciar nuevo intento (POST: /api/intentos)
+    @PostMapping
     public ResponseEntity<IntentoCuestionario> iniciarIntento(@RequestBody IntentoCuestionario intento) {
         IntentoCuestionario nuevoIntento = intentoService.iniciarIntento(intento);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoIntento);
     }
 
-    // Finalizar intento y nviar respuesta a calificar (POST:
-    // /api/intentos/{id}/finalizar)
-    @PostMapping("/{id}/finalizar")
+    // Finalizar intento y enviar respuesta a calificar (POST:
+    // /api/intentos/{intentoId}/finalizar)
+    @PostMapping("/{intentoId}/finalizar")
     public ResponseEntity<IntentoCuestionario> finalizarIntento(
-            @PathVariable UUID id,
+            @PathVariable UUID intentoId,
             @RequestBody List<DetalleIntento> respuestas) {
-        IntentoCuestionario intentoCalificado = intentoService.finalizarIntento(id, respuestas);
+        IntentoCuestionario intentoCalificado = intentoService.finalizarIntento(intentoId, respuestas);
         return ResponseEntity.ok(intentoCalificado);
+    }
+
+    // Listar todos los intentos de un cuestionario (GET:
+    // /api/intentos/cuestionarios/{cuestionarioId})
+    @GetMapping("/cuestionarios/{cuestionarioId}")
+    public ResponseEntity<List<IntentoCuestionario>> obtenerIntentosPorCuestionario(@PathVariable UUID cuestionarioId) {
+        List<IntentoCuestionario> intentos = intentoService.obtenerIntentosPorCuestionario(cuestionarioId);
+        return ResponseEntity.ok(intentos);
     }
 }

@@ -63,4 +63,9 @@ public class IntentoCuestionarioService {
 
         return intentoRepository.save(intento);
     }
+
+    // Obtener intentos por id de cuestionario
+    public List<IntentoCuestionario> obtenerIntentosPorCuestionario(UUID cuestionarioId) {
+        return intentoRepository.findByCuestionarioId(cuestionarioId);
+    }
 }
