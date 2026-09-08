@@ -24,6 +24,13 @@ public class PreguntaController {
         return ResponseEntity.ok(preguntas);
     }
 
+    // Obtener todas las preguntas de un cuestionario
+    @GetMapping("/cuestionarios/{cuestionarioId}")
+    public ResponseEntity<List<Pregunta>> obtenerPreguntasPorCuestionario(@PathVariable UUID cuestionarioId) {
+        List<Pregunta> preguntas = preguntaService.obtenerPorCuestionarioId(cuestionarioId);
+        return ResponseEntity.ok(preguntas);
+    }
+
     // Obtener una pregunta por ID (GET: /api/preguntas/{id})
     @GetMapping("/{id}")
     public ResponseEntity<Pregunta> obtenerPorId(@PathVariable UUID id) {
