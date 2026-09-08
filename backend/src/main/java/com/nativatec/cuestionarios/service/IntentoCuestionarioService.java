@@ -68,4 +68,13 @@ public class IntentoCuestionarioService {
     public List<IntentoCuestionario> obtenerIntentosPorCuestionario(UUID cuestionarioId) {
         return intentoRepository.findByCuestionarioId(cuestionarioId);
     }
+
+    // Detalles del intento
+    public List<DetalleIntento> obtenerDetallesPorIntento(UUID intentoId) {
+        // Validar si el intento existe
+        if (!intentoRepository.existsById(intentoId)) {
+            throw new RuntimeException("Intento no encontrado con ID: " + intentoId);
+        }
+        return detalleRepository.findByIntentoId(intentoId);
+    }
 }

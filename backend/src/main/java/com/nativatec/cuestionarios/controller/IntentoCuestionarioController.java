@@ -43,4 +43,11 @@ public class IntentoCuestionarioController {
         List<IntentoCuestionario> intentos = intentoService.obtenerIntentosPorCuestionario(cuestionarioId);
         return ResponseEntity.ok(intentos);
     }
+
+    // Obtener detalles del intento (GET: /api/intentos/{intentoId}/detalles)
+    @GetMapping("/{intentoId}/detalles")
+    public ResponseEntity<List<DetalleIntento>> obtenerDetallesIntento(@PathVariable UUID intentoId) {
+        List<DetalleIntento> detalles = intentoService.obtenerDetallesPorIntento(intentoId);
+        return ResponseEntity.ok(detalles);
+    }
 }
