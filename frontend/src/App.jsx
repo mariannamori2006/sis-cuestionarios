@@ -1,17 +1,17 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginComponent from './components/LoginComponent';
 import DashboardComponent from './components/DashboardComponent';
+import ParticipanteLogin from './components/ParticipanteLogin';
+import ResolverCuestionario from './components/ResolverCuestionario';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
     return (
-        <Router>
+        <BrowserRouter>
             <Routes>
-                {/* Ruta pública para iniciar sesión */}
+                {/* Rutas de autenticación y panel de profesores */}
                 <Route path="/login" element={<LoginComponent />} />
-
-                {/*Ruta para usuarios autenticados */}
                 <Route
                     path="/dashboard"
                     element={
@@ -21,10 +21,14 @@ function App() {
                     }
                 />
 
-                {/* Redirigir cualquier otra ruta al login */}
+                {/* Rutas para alumnos / participantes */}
+                <Route path="/alumno/login" element={<ParticipanteLogin />} />
+                <Route path="/resolver/:id" element={<ResolverCuestionario />} />
+
+                {/* Redirección por defecto */}
                 <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
-        </Router>
+        </BrowserRouter>
     );
 }
 

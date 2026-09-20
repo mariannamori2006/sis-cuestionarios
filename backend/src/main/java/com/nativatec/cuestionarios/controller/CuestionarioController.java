@@ -15,6 +15,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/cuestionarios")
+@CrossOrigin(origins = "http://localhost:5173")
 public class CuestionarioController {
 
     @Autowired
@@ -36,6 +37,39 @@ public class CuestionarioController {
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
+    // 2.1 Obtener cuestionario por código de acceso o ID para que los alumnos puedan resolverlo
+    @GetMapping("/resolver/{param}")
+    public ResponseEntity<Cuestionario> obtenerParaResolver(@PathVariable String param) {
+        if (param == null || param.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        String valor = param.trim();
+
+        // 1. Buscar primero por código de acceso
+        java.util.Optional<Cuestionario> porCodigo = cuestionarioService.obtenerPorCodigoAcceso(valor.toUpperCase());
+        if (porCodigo.isPresent()) {
+            return ResponseEntity.ok(porCodigo.get());
+        }
+
+        // 2. Si no, intentar buscar por UUID
+        try {
+            UUID uuid = UUID.fromString(valor);
+            return cuestionarioService.obtenerPorId(uuid)
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
+    // 2.2 Obtener cuestionario por código de acceso explícito
+    @GetMapping("/codigo/{codigoAcceso}")
+    public ResponseEntity<Cuestionario> obtenerPorCodigoAcceso(@PathVariable String codigoAcceso) {
+        return cuestionarioService.obtenerPorCodigoAcceso(codigoAcceso.toUpperCase().trim())
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
+
     // 3. Crear un cuestionario (POST: /api/cuestionarios) - Solo PROFESOR y ADMIN
     @PostMapping
     @PreAuthorize("hasAnyRole('PROFESOR', 'ADMIN')")
@@ -44,7 +78,9 @@ public class CuestionarioController {
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         // Asignamos al usuario autenticado (Profesor o Admin) como creador
-        cuestionario.setCreadoPor(userDetails.getUsuario());
+        if (userDetails != null) {
+            cuestionario.setCreadoPor(userDetails.getUsuario());
+        }
 
         Cuestionario nuevoCuestionario = cuestionarioService.guardarCuestionario(cuestionario);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoCuestionario);

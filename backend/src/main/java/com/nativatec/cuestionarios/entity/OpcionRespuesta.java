@@ -1,5 +1,7 @@
 package com.nativatec.cuestionarios.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -14,6 +16,7 @@ public class OpcionRespuesta {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pregunta_id", nullable = false)
+    @JsonBackReference
     private Pregunta pregunta;
 
     @Column(name = "texto_opcion", nullable = false, columnDefinition = "TEXT")
@@ -37,6 +40,9 @@ public class OpcionRespuesta {
         if (updatedAt == null) {
             updatedAt = now;
         }
+        if (esCorrecta == null) {
+            esCorrecta = false;
+        }
     }
 
     @PreUpdate
@@ -44,7 +50,29 @@ public class OpcionRespuesta {
         updatedAt = LocalDateTime.now();
     }
 
-    // Getters y Setters explícitos
+    // Mapeo con @JsonProperty para aceptar "texto" y "correcta" desde el modal de
+    // React
+    @JsonProperty("texto")
+    public String getTextoOpcion() {
+        return textoOpcion;
+    }
+
+    @JsonProperty("texto")
+    public void setTextoOpcion(String textoOpcion) {
+        this.textoOpcion = textoOpcion;
+    }
+
+    @JsonProperty("correcta")
+    public Boolean getEsCorrecta() {
+        return esCorrecta;
+    }
+
+    @JsonProperty("correcta")
+    public void setEsCorrecta(Boolean esCorrecta) {
+        this.esCorrecta = esCorrecta;
+    }
+
+    // Getters y Setters habituales
     public UUID getId() {
         return id;
     }
@@ -59,22 +87,6 @@ public class OpcionRespuesta {
 
     public void setPregunta(Pregunta pregunta) {
         this.pregunta = pregunta;
-    }
-
-    public String getTextoOpcion() {
-        return textoOpcion;
-    }
-
-    public void setTextoOpcion(String textoOpcion) {
-        this.textoOpcion = textoOpcion;
-    }
-
-    public Boolean getEsCorrecta() {
-        return esCorrecta;
-    }
-
-    public void setEsCorrecta(Boolean esCorrecta) {
-        this.esCorrecta = esCorrecta;
     }
 
     public LocalDateTime getCreatedAt() {

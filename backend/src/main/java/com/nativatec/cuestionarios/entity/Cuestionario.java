@@ -1,7 +1,10 @@
 package com.nativatec.cuestionarios.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -18,6 +21,10 @@ public class Cuestionario {
     @Column(columnDefinition = "TEXT")
     private String descripcion;
 
+    // NUEVO: Código de acceso para los alumnos
+    @Column(name = "codigo_acceso", unique = true, length = 50)
+    private String codigoAcceso;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creado_por", nullable = false)
     private Usuario creadoPor;
@@ -31,19 +38,11 @@ public class Cuestionario {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Constructores para mapeo JSON
-    public Cuestionario() {
-    }
+    @OneToMany(mappedBy = "cuestionario", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<Pregunta> preguntas = new ArrayList<>();
 
-    public Cuestionario(UUID id, String titulo, String descripcion, Usuario creadoPor, Boolean activo,
-            LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.id = id;
-        this.titulo = titulo;
-        this.descripcion = descripcion;
-        this.creadoPor = creadoPor;
-        this.activo = activo;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
+    public Cuestionario() {
     }
 
     @PrePersist
@@ -58,6 +57,11 @@ public class Cuestionario {
         if (activo == null) {
             activo = true;
         }
+        // Generar un código de acceso único automáticamente si no viene definido (ej:
+        // los primeros 8 caracteres de un UUID)
+        if (codigoAcceso == null || codigoAcceso.isEmpty()) {
+            codigoAcceso = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        }
     }
 
     @PreUpdate
@@ -65,7 +69,7 @@ public class Cuestionario {
         updatedAt = LocalDateTime.now();
     }
 
-    // Getters y Setters explícitos
+    // Getters y Setters
     public UUID getId() {
         return id;
     }
@@ -88,6 +92,14 @@ public class Cuestionario {
 
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
+    }
+
+    public String getCodigoAcceso() {
+        return codigoAcceso;
+    }
+
+    public void setCodigoAcceso(String codigoAcceso) {
+        this.codigoAcceso = codigoAcceso;
     }
 
     public Usuario getCreadoPor() {
@@ -120,5 +132,18 @@ public class Cuestionario {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public List<Pregunta> getPreguntas() {
+        return preguntas;
+    }
+
+    public void setPreguntas(List<Pregunta> preguntas) {
+        this.preguntas = preguntas;
+        if (preguntas != null) {
+            for (Pregunta p : preguntas) {
+                p.setCuestionario(this);
+            }
+        }
     }
 }
