@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import CrearCuestionarioModal from './CrearCuestionarioModal';
 import CompartirCuestionarioModal from './CompartirCuestionarioModal';
+import AuditoriaResultadosModal from './AuditoriaResultadosModal';
+import EliminarCuestionarioModal from './EliminarCuestionarioModal';
 import { obtenerCuestionarioPorId, eliminarCuestionario } from '../services/cuestionarioService';
 import {
     Search,
@@ -22,6 +24,8 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
     const [cuestionarioAEditar, setCuestionarioAEditar] = useState(null);
     const [cargandoEdicionId, setCargandoEdicionId] = useState(null);
     const [cuestionarioParaCompartir, setCuestionarioParaCompartir] = useState(null);
+    const [cuestionarioParaAuditar, setCuestionarioParaAuditar] = useState(null);
+    const [cuestionarioParaEliminar, setCuestionarioParaEliminar] = useState(null);
     const [busqueda, setBusqueda] = useState('');
 
     // Filtramos los cuestionarios según lo que escriban en el buscador
@@ -62,10 +66,7 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
         setCuestionarioAEditar(null);
     };
 
-    const handleEliminarCuestionario = async (cuestionario) => {
-        const confirmar = window.confirm(`¿Estás seguro de que deseas eliminar el cuestionario "${cuestionario.titulo}"? Esta acción no se puede deshacer.`);
-        if (!confirmar) return;
-
+    const handleConfirmarEliminacion = async (cuestionario) => {
         try {
             await eliminarCuestionario(cuestionario.id);
             if (onRecargarCuestionarios) {
@@ -74,6 +75,7 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
         } catch (err) {
             console.error('Error al eliminar el cuestionario:', err);
             alert('No se pudo eliminar el cuestionario.');
+            throw err;
         }
     };
 
@@ -251,11 +253,23 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                                     >
                                         <Edit3 size={16} /> {cargandoEdicionId === cuestionario.id ? 'Cargando...' : 'Editar'}
                                     </button>
-                                    <button onClick={() => alert(`Auditar resultados próximamente`)} style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                                    <button
+                                        onClick={() => setCuestionarioParaAuditar(cuestionario)}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            color: '#475569',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            gap: '4px'
+                                        }}
+                                    >
                                         <ClipboardCheck size={16} /> Auditar
                                     </button>
                                     <button
-                                        onClick={() => handleEliminarCuestionario(cuestionario)}
+                                        onClick={() => setCuestionarioParaEliminar(cuestionario)}
                                         style={{
                                             background: 'none',
                                             border: 'none',
@@ -302,6 +316,26 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                 isOpen={Boolean(cuestionarioParaCompartir)}
                 onClose={() => setCuestionarioParaCompartir(null)}
                 cuestionario={cuestionarioParaCompartir}
+            />
+
+            {/* Modal para Auditoría de Resultados */}
+            <AuditoriaResultadosModal
+                isOpen={Boolean(cuestionarioParaAuditar)}
+                onClose={() => setCuestionarioParaAuditar(null)}
+                cuestionario={cuestionarioParaAuditar}
+                onActualizado={() => {
+                    if (onRecargarCuestionarios) {
+                        onRecargarCuestionarios();
+                    }
+                }}
+            />
+
+            {/* Modal para Confirmar Eliminación */}
+            <EliminarCuestionarioModal
+                isOpen={Boolean(cuestionarioParaEliminar)}
+                onClose={() => setCuestionarioParaEliminar(null)}
+                cuestionario={cuestionarioParaEliminar}
+                onConfirmarEliminacion={handleConfirmarEliminacion}
             />
         </div>
     );

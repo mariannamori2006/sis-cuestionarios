@@ -20,6 +20,9 @@ public class CuestionarioService {
     @Autowired
     private IntentoCuestionarioRepository intentoRepository;
 
+    @Autowired
+    private com.nativatec.cuestionarios.repository.DetalleIntentoRepository detalleRepository;
+
     // Listar todos los cuestionarios con sus métricas calculadas desde la base de datos
     public List<Cuestionario> obtenerTodos() {
         List<Cuestionario> cuestionarios = cuestionarioRepository.findAll();
@@ -165,8 +168,14 @@ public class CuestionarioService {
         });
     }
 
-    // Eliminar cuestionario
+    // Eliminar cuestionario y sus intentos/detalles asociados
+    @org.springframework.transaction.annotation.Transactional
     public void eliminarCuestionario(UUID id) {
+        List<com.nativatec.cuestionarios.entity.IntentoCuestionario> intentos = intentoRepository.findByCuestionarioId(id);
+        for (com.nativatec.cuestionarios.entity.IntentoCuestionario intento : intentos) {
+            detalleRepository.deleteAll(detalleRepository.findByIntentoId(intento.getId()));
+            intentoRepository.delete(intento);
+        }
         cuestionarioRepository.deleteById(id);
     }
 }

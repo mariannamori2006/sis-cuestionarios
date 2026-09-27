@@ -33,3 +33,13 @@ export const responderCuestionario = async (data) => {
     const response = await api.post('/intentos/responder', data);
     return response.data;
 };
+
+export const obtenerAuditoriaCuestionario = async (cuestionarioId) => {
+    const response = await api.get(`/intentos/auditoria/${cuestionarioId}`);
+    return response.data;
+};
+
+export const calificarIntento = async (intentoId, calificacion) => {
+    const response = await api.put(`/intentos/${intentoId}/calificar`, { calificacion });
+    return response.data;
+};

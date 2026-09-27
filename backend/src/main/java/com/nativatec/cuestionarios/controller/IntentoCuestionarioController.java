@@ -53,6 +53,22 @@ public class IntentoCuestionarioController {
         return ResponseEntity.ok(intentoCalificado);
     }
 
+    // Auditoría de resultados del cuestionario con datos completos (GET: /api/intentos/auditoria/{cuestionarioId})
+    @GetMapping("/auditoria/{cuestionarioId}")
+    public ResponseEntity<com.nativatec.cuestionarios.dto.AuditoriaCuestionarioDTO> obtenerAuditoria(@PathVariable UUID cuestionarioId) {
+        com.nativatec.cuestionarios.dto.AuditoriaCuestionarioDTO auditoria = intentoService.obtenerAuditoriaCuestionario(cuestionarioId);
+        return ResponseEntity.ok(auditoria);
+    }
+
+    // Calificar o actualizar nota de un intento (PUT: /api/intentos/{intentoId}/calificar)
+    @PutMapping("/{intentoId}/calificar")
+    public ResponseEntity<IntentoCuestionario> calificarIntento(
+            @PathVariable UUID intentoId,
+            @RequestBody com.nativatec.cuestionarios.dto.CalificarIntentoDTO dto) {
+        IntentoCuestionario intentoActualizado = intentoService.calificarManualmente(intentoId, dto.getCalificacion());
+        return ResponseEntity.ok(intentoActualizado);
+    }
+
     // Listar todos los intentos de un cuestionario (GET: /api/intentos/cuestionarios/{cuestionarioId})
     @GetMapping("/cuestionarios/{cuestionarioId}")
     public ResponseEntity<List<IntentoCuestionario>> obtenerIntentosPorCuestionario(@PathVariable UUID cuestionarioId) {
