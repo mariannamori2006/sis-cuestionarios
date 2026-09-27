@@ -4,6 +4,7 @@ import { logout, getCurrentUser } from '../services/authService';
 import { obtenerCuestionarios, obtenerEstadisticas, obtenerActividadReciente } from '../services/cuestionarioService';
 import CuestionariosView from './CuestionariosView';
 import EstadisticasView from './EstadisticasView';
+import ConfiguracionView from './ConfiguracionView';
 import logoNativa from '../images/logoNativa.jpeg';
 import { 
     LayoutDashboard, 
@@ -22,7 +23,7 @@ import {
 
 export default function DashboardComponent() {
     const navigate = useNavigate();
-    const currentUser = getCurrentUser();
+    const [currentUser, setCurrentUser] = useState(getCurrentUser());
 
     const userNombre = currentUser?.nombre || '';
     const userApellido = currentUser?.apellido || '';
@@ -398,10 +399,7 @@ export default function DashboardComponent() {
                 )}
 
                 {vistaActiva === 'configuracion' && (
-                    <div style={{ background: '#fff', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                        <h2 style={{ marginTop: 0 }}>Configuración de Perfil</h2>
-                        <p style={{ color: '#64748b', fontSize: '14px' }}>Preferencias de cuenta y notificaciones.</p>
-                    </div>
+                    <ConfiguracionView onUserUpdated={(u) => setCurrentUser(u)} />
                 )}
             </div>
         </div>

@@ -21,7 +21,7 @@ public interface IntentoCuestionarioRepository extends JpaRepository<IntentoCues
     @Query("SELECT COUNT(i) FROM IntentoCuestionario i")
     Long contarTotalRespuestas();
 
-    @Query("SELECT COUNT(DISTINCT COALESCE(i.usuario.email, i.nombreInvitado)) FROM IntentoCuestionario i WHERE (i.usuario IS NOT NULL OR (i.nombreInvitado IS NOT NULL AND TRIM(i.nombreInvitado) <> ''))")
+    @Query("SELECT COUNT(DISTINCT LOWER(TRIM(COALESCE(i.usuario.email, i.usuario.nombre, i.nombreInvitado)))) FROM IntentoCuestionario i WHERE (i.usuario IS NOT NULL OR (i.nombreInvitado IS NOT NULL AND TRIM(i.nombreInvitado) <> ''))")
     Long contarAlumnosUnicos();
 
     @Query("SELECT AVG(i.calificacion) FROM IntentoCuestionario i WHERE i.cuestionario.id = :cuestionarioId AND i.calificacion IS NOT NULL")
@@ -30,7 +30,7 @@ public interface IntentoCuestionarioRepository extends JpaRepository<IntentoCues
     @Query("SELECT COUNT(i) FROM IntentoCuestionario i WHERE i.cuestionario.id = :cuestionarioId")
     Long contarRespuestasPorCuestionario(@Param("cuestionarioId") UUID cuestionarioId);
 
-    @Query("SELECT COUNT(DISTINCT COALESCE(i.usuario.email, i.nombreInvitado)) FROM IntentoCuestionario i WHERE i.cuestionario.id = :cuestionarioId AND (i.usuario IS NOT NULL OR (i.nombreInvitado IS NOT NULL AND TRIM(i.nombreInvitado) <> ''))")
+    @Query("SELECT COUNT(DISTINCT LOWER(TRIM(COALESCE(i.usuario.email, i.usuario.nombre, i.nombreInvitado)))) FROM IntentoCuestionario i WHERE i.cuestionario.id = :cuestionarioId AND (i.usuario IS NOT NULL OR (i.nombreInvitado IS NOT NULL AND TRIM(i.nombreInvitado) <> ''))")
     Long contarAlumnosUnicosPorCuestionario(@Param("cuestionarioId") UUID cuestionarioId);
 }
 

@@ -39,7 +39,7 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
         : '0.0 / 20';
 
     const totalRespuestasTexto = estadisticas?.totalRespuestas ?? cuestionarios.reduce((acc, curr) => acc + (curr.totalRespuestas || 0), 0);
-    const alumnosUnicosTexto = estadisticas?.alumnosUnicos ?? cuestionarios.reduce((acc, curr) => acc + (curr.alumnosUnicos || 0), 0);
+    const alumnosUnicosTexto = estadisticas?.alumnosUnicos ?? 0;
 
     const handleNuevoCuestionario = () => {
         setCuestionarioAEditar(null);
