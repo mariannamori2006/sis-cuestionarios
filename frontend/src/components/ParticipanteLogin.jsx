@@ -8,8 +8,8 @@ export default function ParticipanteLogin() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Paso 1: Ingreso y validación de código numérico
-    // Paso 2: Ingreso de nombre/apodo
+    // Paso 1: Ingreso y validación obligatoria del código numérico por parte del alumno
+    // Paso 2: Ingreso de nombre/apodo una vez validado el código
     const [paso, setPaso] = useState(1);
     const [codigoAcceso, setCodigoAcceso] = useState('');
     const [nombreParticipante, setNombreParticipante] = useState(sessionStorage.getItem('nombreParticipante') || '');
@@ -17,17 +17,6 @@ export default function ParticipanteLogin() {
     const [cuestionario, setCuestionario] = useState(null);
     const [validando, setValidando] = useState(false);
     const [error, setError] = useState('');
-
-    // Si viene con un parámetro en la URL (?codigo=123456)
-    useEffect(() => {
-        const queryParams = new URLSearchParams(location.search);
-        const codeParam = queryParams.get('codigo');
-        if (codeParam) {
-            const limpio = codeParam.trim();
-            setCodigoAcceso(limpio);
-            verificarCodigo(limpio);
-        }
-    }, [location.search]);
 
     const verificarCodigo = async (codigoParaVerificar) => {
         const codigo = (codigoParaVerificar || codigoAcceso).trim();
@@ -260,7 +249,7 @@ export default function ParticipanteLogin() {
                     <form onSubmit={handleComenzarExamen} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
                         {/* Tarjeta de Cuestionario Verificado */}
-                        <div style={{
+                        {/*<div style={{
                             backgroundColor: '#f0fdf4',
                             border: '1px solid #bbf7d0',
                             borderRadius: '12px',
@@ -300,11 +289,11 @@ export default function ParticipanteLogin() {
                             <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
                                 {cuestionario.descripcion || 'Evaluación académica'} • {cuestionario.preguntas ? `${cuestionario.preguntas.length} preguntas` : ''}
                             </p>
-                        </div>
+                        </div>*/}
 
                         <div>
                             <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>
-                                TU NOMBRE O APODO *
+                                TU NOMBRE *
                             </label>
                             <div style={{ position: 'relative' }}>
                                 <User size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />

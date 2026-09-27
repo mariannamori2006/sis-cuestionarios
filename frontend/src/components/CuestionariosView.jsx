@@ -1,23 +1,26 @@
 import React, { useState } from 'react';
 import CrearCuestionarioModal from './CrearCuestionarioModal';
 import CompartirCuestionarioModal from './CompartirCuestionarioModal';
-import { 
-    Search, 
-    Plus, 
-    FileText, 
-    MessageSquare, 
-    Users, 
-    Award, 
-    Key, 
-    Calendar, 
-    Share2, 
-    Edit3, 
-    ClipboardCheck, 
-    Trash2 
+import { obtenerCuestionarioPorId, eliminarCuestionario } from '../services/cuestionarioService';
+import {
+    Search,
+    Plus,
+    FileText,
+    MessageSquare,
+    Users,
+    Award,
+    Key,
+    Calendar,
+    Share2,
+    Edit3,
+    ClipboardCheck,
+    Trash2
 } from 'lucide-react';
 
 export default function CuestionariosView({ cuestionarios, estadisticas, onRecargarCuestionarios }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [cuestionarioAEditar, setCuestionarioAEditar] = useState(null);
+    const [cargandoEdicionId, setCargandoEdicionId] = useState(null);
     const [cuestionarioParaCompartir, setCuestionarioParaCompartir] = useState(null);
     const [busqueda, setBusqueda] = useState('');
 
@@ -33,6 +36,46 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
 
     const totalRespuestasTexto = estadisticas?.totalRespuestas ?? cuestionarios.reduce((acc, curr) => acc + (curr.totalRespuestas || 0), 0);
     const alumnosUnicosTexto = estadisticas?.alumnosUnicos ?? cuestionarios.reduce((acc, curr) => acc + (curr.alumnosUnicos || 0), 0);
+
+    const handleNuevoCuestionario = () => {
+        setCuestionarioAEditar(null);
+        setIsModalOpen(true);
+    };
+
+    const handleEditarCuestionario = async (cuestionario) => {
+        try {
+            setCargandoEdicionId(cuestionario.id);
+            const cuestionarioCompleto = await obtenerCuestionarioPorId(cuestionario.id);
+            setCuestionarioAEditar(cuestionarioCompleto);
+            setIsModalOpen(true);
+        } catch (err) {
+            console.error('Error al cargar cuestionario para editar:', err);
+            setCuestionarioAEditar(cuestionario);
+            setIsModalOpen(true);
+        } finally {
+            setCargandoEdicionId(null);
+        }
+    };
+
+    const handleCerrarModal = () => {
+        setIsModalOpen(false);
+        setCuestionarioAEditar(null);
+    };
+
+    const handleEliminarCuestionario = async (cuestionario) => {
+        const confirmar = window.confirm(`¿Estás seguro de que deseas eliminar el cuestionario "${cuestionario.titulo}"? Esta acción no se puede deshacer.`);
+        if (!confirmar) return;
+
+        try {
+            await eliminarCuestionario(cuestionario.id);
+            if (onRecargarCuestionarios) {
+                onRecargarCuestionarios();
+            }
+        } catch (err) {
+            console.error('Error al eliminar el cuestionario:', err);
+            alert('No se pudo eliminar el cuestionario.');
+        }
+    };
 
     return (
         <div style={{ fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif' }}>
@@ -68,7 +111,7 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
 
                     {/* Botón Nuevo Cuestionario */}
                     <button
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={handleNuevoCuestionario}
                         style={{
                             backgroundColor: '#0f172a',
                             color: '#ffffff',
@@ -130,7 +173,6 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' }}>
                 {cuestionariosFiltrados.length > 0 ? (
                     cuestionariosFiltrados.map((cuestionario) => {
-                        const codigo = cuestionario.codigoAcceso || (cuestionario.id ? cuestionario.id.substring(0, 8).toUpperCase() : 'N/A');
                         const respuestasCount = cuestionario.totalRespuestas || 0;
                         const promCuestionario = (cuestionario.promedioCalificacion && cuestionario.promedioCalificacion > 0)
                             ? `${cuestionario.promedioCalificacion.toFixed(1)} / 20`
@@ -148,7 +190,7 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                                 border: '1px solid #e2e8f0'
                             }}>
                                 <div>
-                                    {/* Categoría, Respuestas y Código de Acceso */}
+                                    {/* Categoría, Respuestas */}
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                                         <span style={{
                                             backgroundColor: '#eff6ff',
@@ -160,24 +202,6 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                                         }}>
                                             {respuestasCount} {respuestasCount === 1 ? 'respuesta' : 'respuestas'}
                                         </span>
-
-                                        {/* Código de acceso visible */}
-                                        <div style={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '6px',
-                                            backgroundColor: '#f1f5f9',
-                                            border: '1px solid #cbd5e1',
-                                            padding: '4px 8px',
-                                            borderRadius: '6px',
-                                            fontSize: '12px',
-                                            fontWeight: 'bold',
-                                            color: '#0f172a',
-                                            fontFamily: 'monospace'
-                                        }}>
-                                            <Key size={12} color="#64748b" />
-                                            <span>{codigo}</span>
-                                        </div>
                                     </div>
 
                                     {/* Título y Descripción */}
@@ -210,13 +234,39 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                                     <button onClick={() => setCuestionarioParaCompartir(cuestionario)} style={{ background: 'none', border: 'none', color: '#10b981', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', fontWeight: '600' }}>
                                         <Share2 size={16} /> Compartir
                                     </button>
-                                    <button onClick={() => alert(`Editar cuestionario`)} style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                                        <Edit3 size={16} /> Editar
+                                    <button
+                                        onClick={() => handleEditarCuestionario(cuestionario)}
+                                        disabled={cargandoEdicionId === cuestionario.id}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            color: '#475569',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            opacity: cargandoEdicionId === cuestionario.id ? 0.6 : 1
+                                        }}
+                                    >
+                                        <Edit3 size={16} /> {cargandoEdicionId === cuestionario.id ? 'Cargando...' : 'Editar'}
                                     </button>
-                                    <button onClick={() => alert(`Auditar resultados`)} style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                                    <button onClick={() => alert(`Auditar resultados próximamente`)} style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                                         <ClipboardCheck size={16} /> Auditar
                                     </button>
-                                    <button onClick={() => alert(`Eliminar cuestionario`)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                                    <button
+                                        onClick={() => handleEliminarCuestionario(cuestionario)}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            color: '#dc2626',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            gap: '4px'
+                                        }}
+                                    >
                                         <Trash2 size={16} /> Eliminar
                                     </button>
                                 </div>
@@ -230,17 +280,20 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                 )}
             </div>
 
-            {/* Modal para Crear Cuestionario */}
+            {/* Modal para Crear / Editar Cuestionario */}
             <CrearCuestionarioModal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onCuestionarioCreado={(nuevoCuestionario) => {
+                onClose={handleCerrarModal}
+                cuestionarioAEditar={cuestionarioAEditar}
+                onCuestionarioCreado={(resultado) => {
                     if (onRecargarCuestionarios) {
                         onRecargarCuestionarios();
                     }
-                    if (nuevoCuestionario) {
-                        setCuestionarioParaCompartir(nuevoCuestionario);
+                    if (resultado && !cuestionarioAEditar) {
+                        // Solo abrir modal de compartir si fue creación nueva
+                        setCuestionarioParaCompartir(resultado);
                     }
+                    handleCerrarModal();
                 }}
             />
 

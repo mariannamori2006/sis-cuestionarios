@@ -9,17 +9,23 @@ public class ResultadoEvaluacionDTO {
     private Integer aciertos;
     private Integer totalPreguntas;
     private String mensaje;
+    private Boolean requiereRevision = false;
 
     public ResultadoEvaluacionDTO() {
     }
 
     public ResultadoEvaluacionDTO(UUID intentoId, Double calificacion, String notaFormateada, Integer aciertos, Integer totalPreguntas, String mensaje) {
+        this(intentoId, calificacion, notaFormateada, aciertos, totalPreguntas, mensaje, false);
+    }
+
+    public ResultadoEvaluacionDTO(UUID intentoId, Double calificacion, String notaFormateada, Integer aciertos, Integer totalPreguntas, String mensaje, Boolean requiereRevision) {
         this.intentoId = intentoId;
         this.calificacion = calificacion;
         this.notaFormateada = notaFormateada;
         this.aciertos = aciertos;
         this.totalPreguntas = totalPreguntas;
         this.mensaje = mensaje;
+        this.requiereRevision = requiereRevision != null ? requiereRevision : false;
     }
 
     public UUID getIntentoId() {
@@ -68,5 +74,13 @@ public class ResultadoEvaluacionDTO {
 
     public void setMensaje(String mensaje) {
         this.mensaje = mensaje;
+    }
+
+    public Boolean getRequiereRevision() {
+        return requiereRevision;
+    }
+
+    public void setRequiereRevision(Boolean requiereRevision) {
+        this.requiereRevision = requiereRevision;
     }
 }

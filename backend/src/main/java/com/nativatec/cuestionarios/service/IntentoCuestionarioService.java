@@ -104,8 +104,12 @@ public class IntentoCuestionarioService {
                 DetalleIntento detalle = new DetalleIntento();
                 detalle.setIntento(intento);
 
+                Pregunta preguntaItem = null;
                 if (item.getPreguntaId() != null) {
-                    preguntaRepository.findById(item.getPreguntaId()).ifPresent(detalle::setPregunta);
+                    preguntaItem = preguntaRepository.findById(item.getPreguntaId()).orElse(null);
+                    if (preguntaItem != null) {
+                        detalle.setPregunta(preguntaItem);
+                    }
                 }
 
                 if (item.getOpcionSeleccionadaId() != null) {
@@ -116,13 +120,58 @@ public class IntentoCuestionarioService {
                             aciertos++;
                         }
                     }
+                } else if (item.getRespuestaTexto() != null && !item.getRespuestaTexto().trim().isEmpty()) {
+                    String textoAlumno = item.getRespuestaTexto().trim();
+                    detalle.setRespuestaTexto(textoAlumno);
+
+                    if (preguntaItem != null && preguntaItem.getOpciones() != null) {
+                        for (OpcionRespuesta opc : preguntaItem.getOpciones()) {
+                            if (Boolean.TRUE.equals(opc.getEsCorrecta()) && opc.getTextoOpcion() != null) {
+                                if (opc.getTextoOpcion().trim().equalsIgnoreCase(textoAlumno)) {
+                                    aciertos++;
+                                    break;
+                                }
+                            }
+                        }
+                    }
                 }
 
-                detalle.setRespuestaTexto(item.getRespuestaTexto());
+                if (item.getRespuestaTexto() != null && detalle.getRespuestaTexto() == null) {
+                    detalle.setRespuestaTexto(item.getRespuestaTexto().trim());
+                }
+
                 detalleRepository.save(detalle);
             }
         }
 
+        // Verificar si el cuestionario contiene preguntas escritas que requieran calificación manual
+        boolean tienePreguntasEscritas = false;
+        if (cuestionario.getPreguntas() != null) {
+            for (Pregunta p : cuestionario.getPreguntas()) {
+                if (p.getTipo() == Pregunta.TipoPregunta.RESPUESTA_CORTA) {
+                    tienePreguntasEscritas = true;
+                    break;
+                }
+            }
+        }
+
+        // Si contiene preguntas de respuesta escrita, la nota queda pendiente para revisión del profesor
+        if (tienePreguntasEscritas) {
+            intento.setCalificacion(null);
+            intentoRepository.save(intento);
+
+            return new ResultadoEvaluacionDTO(
+                    intento.getId(),
+                    null,
+                    "Pendiente de revisión",
+                    aciertos,
+                    totalPreguntas,
+                    "¡Tus respuestas han sido enviadas con éxito! Al incluir preguntas escritas, tu profesor revisará y calificará tu examen.",
+                    true
+            );
+        }
+
+        // Calificación automática cuando son únicamente preguntas cerradas (Opción múltiple / Verdadero-Falso)
         double calificacionFinal = 0.0;
         if (totalPreguntas > 0) {
             calificacionFinal = Math.round(((double) aciertos / totalPreguntas * 20.0) * 10.0) / 10.0;
@@ -145,7 +194,8 @@ public class IntentoCuestionarioService {
                 notaFormateada,
                 aciertos,
                 totalPreguntas,
-                mensaje
+                mensaje,
+                false
         );
     }
 

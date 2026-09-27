@@ -91,10 +91,83 @@ public class CuestionarioService {
         return cuestionarioRepository.save(cuestionario);
     }
 
-    // Eliminar cuestinario
+    // Actualizar cuestionario existente
+    @org.springframework.transaction.annotation.Transactional
+    public Optional<Cuestionario> actualizarCuestionario(UUID id, Cuestionario modificado) {
+        return cuestionarioRepository.findById(id).map(existente -> {
+            existente.setTitulo(modificado.getTitulo());
+            existente.setDescripcion(modificado.getDescripcion());
+
+            if (modificado.getCodigoAcceso() != null && !modificado.getCodigoAcceso().trim().isEmpty()) {
+                existente.setCodigoAcceso(modificado.getCodigoAcceso().trim());
+            }
+
+            if (modificado.getPreguntas() != null) {
+                List<com.nativatec.cuestionarios.entity.Pregunta> actuales = existente.getPreguntas();
+                List<com.nativatec.cuestionarios.entity.Pregunta> nuevas = modificado.getPreguntas();
+
+                int comunes = Math.min(actuales.size(), nuevas.size());
+                int orden = 1;
+
+                // 1. Actualizar preguntas coincidentes in-place
+                for (int i = 0; i < comunes; i++) {
+                    com.nativatec.cuestionarios.entity.Pregunta act = actuales.get(i);
+                    com.nativatec.cuestionarios.entity.Pregunta nueva = nuevas.get(i);
+
+                    act.setTextoPregunta(nueva.getTextoPregunta());
+                    act.setTipo(nueva.getTipo());
+                    act.setOrden(orden++);
+
+                    if (nueva.getOpciones() != null) {
+                        List<com.nativatec.cuestionarios.entity.OpcionRespuesta> opcActuales = act.getOpciones();
+                        List<com.nativatec.cuestionarios.entity.OpcionRespuesta> opcNuevas = nueva.getOpciones();
+
+                        int opcComunes = Math.min(opcActuales.size(), opcNuevas.size());
+                        for (int j = 0; j < opcComunes; j++) {
+                            opcActuales.get(j).setTextoOpcion(opcNuevas.get(j).getTextoOpcion());
+                            opcActuales.get(j).setEsCorrecta(opcNuevas.get(j).getEsCorrecta());
+                        }
+
+                        // Agregar opciones adicionales si hay más
+                        for (int j = opcComunes; j < opcNuevas.size(); j++) {
+                            com.nativatec.cuestionarios.entity.OpcionRespuesta nuevaOpc = opcNuevas.get(j);
+                            nuevaOpc.setPregunta(act);
+                            opcActuales.add(nuevaOpc);
+                        }
+
+                        // Eliminar opciones sobrantes
+                        while (opcActuales.size() > opcNuevas.size()) {
+                            opcActuales.remove(opcActuales.size() - 1);
+                        }
+                    }
+                }
+
+                // 2. Agregar preguntas nuevas si aumentaron
+                for (int i = comunes; i < nuevas.size(); i++) {
+                    com.nativatec.cuestionarios.entity.Pregunta nueva = nuevas.get(i);
+                    nueva.setCuestionario(existente);
+                    nueva.setOrden(orden++);
+                    if (nueva.getOpciones() != null) {
+                        for (com.nativatec.cuestionarios.entity.OpcionRespuesta o : nueva.getOpciones()) {
+                            o.setPregunta(nueva);
+                        }
+                    }
+                    actuales.add(nueva);
+                }
+
+                // 3. Eliminar preguntas sobrantes si se borraron
+                while (actuales.size() > nuevas.size()) {
+                    actuales.remove(actuales.size() - 1);
+                }
+            }
+
+            return cuestionarioRepository.save(existente);
+        });
+    }
+
+    // Eliminar cuestionario
     public void eliminarCuestionario(UUID id) {
         cuestionarioRepository.deleteById(id);
     }
-
 }
 

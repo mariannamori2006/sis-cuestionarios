@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import logoNativa from '../images/logoNativa.jpeg';
-import { Award, CheckCircle, LogOut } from 'lucide-react';
+import { Award, CheckCircle, LogOut, Clock } from 'lucide-react';
 import { responderCuestionario } from '../services/cuestionarioService';
 
 export default function ResolverCuestionario() {
@@ -20,6 +20,12 @@ export default function ResolverCuestionario() {
     const [enviando, setEnviando] = useState(false);
 
     useEffect(() => {
+        const nombre = sessionStorage.getItem('nombreParticipante');
+        if (!nombre || !nombre.trim()) {
+            navigate('/unirse');
+            return;
+        }
+
         // Obtenemos los detalles del cuestionario y sus preguntas desde el backend
         axios.get(`http://localhost:8080/api/cuestionarios/resolver/${id}`)
             .then(res => {
@@ -30,7 +36,7 @@ export default function ResolverCuestionario() {
                 console.error("Error al cargar el cuestionario:", err);
                 setLoading(false);
             });
-    }, [id]);
+    }, [id, navigate]);
 
     const handleIniciarConNombre = (e) => {
         e.preventDefault();
@@ -47,6 +53,13 @@ export default function ResolverCuestionario() {
         }));
     };
 
+    const handleTextoRespuesta = (preguntaKey, valor) => {
+        setRespuestasSeleccionadas(prev => ({
+            ...prev,
+            [preguntaKey]: valor
+        }));
+    };
+
     const handleSubmitEvaluacion = async (e) => {
         e.preventDefault();
 
@@ -56,6 +69,15 @@ export default function ResolverCuestionario() {
 
         const respuestasPayload = (cuestionario.preguntas || []).map((pregunta, pIndex) => {
             const pKey = pregunta.id || pIndex;
+            const esEscrita = pregunta.tipo === 'RESPUESTA_CORTA' || pregunta.tipo === 'Respuesta escrita';
+            
+            if (esEscrita) {
+                return {
+                    preguntaId: pregunta.id || null,
+                    respuestaTexto: (respuestasSeleccionadas[pKey] || '').toString().trim()
+                };
+            }
+
             const opcionId = respuestasSeleccionadas[pKey];
             return {
                 preguntaId: pregunta.id || null,
@@ -71,29 +93,48 @@ export default function ResolverCuestionario() {
             });
 
             setResultado({
-                nota: resultadoBackend.notaFormateada || `${resultadoBackend.calificacion} / 20`,
-                mensaje: resultadoBackend.mensaje
+                nota: resultadoBackend.notaFormateada || (resultadoBackend.requiereRevision ? 'Pendiente de revisión' : `${resultadoBackend.calificacion} / 20`),
+                mensaje: resultadoBackend.mensaje,
+                requiereRevision: Boolean(resultadoBackend.requiereRevision)
             });
         } catch (err) {
             console.error("Error al enviar respuestas a la base de datos:", err);
             // Fallback en caso de error de red
             let totalPreguntas = cuestionario.preguntas?.length || 0;
             let aciertos = 0;
+            let tieneEscritas = false;
+
             (cuestionario.preguntas || []).forEach((pregunta, pIndex) => {
                 const pKey = pregunta.id || pIndex;
-                const opcionSeleccionadaId = respuestasSeleccionadas[pKey];
-                if (pregunta.opciones) {
-                    const opcionElegida = pregunta.opciones.find((op, oIndex) => (op.id || oIndex) === opcionSeleccionadaId);
-                    if (opcionElegida && (opcionElegida.correcta === true || opcionElegida.esCorrecta === true)) {
-                        aciertos++;
+                const esEscrita = pregunta.tipo === 'RESPUESTA_CORTA' || pregunta.tipo === 'Respuesta escrita';
+
+                if (esEscrita) {
+                    tieneEscritas = true;
+                } else {
+                    const opcionSeleccionadaId = respuestasSeleccionadas[pKey];
+                    if (pregunta.opciones) {
+                        const opcionElegida = pregunta.opciones.find((op, oIndex) => (op.id || oIndex) === opcionSeleccionadaId);
+                        if (opcionElegida && (opcionElegida.correcta === true || opcionElegida.esCorrecta === true)) {
+                            aciertos++;
+                        }
                     }
                 }
             });
-            const notaCalculada = totalPreguntas > 0 ? ((aciertos / totalPreguntas) * 20).toFixed(1) : "20.0";
-            setResultado({
-                nota: `${notaCalculada} / 20`,
-                mensaje: `Has completado el cuestionario con ${aciertos} de ${totalPreguntas} aciertos.`
-            });
+
+            if (tieneEscritas) {
+                setResultado({
+                    nota: 'Pendiente de revisión',
+                    mensaje: '¡Tus respuestas han sido enviadas con éxito! Al incluir preguntas escritas, tu profesor revisará tus respuestas y asignará tu calificación.',
+                    requiereRevision: true
+                });
+            } else {
+                const notaCalculada = totalPreguntas > 0 ? ((aciertos / totalPreguntas) * 20).toFixed(1) : "20.0";
+                setResultado({
+                    nota: `${notaCalculada} / 20`,
+                    mensaje: `Has completado el cuestionario con ${aciertos} de ${totalPreguntas} aciertos.`,
+                    requiereRevision: false
+                });
+            }
         } finally {
             setEnviando(false);
         }
@@ -198,19 +239,52 @@ export default function ResolverCuestionario() {
 
                 {resultado ? (
                     <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
-                            <div style={{ background: '#ecfdf5', padding: '16px', borderRadius: '50%', color: '#10b981' }}>
-                                <Award size={48} />
+                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+                            <div style={{
+                                background: resultado.requiereRevision ? '#eff6ff' : '#ecfdf5',
+                                padding: '20px',
+                                borderRadius: '50%',
+                                color: resultado.requiereRevision ? '#2563eb' : '#10b981',
+                                border: resultado.requiereRevision ? '2px solid #bfdbfe' : '2px solid #a7f3d0'
+                            }}>
+                                {resultado.requiereRevision ? <Clock size={48} /> : <Award size={48} />}
                             </div>
                         </div>
-                        <h3 style={{ fontSize: '24px', color: '#0f172a', margin: '0 0 10px 0' }}>¡Resultado Final!</h3>
-                        <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#10b981', margin: '15px 0' }}>{resultado.nota}</div>
-                        <p style={{ color: '#64748b', fontSize: '14px' }}>{resultado.mensaje}</p>
+
+                        <h3 style={{ fontSize: '24px', color: '#0f172a', margin: '0 0 10px 0' }}>
+                            {resultado.requiereRevision ? '¡Examen Enviado con Éxito!' : '¡Resultado Final!'}
+                        </h3>
+
+                        <div style={{
+                            fontSize: resultado.requiereRevision ? '24px' : '36px',
+                            fontWeight: 'bold',
+                            color: resultado.requiereRevision ? '#2563eb' : '#10b981',
+                            margin: '15px 0'
+                        }}>
+                            {resultado.nota}
+                        </div>
+
+                        <p style={{ color: '#64748b', fontSize: '14px', maxWidth: '480px', margin: '0 auto 20px auto', lineHeight: '1.5' }}>
+                            {resultado.mensaje}
+                        </p>
+
                         <button
                             onClick={() => navigate('/alumno/login')}
-                            style={{ marginTop: '20px', backgroundColor: '#0f172a', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                            style={{
+                                backgroundColor: '#0f172a',
+                                color: '#fff',
+                                border: 'none',
+                                padding: '12px 24px',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontWeight: '600',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                fontSize: '14px'
+                            }}
                         >
-                            <LogOut size={16} /> Finalizar y Salir
+                            <LogOut size={16} /> Salir de la Evaluación
                         </button>
                     </div>
                 ) : (
@@ -218,28 +292,121 @@ export default function ResolverCuestionario() {
                         {cuestionario.preguntas && cuestionario.preguntas.length > 0 ? (
                             cuestionario.preguntas.map((pregunta, index) => {
                                 const pKey = pregunta.id || index;
+                                const tipo = pregunta.tipo || 'OPCION_MULTIPLE';
+                                const esVerdaderoFalso = tipo === 'VERDADERO_FALSO' || tipo === 'Verdadero/Falso';
+                                const esEscrita = tipo === 'RESPUESTA_CORTA' || tipo === 'Respuesta escrita';
+
                                 return (
                                     <div key={pKey} style={{ backgroundColor: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                                        <h4 style={{ margin: '0 0 12px 0', fontSize: '15px', color: '#1e293b' }}>
-                                            {index + 1}. {pregunta.enunciado || pregunta.textoPregunta}
-                                        </h4>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                            {pregunta.opciones && pregunta.opciones.map((opcion, oIndex) => {
-                                                const oKey = opcion.id || oIndex;
-                                                return (
-                                                    <label key={oKey} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', color: '#334155', cursor: 'pointer', padding: '10px 12px', borderRadius: '8px', backgroundColor: '#fff', border: '1px solid #cbd5e1' }}>
-                                                        <input
-                                                            type="radio"
-                                                            name={`pregunta_${pKey}`}
-                                                            checked={respuestasSeleccionadas[pKey] === oKey}
-                                                            onChange={() => handleSelectOpcion(pKey, oKey)}
-                                                            required
-                                                        />
-                                                        {opcion.texto || opcion.textoOpcion}
-                                                    </label>
-                                                );
-                                            })}
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                            <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                                Pregunta {index + 1} • {esVerdaderoFalso ? 'Verdadero / Falso' : esEscrita ? 'Respuesta Escrita' : 'Opción Múltiple'}
+                                            </span>
                                         </div>
+
+                                        <h4 style={{ margin: '0 0 14px 0', fontSize: '15px', color: '#1e293b', lineHeight: '1.4' }}>
+                                            {pregunta.enunciado || pregunta.textoPregunta}
+                                        </h4>
+
+                                        {/* TIPO 1: VERDADERO / FALSO */}
+                                        {esVerdaderoFalso && (
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                                {pregunta.opciones && pregunta.opciones.map((opcion, oIndex) => {
+                                                    const oKey = opcion.id || oIndex;
+                                                    const isChecked = respuestasSeleccionadas[pKey] === oKey;
+                                                    return (
+                                                        <label
+                                                            key={oKey}
+                                                            style={{
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '10px',
+                                                                padding: '14px 16px',
+                                                                borderRadius: '10px',
+                                                                backgroundColor: isChecked ? '#eff6ff' : '#ffffff',
+                                                                border: isChecked ? '2px solid #2563eb' : '1px solid #cbd5e1',
+                                                                cursor: 'pointer',
+                                                                fontWeight: '600',
+                                                                fontSize: '14px',
+                                                                color: isChecked ? '#1e40af' : '#334155',
+                                                                transition: 'all 0.2s'
+                                                            }}
+                                                        >
+                                                            <input
+                                                                type="radio"
+                                                                name={`pregunta_${pKey}`}
+                                                                checked={isChecked}
+                                                                onChange={() => handleSelectOpcion(pKey, oKey)}
+                                                                required
+                                                                style={{ accentColor: '#2563eb', width: '18px', height: '18px' }}
+                                                            />
+                                                            <span>{opcion.texto || opcion.textoOpcion}</span>
+                                                        </label>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+
+                                        {/* TIPO 2: RESPUESTA ESCRITA */}
+                                        {esEscrita && (
+                                            <div>
+                                                <input
+                                                    type="text"
+                                                    value={respuestasSeleccionadas[pKey] || ''}
+                                                    onChange={(e) => handleTextoRespuesta(pKey, e.target.value)}
+                                                    placeholder="Escribe tu respuesta aquí..."
+                                                    required
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '12px 14px',
+                                                        borderRadius: '8px',
+                                                        border: '1px solid #cbd5e1',
+                                                        outline: 'none',
+                                                        fontSize: '14px',
+                                                        backgroundColor: '#ffffff',
+                                                        boxSizing: 'border-box'
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+
+                                        {/* TIPO 3: OPCIÓN MÚLTIPLE */}
+                                        {!esVerdaderoFalso && !esEscrita && (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                {pregunta.opciones && pregunta.opciones.map((opcion, oIndex) => {
+                                                    const oKey = opcion.id || oIndex;
+                                                    const isChecked = respuestasSeleccionadas[pKey] === oKey;
+                                                    return (
+                                                        <label
+                                                            key={oKey}
+                                                            style={{
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '10px',
+                                                                fontSize: '14px',
+                                                                color: isChecked ? '#1e40af' : '#334155',
+                                                                cursor: 'pointer',
+                                                                padding: '10px 14px',
+                                                                borderRadius: '8px',
+                                                                backgroundColor: isChecked ? '#eff6ff' : '#ffffff',
+                                                                border: isChecked ? '1px solid #2563eb' : '1px solid #cbd5e1',
+                                                                transition: 'all 0.2s'
+                                                            }}
+                                                        >
+                                                            <input
+                                                                type="radio"
+                                                                name={`pregunta_${pKey}`}
+                                                                checked={isChecked}
+                                                                onChange={() => handleSelectOpcion(pKey, oKey)}
+                                                                required
+                                                                style={{ accentColor: '#2563eb' }}
+                                                            />
+                                                            <span>{opcion.texto || opcion.textoOpcion}</span>
+                                                        </label>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })
@@ -249,6 +416,7 @@ export default function ResolverCuestionario() {
 
                         <button
                             type="submit"
+                            disabled={enviando}
                             style={{
                                 backgroundColor: '#10b981',
                                 color: '#ffffff',
@@ -258,10 +426,11 @@ export default function ResolverCuestionario() {
                                 fontWeight: '600',
                                 cursor: 'pointer',
                                 fontSize: '15px',
-                                marginTop: '10px'
+                                marginTop: '10px',
+                                opacity: enviando ? 0.7 : 1
                             }}
                         >
-                            Enviar Respuestas y Calificar
+                            {enviando ? 'Enviando respuestas...' : 'Enviar Respuestas y Calificar'}
                         </button>
                     </form>
                 )}

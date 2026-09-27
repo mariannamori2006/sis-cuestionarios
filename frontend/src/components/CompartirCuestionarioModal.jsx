@@ -8,7 +8,7 @@ export default function CompartirCuestionarioModal({ isOpen, onClose, cuestionar
     if (!isOpen || !cuestionario) return null;
 
     const codigo = cuestionario.codigoAcceso || (cuestionario.id ? cuestionario.id.substring(0, 6).toUpperCase() : '');
-    const enlacePortal = `${window.location.origin}/unirse?codigo=${codigo}`;
+    const enlacePortal = `${window.location.origin}/unirse`;
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(enlacePortal)}&color=0f172a`;
 
     const handleCopiarEnlace = () => {
@@ -139,7 +139,7 @@ export default function CompartirCuestionarioModal({ isOpen, onClose, cuestionar
                         marginBottom: '8px',
                         textTransform: 'uppercase'
                     }}>
-                        ENLACE PARA EL ALUMNO
+                        ENLACE DIRECTO DEL PORTAL
                     </label>
                     <div style={{ display: 'flex', gap: '8px' }}>
                         <input
@@ -194,7 +194,7 @@ export default function CompartirCuestionarioModal({ isOpen, onClose, cuestionar
                         marginBottom: '12px',
                         textTransform: 'uppercase'
                     }}>
-                        CÓDIGO QR PARA ESCANEO RÁPIDO
+                        CÓDIGO QR PARA ACCESO RÁPIDO AL PORTAL
                     </div>
 
                     <div style={{
@@ -207,7 +207,7 @@ export default function CompartirCuestionarioModal({ isOpen, onClose, cuestionar
                     }}>
                         <img
                             src={qrUrl}
-                            alt="Código QR del cuestionario"
+                            alt="Código QR del portal de evaluación"
                             style={{
                                 width: '160px',
                                 height: '160px',
@@ -228,11 +228,11 @@ export default function CompartirCuestionarioModal({ isOpen, onClose, cuestionar
                     color: '#1e3a8a',
                     lineHeight: '1.5'
                 }}>
-                    <strong>¿Cómo ingresa el alumno?</strong>
+                    <strong>Instrucciones para el alumno:</strong>
                     <ol style={{ margin: '6px 0 0 0', paddingLeft: '18px' }}>
-                        <li>Abre el enlace de evaluación proporcionado.</li>
-                        <li>Ingresa el <strong>código numérico ({codigo})</strong>.</li>
-                        <li>Escribe su <strong>Nombre o Apodo</strong> y comienza de inmediato.</li>
+                        <li>Ingresa al enlace o escanea el QR.</li>
+                        <li>Escribe el código numérico: <strong>{codigo}</strong>.</li>
+                        <li>Ingresa su nombre o apodo y podrá resolver el examen.</li>
                     </ol>
                 </div>
             </div>

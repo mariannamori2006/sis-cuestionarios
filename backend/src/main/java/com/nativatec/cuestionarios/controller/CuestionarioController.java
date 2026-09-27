@@ -86,6 +86,18 @@ public class CuestionarioController {
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoCuestionario);
     }
 
+    // 3.1 Actualizar un cuestionario (PUT: /api/cuestionarios/{id}) - Solo PROFESOR y ADMIN
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('PROFESOR', 'ADMIN')")
+    public ResponseEntity<Cuestionario> actualizarCuestionario(
+            @PathVariable UUID id,
+            @RequestBody Cuestionario cuestionarioModificado) {
+
+        return cuestionarioService.actualizarCuestionario(id, cuestionarioModificado)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
+
     // 4. Eliminar un cuestionario (DELETE: /api/cuestionarios/{id}) - Solo PROFESOR
     // y ADMIN
     @DeleteMapping("/{id}")

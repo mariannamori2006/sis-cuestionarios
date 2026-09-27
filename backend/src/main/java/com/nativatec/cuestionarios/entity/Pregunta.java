@@ -167,7 +167,7 @@ public class Pregunta {
                     .replace("/", "_");
             if (clean.contains("MULTIPLE")) return OPCION_MULTIPLE;
             if (clean.contains("VERDADERO") || clean.contains("FALSO")) return VERDADERO_FALSO;
-            if (clean.contains("CORTA")) return RESPUESTA_CORTA;
+            if (clean.contains("CORTA") || clean.contains("ESCRITA") || clean.contains("ABIERTA") || clean.contains("TEXTO")) return RESPUESTA_CORTA;
             for (TipoPregunta t : TipoPregunta.values()) {
                 if (t.name().equalsIgnoreCase(clean)) return t;
             }

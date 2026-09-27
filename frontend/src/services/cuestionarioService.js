@@ -10,6 +10,16 @@ export const crearCuestionario = async (cuestionarioData) => {
     return response.data;
 };
 
+export const actualizarCuestionario = async (id, cuestionarioData) => {
+    const response = await api.put(`/cuestionarios/${id}`, cuestionarioData);
+    return response.data;
+};
+
+export const obtenerCuestionarioPorId = async (id) => {
+    const response = await api.get(`/cuestionarios/${id}`);
+    return response.data;
+};
+
 export const eliminarCuestionario = async (id) => {
     await api.delete(`/cuestionarios/${id}`);
 };
