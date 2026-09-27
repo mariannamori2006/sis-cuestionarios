@@ -39,8 +39,38 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
+    // Actualizar un usuario existente
+    public Usuario actualizarUsuario(UUID id, Usuario usuarioActualizado) {
+        return usuarioRepository.findById(id).map(usuario -> {
+            if (usuarioActualizado.getNombre() != null) {
+                usuario.setNombre(usuarioActualizado.getNombre());
+            }
+            if (usuarioActualizado.getApellido() != null) {
+                usuario.setApellido(usuarioActualizado.getApellido());
+            }
+            if (usuarioActualizado.getEmail() != null) {
+                usuario.setEmail(usuarioActualizado.getEmail());
+            }
+            if (usuarioActualizado.getRol() != null) {
+                usuario.setRol(usuarioActualizado.getRol());
+            }
+            if (usuarioActualizado.getActivo() != null) {
+                usuario.setActivo(usuarioActualizado.getActivo());
+            }
+            if (usuarioActualizado.getPasswordHash() != null && !usuarioActualizado.getPasswordHash().trim().isEmpty()) {
+                if (!usuarioActualizado.getPasswordHash().startsWith("$2a$")) {
+                    usuario.setPasswordHash(passwordEncoder.encode(usuarioActualizado.getPasswordHash()));
+                } else {
+                    usuario.setPasswordHash(usuarioActualizado.getPasswordHash());
+                }
+            }
+            return usuarioRepository.save(usuario);
+        }).orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
+    }
+
     // Eliminar un usuario
     public void eliminarUsuario(UUID id) {
         usuarioRepository.deleteById(id);
     }
 }
+

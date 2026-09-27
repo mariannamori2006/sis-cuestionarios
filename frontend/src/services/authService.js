@@ -10,6 +10,20 @@ export const login = async (email, password) => {
     return response.data;
 };
 
+export const register = async (nombre, apellido, email, password, rol = 'PROFESOR') => {
+    const response = await axios.post(API_URL + 'register', {
+        nombre,
+        apellido,
+        email,
+        password,
+        rol
+    });
+    if (response.data.accessToken) {
+        localStorage.setItem('user', JSON.stringify(response.data));
+    }
+    return response.data;
+};
+
 export const logout = () => {
     localStorage.removeItem('user');
 };

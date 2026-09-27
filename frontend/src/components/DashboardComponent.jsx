@@ -8,17 +8,13 @@ export default function DashboardComponent() {
     const navigate = useNavigate();
     const currentUser = getCurrentUser();
 
-    const fullName = currentUser?.nombre || 'Profesor';
+    const userNombre = currentUser?.nombre || '';
+    const userApellido = currentUser?.apellido || '';
+    const fullName = `${userNombre} ${userApellido}`.trim() || 'Profesor';
     const userName = fullName.startsWith('Mtro.') ? fullName : `Mtro. ${fullName}`;
     const userEmail = currentUser?.email || 'profesor@nativatec.edu';
 
-    const userInitials = fullName
-        .replace('Mtro. ', '')
-        .split(' ')
-        .map(n => n[0] || '')
-        .join('')
-        .toUpperCase()
-        .slice(0, 2);
+    const userInitials = ((userNombre ? userNombre[0] : '') + (userApellido ? userApellido[0] : '') || 'P').toUpperCase();
 
     const [cuestionarios, setCuestionarios] = useState([]);
     const [vistaActiva, setVistaActiva] = useState('panel');

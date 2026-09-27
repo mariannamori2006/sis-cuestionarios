@@ -15,6 +15,9 @@ public class Usuario {
     @Column(nullable = false, length = 150)
     private String nombre;
 
+    @Column(length = 150)
+    private String apellido;
+
     @Column(nullable = false, unique = true, length = 150)
     private String email;
 
@@ -38,10 +41,11 @@ public class Usuario {
     public Usuario() {
     }
 
-    public Usuario(UUID id, String nombre, String email, String passwordHash, RolUsuario rol, Boolean activo,
+    public Usuario(UUID id, String nombre, String apellido, String email, String passwordHash, RolUsuario rol, Boolean activo,
             LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.nombre = nombre;
+        this.apellido = apellido;
         this.email = email;
         this.passwordHash = passwordHash;
         this.rol = rol;
@@ -81,6 +85,14 @@ public class Usuario {
 
     public void setNombre(String nombre) {
         this.nombre = nombre;
+    }
+
+    public String getApellido() {
+        return apellido;
+    }
+
+    public void setApellido(String apellido) {
+        this.apellido = apellido;
     }
 
     public String getEmail() {
