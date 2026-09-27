@@ -43,6 +43,9 @@ function App() {
                 />
 
                 {/* Rutas para alumnos / participantes */}
+                <Route path="/unirse" element={<ParticipanteLogin />} />
+                <Route path="/evaluacion" element={<ParticipanteLogin />} />
+                <Route path="/alumno" element={<ParticipanteLogin />} />
                 <Route path="/alumno/login" element={<ParticipanteLogin />} />
                 <Route path="/resolver/:id" element={<ResolverCuestionario />} />
 

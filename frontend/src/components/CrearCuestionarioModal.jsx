@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { crearCuestionario } from '../services/cuestionarioService';
+import { X, UploadCloud, Download, Plus } from 'lucide-react';
 
 export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionarioCreado }) {
     const [tabActiva, setTabActiva] = useState('manual'); // 'manual' o 'importar'
@@ -92,13 +93,17 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                 preguntas: preguntasFormateadas
             };
 
-            await crearCuestionario(cuestionarioData);
+            const cuestionarioCreado = await crearCuestionario(cuestionarioData);
 
-            // Limpiar y cerrar
+            // Limpiar formulario
             setTitulo('');
             setDescripcion('');
             setPreguntas([{ enunciado: '', tipo: 'Opción múltiple', opciones: [{ texto: '', correcta: true }, { texto: '', correcta: false }, { texto: '', correcta: false }, { texto: '', correcta: false }] }]);
-            onCuestionarioCreado();
+            
+            // Notificar y cerrar
+            if (onCuestionarioCreado) {
+                onCuestionarioCreado(cuestionarioCreado);
+            }
             onClose();
         } catch (err) {
             console.error('Error al guardar el cuestionario:', err);
@@ -145,9 +150,9 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                     </div>
                     <button
                         onClick={onClose}
-                        style={{ background: 'transparent', border: 'none', color: '#ffffff', fontSize: '18px', cursor: 'pointer' }}
+                        style={{ background: 'transparent', border: 'none', color: '#ffffff', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
                     >
-                        ✕
+                        <X size={20} />
                     </button>
                 </div>
 
@@ -372,11 +377,14 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                         cursor: 'pointer',
                                         fontSize: '14px',
                                         textAlign: 'center',
-                                        display: 'block',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px',
                                         boxSizing: 'border-box'
                                     }}
                                 >
-                                    + Añadir pregunta
+                                    <Plus size={18} /> Añadir pregunta
                                 </button>
                             </div>
                         </>
@@ -388,9 +396,12 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                 borderRadius: '12px',
                                 padding: '40px 20px',
                                 textAlign: 'center',
-                                backgroundColor: '#f8fafc'
+                                backgroundColor: '#f8fafc',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center'
                             }}>
-                                <div style={{ fontSize: '32px', marginBottom: '10px' }}>📤</div>
+                                <UploadCloud size={40} color="#3b82f6" style={{ marginBottom: '12px' }} />
                                 <div style={{ fontSize: '15px', fontWeight: '600', color: '#0f172a', marginBottom: '4px' }}>Arrastra tu archivo aquí</div>
                                 <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '12px' }}>o haz clic para seleccionar</div>
                                 <div style={{ fontSize: '12px', color: '#94a3b8' }}>Excel (.xlsx, .xls) o CSV</div>
@@ -408,10 +419,13 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                     fontSize: '13px',
                                     fontWeight: '600',
                                     color: '#334155',
-                                    cursor: 'pointer'
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px'
                                 }}
                             >
-                                📥 Descargar plantilla de ejemplo
+                                <Download size={15} /> Descargar plantilla de ejemplo
                             </button>
 
                             <div style={{ backgroundColor: '#f1f5f9', padding: '16px', borderRadius: '10px', fontSize: '13px', color: '#475569', lineHeight: '1.5' }}>

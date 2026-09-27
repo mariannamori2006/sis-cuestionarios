@@ -57,10 +57,10 @@ public class Cuestionario {
         if (activo == null) {
             activo = true;
         }
-        // Generar un código de acceso único automáticamente si no viene definido (ej:
-        // los primeros 8 caracteres de un UUID)
-        if (codigoAcceso == null || codigoAcceso.isEmpty()) {
-            codigoAcceso = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        // Generar un código de acceso de 6 números automáticamente si no viene definido
+        if (codigoAcceso == null || codigoAcceso.trim().isEmpty()) {
+            int numeroAleatorio = 100000 + new java.util.Random().nextInt(900000);
+            codigoAcceso = String.valueOf(numeroAleatorio);
         }
     }
 
@@ -134,6 +134,15 @@ public class Cuestionario {
         this.updatedAt = updatedAt;
     }
 
+    @Transient
+    private Long totalRespuestas = 0L;
+
+    @Transient
+    private Long alumnosUnicos = 0L;
+
+    @Transient
+    private Double promedioCalificacion = 0.0;
+
     public List<Pregunta> getPreguntas() {
         return preguntas;
     }
@@ -145,5 +154,29 @@ public class Cuestionario {
                 p.setCuestionario(this);
             }
         }
+    }
+
+    public Long getTotalRespuestas() {
+        return totalRespuestas;
+    }
+
+    public void setTotalRespuestas(Long totalRespuestas) {
+        this.totalRespuestas = totalRespuestas;
+    }
+
+    public Long getAlumnosUnicos() {
+        return alumnosUnicos;
+    }
+
+    public void setAlumnosUnicos(Long alumnosUnicos) {
+        this.alumnosUnicos = alumnosUnicos;
+    }
+
+    public Double getPromedioCalificacion() {
+        return promedioCalificacion;
+    }
+
+    public void setPromedioCalificacion(Double promedioCalificacion) {
+        this.promedioCalificacion = promedioCalificacion;
     }
 }

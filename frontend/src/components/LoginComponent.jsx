@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login, register } from '../services/authService';
+import logoNativa from '../images/logoNativa.jpeg';
+import { Mail, Lock, User, LogIn, UserPlus } from 'lucide-react';
 
 export default function LoginComponent() {
     const [isRegister, setIsRegister] = useState(false);
@@ -100,10 +102,8 @@ export default function LoginComponent() {
             }}>
                 <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '40px' }}>
-                        <div style={{ background: '#10b981', padding: '10px', borderRadius: '10px', fontWeight: 'bold' }}>N</div>
-                        <div>
-                            <h2 style={{ margin: 0, fontSize: '20px', letterSpacing: '0.5px' }}>nativatec</h2>
-                            <span style={{ fontSize: '12px', color: '#94a3b8' }}>.cuestionarios</span>
+                        <div style={{ background: '#ffffff', padding: '6px 14px', borderRadius: '10px', display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+                            <img src={logoNativa} alt="NativaTec" style={{ height: '36px', objectFit: 'contain' }} />
                         </div>
                     </div>
                     <h1 style={{ fontSize: '38px', lineHeight: '1.2', marginBottom: '20px' }}>
@@ -189,7 +189,7 @@ export default function LoginComponent() {
                     <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '24px' }}>
                         {isRegister
                             ? 'Completa tus datos para habilitar tu acceso institucional'
-                            : 'Ingresa tus credenciales institucionales'}
+                            : 'Ingresa tus credenciales'}
                     </p>
 
                     {error && (
@@ -227,44 +227,50 @@ export default function LoginComponent() {
                                 <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
                                     Correo Electrónico
                                 </label>
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="ejemplo@nativatec.edu"
-                                    required
-                                    style={{
-                                        width: '100%',
-                                        padding: '12px 14px',
-                                        borderRadius: '8px',
-                                        border: '1px solid #cbd5e1',
-                                        outline: 'none',
-                                        fontSize: '14px',
-                                        boxSizing: 'border-box'
-                                    }}
-                                />
+                                <div style={{ position: 'relative' }}>
+                                    <Mail size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                                    <input
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="ejemplo@nativatec.edu"
+                                        required
+                                        style={{
+                                            width: '100%',
+                                            padding: '12px 14px 12px 38px',
+                                            borderRadius: '8px',
+                                            border: '1px solid #cbd5e1',
+                                            outline: 'none',
+                                            fontSize: '14px',
+                                            boxSizing: 'border-box'
+                                        }}
+                                    />
+                                </div>
                             </div>
 
                             <div>
                                 <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
                                     Contraseña
                                 </label>
-                                <input
-                                    type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="••••••••"
-                                    required
-                                    style={{
-                                        width: '100%',
-                                        padding: '12px 14px',
-                                        borderRadius: '8px',
-                                        border: '1px solid #cbd5e1',
-                                        outline: 'none',
-                                        fontSize: '14px',
-                                        boxSizing: 'border-box'
-                                    }}
-                                />
+                                <div style={{ position: 'relative' }}>
+                                    <Lock size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                                    <input
+                                        type="password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="••••••••"
+                                        required
+                                        style={{
+                                            width: '100%',
+                                            padding: '12px 14px 12px 38px',
+                                            borderRadius: '8px',
+                                            border: '1px solid #cbd5e1',
+                                            outline: 'none',
+                                            fontSize: '14px',
+                                            boxSizing: 'border-box'
+                                        }}
+                                    />
+                                </div>
                             </div>
 
                             <button
@@ -280,10 +286,14 @@ export default function LoginComponent() {
                                     fontSize: '14px',
                                     fontWeight: '600',
                                     cursor: 'pointer',
-                                    transition: 'background 0.2s'
+                                    transition: 'background 0.2s',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px'
                                 }}
                             >
-                                {loading ? 'Verificando...' : 'Entrar al Sistema'}
+                                <LogIn size={16} /> {loading ? 'Verificando...' : 'Entrar al Sistema'}
                             </button>
 
                             <div style={{ textAlign: 'center', marginTop: '6px' }}>
@@ -315,22 +325,25 @@ export default function LoginComponent() {
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
                                         Nombre *
                                     </label>
-                                    <input
-                                        type="text"
-                                        value={nombre}
-                                        onChange={(e) => setNombre(e.target.value)}
-                                        placeholder="Ej: Carlos"
-                                        required
-                                        style={{
-                                            width: '100%',
-                                            padding: '10px 12px',
-                                            borderRadius: '8px',
-                                            border: '1px solid #cbd5e1',
-                                            outline: 'none',
-                                            fontSize: '13px',
-                                            boxSizing: 'border-box'
-                                        }}
-                                    />
+                                    <div style={{ position: 'relative' }}>
+                                        <User size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                                        <input
+                                            type="text"
+                                            value={nombre}
+                                            onChange={(e) => setNombre(e.target.value)}
+                                            placeholder="Ej: Carlos"
+                                            required
+                                            style={{
+                                                width: '100%',
+                                                padding: '10px 12px 10px 32px',
+                                                borderRadius: '8px',
+                                                border: '1px solid #cbd5e1',
+                                                outline: 'none',
+                                                fontSize: '13px',
+                                                boxSizing: 'border-box'
+                                            }}
+                                        />
+                                    </div>
                                 </div>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
@@ -359,22 +372,25 @@ export default function LoginComponent() {
                                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
                                     Correo Electrónico *
                                 </label>
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="profesor@nativatec.edu"
-                                    required
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px 12px',
-                                        borderRadius: '8px',
-                                        border: '1px solid #cbd5e1',
-                                        outline: 'none',
-                                        fontSize: '13px',
-                                        boxSizing: 'border-box'
-                                    }}
-                                />
+                                <div style={{ position: 'relative' }}>
+                                    <Mail size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                                    <input
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="profesor@nativatec.edu"
+                                        required
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px 12px 10px 32px',
+                                            borderRadius: '8px',
+                                            border: '1px solid #cbd5e1',
+                                            outline: 'none',
+                                            fontSize: '13px',
+                                            boxSizing: 'border-box'
+                                        }}
+                                    />
+                                </div>
                             </div>
 
                             <div>
@@ -458,10 +474,14 @@ export default function LoginComponent() {
                                     fontSize: '14px',
                                     fontWeight: '600',
                                     cursor: 'pointer',
-                                    transition: 'background 0.2s'
+                                    transition: 'background 0.2s',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px'
                                 }}
                             >
-                                {loading ? 'Creando cuenta...' : 'Crear Cuenta'}
+                                <UserPlus size={16} /> {loading ? 'Creando cuenta...' : 'Crear Cuenta'}
                             </button>
 
                             <div style={{ textAlign: 'center', marginTop: '6px' }}>

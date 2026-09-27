@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import logoNativa from '../images/logoNativa.jpeg';
+import { Award, CheckCircle, LogOut } from 'lucide-react';
+import { responderCuestionario } from '../services/cuestionarioService';
 
 export default function ResolverCuestionario() {
     const { id } = useParams(); // ID o Código del cuestionario
@@ -14,6 +17,7 @@ export default function ResolverCuestionario() {
     const [respuestasSeleccionadas, setRespuestasSeleccionadas] = useState({});
     const [resultado, setResultado] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [enviando, setEnviando] = useState(false);
 
     useEffect(() => {
         // Obtenemos los detalles del cuestionario y sus preguntas desde el backend
@@ -43,41 +47,56 @@ export default function ResolverCuestionario() {
         }));
     };
 
-    const handleSubmitEvaluacion = (e) => {
+    const handleSubmitEvaluacion = async (e) => {
         e.preventDefault();
 
-        if (!cuestionario || !cuestionario.preguntas || cuestionario.preguntas.length === 0) {
-            setResultado({
-                nota: '20.0 / 20',
-                mensaje: 'Evaluación completada.'
-            });
-            return;
-        }
+        if (!cuestionario) return;
 
-        let totalPreguntas = cuestionario.preguntas.length;
-        let aciertos = 0;
+        setEnviando(true);
 
-        cuestionario.preguntas.forEach((pregunta, pIndex) => {
+        const respuestasPayload = (cuestionario.preguntas || []).map((pregunta, pIndex) => {
             const pKey = pregunta.id || pIndex;
-            const opcionSeleccionadaId = respuestasSeleccionadas[pKey];
+            const opcionId = respuestasSeleccionadas[pKey];
+            return {
+                preguntaId: pregunta.id || null,
+                opcionSeleccionadaId: opcionId || null
+            };
+        });
 
-            if (pregunta.opciones) {
-                const opcionElegida = pregunta.opciones.find((op, oIndex) => (op.id || oIndex) === opcionSeleccionadaId);
-                if (opcionElegida && (opcionElegida.correcta === true || opcionElegida.esCorrecta === true)) {
-                    aciertos++;
+        try {
+            const resultadoBackend = await responderCuestionario({
+                cuestionarioId: cuestionario.id,
+                nombreParticipante: (nombreParticipante || 'Anónimo').trim(),
+                respuestas: respuestasPayload
+            });
+
+            setResultado({
+                nota: resultadoBackend.notaFormateada || `${resultadoBackend.calificacion} / 20`,
+                mensaje: resultadoBackend.mensaje
+            });
+        } catch (err) {
+            console.error("Error al enviar respuestas a la base de datos:", err);
+            // Fallback en caso de error de red
+            let totalPreguntas = cuestionario.preguntas?.length || 0;
+            let aciertos = 0;
+            (cuestionario.preguntas || []).forEach((pregunta, pIndex) => {
+                const pKey = pregunta.id || pIndex;
+                const opcionSeleccionadaId = respuestasSeleccionadas[pKey];
+                if (pregunta.opciones) {
+                    const opcionElegida = pregunta.opciones.find((op, oIndex) => (op.id || oIndex) === opcionSeleccionadaId);
+                    if (opcionElegida && (opcionElegida.correcta === true || opcionElegida.esCorrecta === true)) {
+                        aciertos++;
+                    }
                 }
-            }
-        });
-
-        const notaCalculada = ((aciertos / totalPreguntas) * 20).toFixed(1);
-        const mensaje = notaCalculada >= 11
-            ? `¡Excelente trabajo! Obtuviste ${aciertos} de ${totalPreguntas} aciertos.`
-            : `Has completado el cuestionario con ${aciertos} de ${totalPreguntas} aciertos. ¡Sigue practicando!`;
-
-        setResultado({
-            nota: `${notaCalculada} / 20`,
-            mensaje
-        });
+            });
+            const notaCalculada = totalPreguntas > 0 ? ((aciertos / totalPreguntas) * 20).toFixed(1) : "20.0";
+            setResultado({
+                nota: `${notaCalculada} / 20`,
+                mensaje: `Has completado el cuestionario con ${aciertos} de ${totalPreguntas} aciertos.`
+            });
+        } finally {
+            setEnviando(false);
+        }
     };
 
     if (loading) {
@@ -105,11 +124,11 @@ export default function ResolverCuestionario() {
             <div style={{ backgroundColor: '#0f172a', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif' }}>
                 <div style={{ backgroundColor: '#ffffff', padding: '36px', borderRadius: '20px', width: '100%', maxWidth: '420px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)' }}>
                     <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                        <div style={{ background: '#10b981', color: '#fff', width: '45px', height: '45px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 'bold', marginBottom: '12px' }}>
-                            🛡️
+                        <div style={{ marginBottom: '14px', display: 'flex', justifyContent: 'center' }}>
+                            <img src={logoNativa} alt="NativaTec" style={{ height: '42px', objectFit: 'contain' }} />
                         </div>
                         <h2 style={{ margin: '0 0 6px 0', fontSize: '20px', color: '#0f172a' }}>{cuestionario.titulo}</h2>
-                        <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>{cuestionario.descripcion || 'Evaluación académica Nativatec'}</p>
+                        <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>{cuestionario.descripcion || 'Evaluación académica'}</p>
                     </div>
 
                     <form onSubmit={handleIniciarConNombre} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -164,10 +183,12 @@ export default function ResolverCuestionario() {
 
                 {/* Cabecera del Examen */}
                 <div style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                        <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase' }}>Evaluación Nativatec</span>
-                        <h2 style={{ margin: '4px 0 0 0', fontSize: '22px', color: '#0f172a' }}>{cuestionario.titulo}</h2>
-                        <p style={{ margin: '6px 0 0 0', fontSize: '13px', color: '#64748b' }}>{cuestionario.descripcion}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                        <img src={logoNativa} alt="NativaTec" style={{ height: '32px', objectFit: 'contain' }} />
+                        <div>
+                            <h2 style={{ margin: '0', fontSize: '20px', color: '#0f172a' }}>{cuestionario.titulo}</h2>
+                            <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#64748b' }}>{cuestionario.descripcion}</p>
+                        </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                         <span style={{ fontSize: '12px', color: '#64748b', display: 'block' }}>Participante:</span>
@@ -177,15 +198,19 @@ export default function ResolverCuestionario() {
 
                 {resultado ? (
                     <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-                        <div style={{ fontSize: '48px', marginBottom: '10px' }}>🎉</div>
+                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+                            <div style={{ background: '#ecfdf5', padding: '16px', borderRadius: '50%', color: '#10b981' }}>
+                                <Award size={48} />
+                            </div>
+                        </div>
                         <h3 style={{ fontSize: '24px', color: '#0f172a', margin: '0 0 10px 0' }}>¡Resultado Final!</h3>
                         <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#10b981', margin: '15px 0' }}>{resultado.nota}</div>
                         <p style={{ color: '#64748b', fontSize: '14px' }}>{resultado.mensaje}</p>
                         <button
                             onClick={() => navigate('/alumno/login')}
-                            style={{ marginTop: '20px', backgroundColor: '#0f172a', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}
+                            style={{ marginTop: '20px', backgroundColor: '#0f172a', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
                         >
-                            Finalizar y Salir
+                            <LogOut size={16} /> Finalizar y Salir
                         </button>
                     </div>
                 ) : (

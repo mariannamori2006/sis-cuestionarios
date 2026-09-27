@@ -3,6 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import { logout, getCurrentUser } from '../services/authService';
 import { obtenerUsuarios, crearUsuario, actualizarUsuario, eliminarUsuario } from '../services/usuarioService';
 import { obtenerCuestionarios } from '../services/cuestionarioService';
+import logoNativa from '../images/logoNativa.jpeg';
+import { 
+    LayoutDashboard, 
+    Users, 
+    FileText, 
+    Settings, 
+    LogOut, 
+    UserPlus, 
+    Search, 
+    Trash2, 
+    Shield, 
+    GraduationCap, 
+    Award, 
+    X, 
+    Check, 
+    CheckCircle2, 
+    XCircle 
+} from 'lucide-react';
 
 export default function AdminDashboardComponent() {
     const navigate = useNavigate();
@@ -155,11 +173,9 @@ export default function AdminDashboardComponent() {
             {/* SIDEBAR */}
             <div style={{ width: '270px', backgroundColor: '#090d16', color: '#ffffff', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '24px 16px', borderRight: '1px solid #1e293b' }}>
                 <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '32px', paddingLeft: '8px' }}>
-                        <div style={{ background: '#3b82f6', padding: '6px 10px', borderRadius: '8px', fontWeight: 'bold', fontSize: '14px' }}>⚡</div>
-                        <div>
-                            <div style={{ fontSize: '16px', fontWeight: 'bold', letterSpacing: '0.5px' }}>nativatec</div>
-                            <div style={{ fontSize: '11px', color: '#60a5fa', fontWeight: '600' }}>PANEL ADMINISTRADOR</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '32px', padding: '4px' }}>
+                        <div style={{ background: '#ffffff', padding: '5px 8px', borderRadius: '8px', display: 'flex', alignItems: 'center', flex: 1 }}>
+                            <img src={logoNativa} alt="NativaTec" style={{ height: '24px', maxWidth: '100%', objectFit: 'contain' }} />
                         </div>
                     </div>
 
@@ -183,7 +199,7 @@ export default function AdminDashboardComponent() {
                                 transition: 'all 0.2s'
                             }}
                         >
-                            <span>📊</span> Panel Principal
+                            <LayoutDashboard size={18} /> Panel Principal
                         </button>
                         <button
                             onClick={() => setVistaActiva('usuarios')}
@@ -204,7 +220,7 @@ export default function AdminDashboardComponent() {
                                 transition: 'all 0.2s'
                             }}
                         >
-                            <span>👥</span> Gestión de Usuarios
+                            <Users size={18} /> Gestión de Usuarios
                         </button>
                         <button
                             onClick={() => setVistaActiva('cuestionarios')}
@@ -225,7 +241,7 @@ export default function AdminDashboardComponent() {
                                 transition: 'all 0.2s'
                             }}
                         >
-                            <span>📑</span> Cuestionarios Globales
+                            <FileText size={18} /> Cuestionarios Globales
                         </button>
                         <button
                             onClick={() => setVistaActiva('configuracion')}
@@ -246,7 +262,7 @@ export default function AdminDashboardComponent() {
                                 transition: 'all 0.2s'
                             }}
                         >
-                            <span>⚙️</span> Configuración
+                            <Settings size={18} /> Configuración
                         </button>
                     </nav>
                 </div>
@@ -262,7 +278,9 @@ export default function AdminDashboardComponent() {
                             <div style={{ fontSize: '11px', color: '#94a3b8', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{userEmail}</div>
                         </div>
                     </div>
-                    <button onClick={handleLogout} title="Cerrar sesión" style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '16px' }}>🚪</button>
+                    <button onClick={handleLogout} title="Cerrar sesión" style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px', borderRadius: '6px' }}>
+                        <LogOut size={18} />
+                    </button>
                 </div>
             </div>
 
@@ -290,7 +308,7 @@ export default function AdminDashboardComponent() {
                         }}>
                             <div>
                                 <span style={{ fontSize: '14px', color: '#94a3b8' }}>Bienvenido al centro de control,</span>
-                                <h2 style={{ margin: '4px 0 8px 0', fontSize: '24px' }}>{userName} 🛡️</h2>
+                                <h2 style={{ margin: '4px 0 8px 0', fontSize: '24px' }}>{userName}</h2>
                                 <span style={{ fontSize: '13px', color: '#94a3b8' }}>
                                     Gestiona usuarios, roles y supervisa todos los cuestionarios institucionales.
                                 </span>
@@ -311,7 +329,7 @@ export default function AdminDashboardComponent() {
                                     gap: '8px'
                                 }}
                             >
-                                <span>+</span> Registrar Usuario
+                                <UserPlus size={18} /> Registrar Usuario
                             </button>
                         </div>
 
@@ -320,7 +338,7 @@ export default function AdminDashboardComponent() {
                             <div style={{ background: '#fff', padding: '22px', borderRadius: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                                     <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>TOTAL USUARIOS</span>
-                                    <span style={{ background: '#eff6ff', color: '#2563eb', padding: '4px 8px', borderRadius: '6px', fontSize: '12px' }}>👥</span>
+                                    <Users size={18} color="#2563eb" />
                                 </div>
                                 <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#0f172a' }}>{usuarios.length}</div>
                                 <div style={{ fontSize: '12px', color: '#10b981', marginTop: '4px' }}>Cuentas registradas</div>
@@ -329,7 +347,7 @@ export default function AdminDashboardComponent() {
                             <div style={{ background: '#fff', padding: '22px', borderRadius: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                                     <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>PROFESORES</span>
-                                    <span style={{ background: '#f0fdf4', color: '#16a34a', padding: '4px 8px', borderRadius: '6px', fontSize: '12px' }}>🎓</span>
+                                    <GraduationCap size={18} color="#16a34a" />
                                 </div>
                                 <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#16a34a' }}>{totalProfesores}</div>
                                 <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Con acceso a creación</div>
@@ -338,7 +356,7 @@ export default function AdminDashboardComponent() {
                             <div style={{ background: '#fff', padding: '22px', borderRadius: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                                     <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>ADMINISTRADORES</span>
-                                    <span style={{ background: '#fef3c7', color: '#d97706', padding: '4px 8px', borderRadius: '6px', fontSize: '12px' }}>👑</span>
+                                    <Shield size={18} color="#d97706" />
                                 </div>
                                 <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#d97706' }}>{totalAdmins}</div>
                                 <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Con acceso total</div>
@@ -347,7 +365,7 @@ export default function AdminDashboardComponent() {
                             <div style={{ background: '#fff', padding: '22px', borderRadius: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                                     <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>CUESTIONARIOS</span>
-                                    <span style={{ background: '#f5f3ff', color: '#7c3aed', padding: '4px 8px', borderRadius: '6px', fontSize: '12px' }}>📑</span>
+                                    <FileText size={18} color="#7c3aed" />
                                 </div>
                                 <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#7c3aed' }}>{cuestionarios.length}</div>
                                 <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Creados en el sistema</div>
@@ -397,6 +415,9 @@ export default function AdminDashboardComponent() {
                                                 </td>
                                                 <td style={{ padding: '12px' }}>
                                                     <span style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px',
                                                         padding: '4px 8px',
                                                         borderRadius: '6px',
                                                         fontSize: '11px',
@@ -437,17 +458,17 @@ export default function AdminDashboardComponent() {
                                     fontSize: '13px',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '6px'
+                                    gap: '8px'
                                 }}
                             >
-                                <span>+</span> Nuevo Usuario
+                                <UserPlus size={16} /> Nuevo Usuario
                             </button>
                         </div>
 
                         {/* BARRA DE FILTROS Y BÚSQUEDA */}
                         <div style={{ display: 'flex', gap: '15px', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap' }}>
                             <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
-                                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>🔍</span>
+                                <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
                                 <input
                                     type="text"
                                     placeholder="Buscar por nombre, apellido o correo..."
@@ -563,7 +584,7 @@ export default function AdminDashboardComponent() {
                                                                 color: u.activo ? '#15803d' : '#b91c1c'
                                                             }}
                                                         >
-                                                            {u.activo ? '✓ Activo' : '✕ Inactivo'}
+                                                            {u.activo ? 'Activo' : 'Inactivo'}
                                                         </button>
                                                     </td>
                                                     <td style={{ padding: '14px 16px', textAlign: 'center' }}>
@@ -576,11 +597,14 @@ export default function AdminDashboardComponent() {
                                                                 cursor: 'pointer',
                                                                 fontSize: '14px',
                                                                 padding: '6px',
-                                                                borderRadius: '6px'
+                                                                borderRadius: '6px',
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center'
                                                             }}
                                                             title="Eliminar usuario"
                                                         >
-                                                            🗑️
+                                                            <Trash2 size={16} />
                                                         </button>
                                                     </td>
                                                 </tr>
@@ -660,9 +684,9 @@ export default function AdminDashboardComponent() {
                             <h2 style={{ margin: 0, fontSize: '20px', color: '#0f172a' }}>Registrar Nuevo Usuario</h2>
                             <button
                                 onClick={() => setModalCrearOpen(false)}
-                                style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: '#64748b' }}
+                                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', padding: '4px' }}
                             >
-                                ✕
+                                <X size={20} />
                             </button>
                         </div>
 

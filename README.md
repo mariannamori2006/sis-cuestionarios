@@ -1,14 +1,14 @@
 # sis-cuestionarios
 Sistema de gestión de cuestionarios (Spring Boot + React).
 
-Backend desarrollado con **Spring Boot** y **Java**, utilizando **PostgreSQL (Neon)** como base de datos para la gestión de usuarios, cuestionarios, preguntas y respuestas de alumnos.
+Backend desarrollado con **Spring Boot** y **Java**, utilizando **PostgreSQL (Local / DBeaver)** como base de datos para la gestión de usuarios, cuestionarios, preguntas y respuestas de alumnos.
 
 ## Tecnologías Utilizadas
 * **Java** (JDK 17)
 * **Spring Boot** (./mvnw spring-boot:run)
 * **Spring Data JPA** (Hibernate)
 * **Lombok**
-* **PostgreSQL** (Base de datos alojada en Neon)
+* **PostgreSQL** (Base de datos local gestionada con DBeaver)
 
 ## Estructura de la Base de Datos (Entidades)
 1. **Usuario**: Gestión de perfiles (Profesores, Alumnos, Admins).

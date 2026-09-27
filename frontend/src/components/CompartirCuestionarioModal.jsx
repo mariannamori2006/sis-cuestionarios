@@ -1,27 +1,35 @@
 import React, { useState } from 'react';
+import { X, Copy, Check, Users, KeyRound, Link, QrCode } from 'lucide-react';
 
 export default function CompartirCuestionarioModal({ isOpen, onClose, cuestionario }) {
-    const [copiado, setCopiado] = useState(false);
+    const [copiadoEnlace, setCopiadoEnlace] = useState(false);
+    const [copiadoCodigo, setCopiadoCodigo] = useState(false);
 
     if (!isOpen || !cuestionario) return null;
 
-    const codigo = cuestionario.codigoAcceso || (cuestionario.id ? cuestionario.id.substring(0, 8).toUpperCase() : '');
-    const enlaceDirecto = `${window.location.origin}/resolver/${codigo || cuestionario.id}`;
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(enlaceDirecto)}&color=0f172a`;
+    const codigo = cuestionario.codigoAcceso || (cuestionario.id ? cuestionario.id.substring(0, 6).toUpperCase() : '');
+    const enlacePortal = `${window.location.origin}/unirse?codigo=${codigo}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(enlacePortal)}&color=0f172a`;
 
-    const handleCopiar = () => {
-        navigator.clipboard.writeText(enlaceDirecto).then(() => {
-            setCopiado(true);
-            setTimeout(() => setCopiado(false), 2500);
+    const handleCopiarEnlace = () => {
+        navigator.clipboard.writeText(enlacePortal).then(() => {
+            setCopiadoEnlace(true);
+            setTimeout(() => setCopiadoEnlace(false), 2500);
         }).catch(() => {
-            // Fallback
             const input = document.getElementById('input-enlace-compartir');
             if (input) {
                 input.select();
                 document.execCommand('copy');
-                setCopiado(true);
-                setTimeout(() => setCopiado(false), 2500);
+                setCopiadoEnlace(true);
+                setTimeout(() => setCopiadoEnlace(false), 2500);
             }
+        });
+    };
+
+    const handleCopiarCodigo = () => {
+        navigator.clipboard.writeText(codigo).then(() => {
+            setCopiadoCodigo(true);
+            setTimeout(() => setCopiadoCodigo(false), 2500);
         });
     };
 
@@ -45,17 +53,19 @@ export default function CompartirCuestionarioModal({ isOpen, onClose, cuestionar
                 backgroundColor: '#ffffff',
                 borderRadius: '20px',
                 width: '100%',
-                maxWidth: '430px',
+                maxWidth: '460px',
+                maxHeight: '92vh',
+                overflowY: 'auto',
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                padding: '24px',
+                padding: '28px',
                 position: 'relative',
                 boxSizing: 'border-box'
             }}>
                 {/* ENCABEZADO */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
                     <div>
-                        <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', color: '#0f172a', fontWeight: 'bold' }}>
-                            Compartir examen
+                        <h3 style={{ margin: '0 0 4px 0', fontSize: '20px', color: '#0f172a', fontWeight: 'bold' }}>
+                            Compartir Cuestionario
                         </h3>
                         <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
                             {cuestionario.titulo}
@@ -66,18 +76,59 @@ export default function CompartirCuestionarioModal({ isOpen, onClose, cuestionar
                         style={{
                             background: 'transparent',
                             border: 'none',
-                            fontSize: '20px',
                             cursor: 'pointer',
                             color: '#94a3b8',
-                            lineHeight: 1,
+                            display: 'flex',
+                            alignItems: 'center',
                             padding: '4px'
                         }}
                     >
-                        ✕
+                        <X size={20} />
                     </button>
                 </div>
 
-                {/* ENLACE DIRECTO */}
+                {/* 1. CÓDIGO NUMÉRICO DE 6 DÍGITOS */}
+                <div style={{
+                    backgroundColor: '#0f172a',
+                    borderRadius: '14px',
+                    padding: '18px 20px',
+                    color: '#ffffff',
+                    marginBottom: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                }}>
+                    <div>
+                        <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '700', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '4px' }}>
+                            CÓDIGO NUMÉRICO DE ACCESO
+                        </div>
+                        <div style={{ fontSize: '32px', fontWeight: '800', letterSpacing: '4px', fontFamily: 'monospace', color: '#38bdf8' }}>
+                            {codigo}
+                        </div>
+                    </div>
+                    <button
+                        onClick={handleCopiarCodigo}
+                        style={{
+                            backgroundColor: copiadoCodigo ? '#10b981' : '#1e293b',
+                            color: '#ffffff',
+                            border: '1px solid #334155',
+                            borderRadius: '10px',
+                            padding: '10px 14px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            transition: 'all 0.2s ease'
+                        }}
+                    >
+                        {copiadoCodigo ? <Check size={16} /> : <Copy size={16} />}
+                        <span>{copiadoCodigo ? '¡Copiado!' : 'Copiar'}</span>
+                    </button>
+                </div>
+
+                {/* 2. ENLACE PARA EL ALUMNO */}
                 <div style={{ marginBottom: '20px' }}>
                     <label style={{
                         display: 'block',
@@ -88,14 +139,14 @@ export default function CompartirCuestionarioModal({ isOpen, onClose, cuestionar
                         marginBottom: '8px',
                         textTransform: 'uppercase'
                     }}>
-                        ENLACE DIRECTO
+                        ENLACE PARA EL ALUMNO
                     </label>
                     <div style={{ display: 'flex', gap: '8px' }}>
                         <input
                             id="input-enlace-compartir"
                             type="text"
                             readOnly
-                            value={enlaceDirecto}
+                            value={enlacePortal}
                             style={{
                                 flex: 1,
                                 backgroundColor: '#f8fafc',
@@ -110,9 +161,9 @@ export default function CompartirCuestionarioModal({ isOpen, onClose, cuestionar
                             }}
                         />
                         <button
-                            onClick={handleCopiar}
+                            onClick={handleCopiarEnlace}
                             style={{
-                                backgroundColor: copiado ? '#10b981' : '#0f172a',
+                                backgroundColor: copiadoEnlace ? '#10b981' : '#0f172a',
                                 color: '#ffffff',
                                 border: 'none',
                                 borderRadius: '10px',
@@ -127,23 +178,23 @@ export default function CompartirCuestionarioModal({ isOpen, onClose, cuestionar
                                 whiteSpace: 'nowrap'
                             }}
                         >
-                            <span>{copiado ? '✓' : '📋'}</span>
-                            <span>{copiado ? '¡Copiado!' : 'Copiar'}</span>
+                            {copiadoEnlace ? <Check size={15} /> : <Copy size={15} />}
+                            <span>{copiadoEnlace ? '¡Copiado!' : 'Copiar Link'}</span>
                         </button>
                     </div>
                 </div>
 
-                {/* CÓDIGO QR */}
+                {/* 3. CÓDIGO QR */}
                 <div style={{ textAlign: 'center', marginBottom: '20px' }}>
                     <div style={{
                         fontSize: '11px',
                         fontWeight: '700',
                         color: '#64748b',
                         letterSpacing: '0.6px',
-                        marginBottom: '14px',
+                        marginBottom: '12px',
                         textTransform: 'uppercase'
                     }}>
-                        CÓDIGO QR PARA ESCANEO MÓVIL
+                        CÓDIGO QR PARA ESCANEO RÁPIDO
                     </div>
 
                     <div style={{
@@ -158,53 +209,34 @@ export default function CompartirCuestionarioModal({ isOpen, onClose, cuestionar
                             src={qrUrl}
                             alt="Código QR del cuestionario"
                             style={{
-                                width: '180px',
-                                height: '180px',
+                                width: '160px',
+                                height: '160px',
                                 display: 'block',
                                 borderRadius: '8px'
                             }}
                         />
                     </div>
-
-                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '10px' }}>
-                        Escanea con la cámara para abrir el examen
-                    </div>
                 </div>
 
-                {/* BANNER INFORMATIVO INFERIOR */}
+                {/* 4. GUÍA DEL FLUJO DEL ALUMNO */}
                 <div style={{
                     backgroundColor: '#eff6ff',
                     border: '1px solid #dbeafe',
                     borderRadius: '12px',
-                    padding: '12px 14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px'
+                    padding: '14px',
+                    fontSize: '12px',
+                    color: '#1e3a8a',
+                    lineHeight: '1.5'
                 }}>
-                    <div style={{
-                        backgroundColor: '#dbeafe',
-                        color: '#1d4ed8',
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '10px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '18px',
-                        flexShrink: 0
-                    }}>
-                        👥
-                    </div>
-                    <div>
-                        <div style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a' }}>
-                            Sin registro requerido
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
-                            Los alumnos solo ingresan su nombre para participar
-                        </div>
-                    </div>
+                    <strong>¿Cómo ingresa el alumno?</strong>
+                    <ol style={{ margin: '6px 0 0 0', paddingLeft: '18px' }}>
+                        <li>Abre el enlace de evaluación proporcionado.</li>
+                        <li>Ingresa el <strong>código numérico ({codigo})</strong>.</li>
+                        <li>Escribe su <strong>Nombre o Apodo</strong> y comienza de inmediato.</li>
+                    </ol>
                 </div>
             </div>
         </div>
     );
 }
+
