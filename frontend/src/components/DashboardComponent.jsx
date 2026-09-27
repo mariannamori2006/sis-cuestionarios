@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { logout, getCurrentUser } from '../services/authService';
 import { obtenerCuestionarios, obtenerEstadisticas, obtenerActividadReciente } from '../services/cuestionarioService';
 import CuestionariosView from './CuestionariosView';
+import EstadisticasView from './EstadisticasView';
 import logoNativa from '../images/logoNativa.jpeg';
 import { 
     LayoutDashboard, 
@@ -393,10 +394,7 @@ export default function DashboardComponent() {
                 )}
 
                 {vistaActiva === 'estadisticas' && (
-                    <div style={{ background: '#fff', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                        <h2 style={{ marginTop: 0 }}>Estadísticas Académicas</h2>
-                        <p style={{ color: '#64748b', fontSize: '14px' }}>Métricas de rendimiento y tasas de aprobación por evaluación.</p>
-                    </div>
+                    <EstadisticasView />
                 )}
 
                 {vistaActiva === 'configuracion' && (

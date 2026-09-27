@@ -48,3 +48,8 @@ export const obtenerActividadReciente = async () => {
     const response = await api.get('/intentos/recientes');
     return response.data;
 };
+
+export const obtenerEstadisticasDetalladas = async () => {
+    const response = await api.get('/intentos/estadisticas-detalladas');
+    return response.data;
+};

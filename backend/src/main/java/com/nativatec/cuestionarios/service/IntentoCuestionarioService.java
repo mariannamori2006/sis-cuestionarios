@@ -214,6 +214,86 @@ public class IntentoCuestionarioService {
         return new EstadisticasDashboardDTO(promedioCalculado, totalCuestionarios, totalRespuestas, alumnosUnicos);
     }
 
+    // Obtener estadísticas detalladas completas para el módulo de estadísticas
+    @Transactional(readOnly = true)
+    public EstadisticasDetalladasDTO obtenerEstadisticasDetalladas() {
+        Long totalRespuestas = intentoRepository.contarTotalRespuestas();
+        if (totalRespuestas == null) totalRespuestas = 0L;
+
+        Long alumnosUnicos = intentoRepository.contarAlumnosUnicos();
+        if (alumnosUnicos == null) alumnosUnicos = 0L;
+
+        Double avg = intentoRepository.obtenerPromedioGeneral();
+        Double promedioGeneral = (avg != null) ? Math.round(avg * 10.0) / 10.0 : 0.0;
+
+        List<IntentoCuestionario> intentos = intentoRepository.findAll();
+        int totalCalificados = 0;
+        int totalAprobados = 0;
+        long c18_20 = 0, c15_17 = 0, c11_14 = 0, c0_10 = 0;
+
+        for (IntentoCuestionario i : intentos) {
+            if (i.getCalificacion() != null) {
+                totalCalificados++;
+                double nota = i.getCalificacion();
+                if (nota >= 11.0) {
+                    totalAprobados++;
+                }
+                if (nota >= 17.5) {
+                    c18_20++;
+                } else if (nota >= 14.5) {
+                    c15_17++;
+                } else if (nota >= 10.5) {
+                    c11_14++;
+                } else {
+                    c0_10++;
+                }
+            }
+        }
+
+        double tasaAprobacion = totalCalificados > 0 ? Math.round(((double) totalAprobados / totalCalificados) * 100.0) : 0.0;
+
+        DistribucionCalificacionesDTO distribucion = new DistribucionCalificacionesDTO(c18_20, c15_17, c11_14, c0_10);
+
+        List<Cuestionario> listaCuestionarios = cuestionarioRepository.findAll();
+        List<CuestionarioEstadisticaItemDTO> cuestionariosResumen = new java.util.ArrayList<>();
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        for (Cuestionario c : listaCuestionarios) {
+            Long respCount = intentoRepository.contarRespuestasPorCuestionario(c.getId());
+            if (respCount == null) respCount = 0L;
+
+            int pregCount = (c.getPreguntas() != null) ? c.getPreguntas().size() : 0;
+
+            String materia = "General";
+            if (c.getDescripcion() != null) {
+                java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("^\\[(.*?)\\]").matcher(c.getDescripcion());
+                if (matcher.find()) {
+                    materia = matcher.group(1);
+                }
+            }
+
+            String fechaStr = c.getCreatedAt() != null ? c.getCreatedAt().format(formatter) : "2026-09-01";
+
+            cuestionariosResumen.add(new CuestionarioEstadisticaItemDTO(
+                    c.getId(),
+                    c.getTitulo(),
+                    materia,
+                    respCount,
+                    pregCount,
+                    fechaStr
+            ));
+        }
+
+        return new EstadisticasDetalladasDTO(
+                totalRespuestas,
+                tasaAprobacion,
+                promedioGeneral,
+                alumnosUnicos,
+                distribucion,
+                cuestionariosResumen
+        );
+    }
+
     // Obtener información completa para el modal de auditoría
     @Transactional(readOnly = true)
     public AuditoriaCuestionarioDTO obtenerAuditoriaCuestionario(UUID cuestionarioId) {

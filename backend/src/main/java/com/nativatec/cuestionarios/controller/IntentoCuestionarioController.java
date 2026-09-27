@@ -30,6 +30,13 @@ public class IntentoCuestionarioController {
         return ResponseEntity.ok(estadisticas);
     }
 
+    // Obtener estadísticas detalladas con distribución y resumen (GET: /api/intentos/estadisticas-detalladas)
+    @GetMapping("/estadisticas-detalladas")
+    public ResponseEntity<com.nativatec.cuestionarios.dto.EstadisticasDetalladasDTO> obtenerEstadisticasDetalladas() {
+        com.nativatec.cuestionarios.dto.EstadisticasDetalladasDTO detalladas = intentoService.obtenerEstadisticasDetalladas();
+        return ResponseEntity.ok(detalladas);
+    }
+
     // Obtener actividad reciente para el panel principal (GET: /api/intentos/recientes)
     @GetMapping("/recientes")
     public ResponseEntity<List<com.nativatec.cuestionarios.dto.ActividadRecienteDTO>> obtenerActividadReciente() {
