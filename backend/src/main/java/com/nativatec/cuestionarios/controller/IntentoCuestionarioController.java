@@ -30,6 +30,13 @@ public class IntentoCuestionarioController {
         return ResponseEntity.ok(estadisticas);
     }
 
+    // Obtener actividad reciente para el panel principal (GET: /api/intentos/recientes)
+    @GetMapping("/recientes")
+    public ResponseEntity<List<com.nativatec.cuestionarios.dto.ActividadRecienteDTO>> obtenerActividadReciente() {
+        List<com.nativatec.cuestionarios.dto.ActividadRecienteDTO> recientes = intentoService.obtenerActividadReciente();
+        return ResponseEntity.ok(recientes);
+    }
+
     // Responder y guardar evaluación completa desde el portal de alumnos (POST: /api/intentos/responder)
     @PostMapping("/responder")
     public ResponseEntity<ResultadoEvaluacionDTO> responderCuestionario(@RequestBody ResponderCuestionarioDTO dto) {

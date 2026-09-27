@@ -373,6 +373,102 @@ public class IntentoCuestionarioService {
         return intentoRepository.save(intento);
     }
 
+    // Obtener los intentos más recientes para el dashboard de actividad reciente
+    @Transactional(readOnly = true)
+    public List<ActividadRecienteDTO> obtenerActividadReciente() {
+        List<IntentoCuestionario> intentos = intentoRepository.findAll();
+        intentos.sort((a, b) -> {
+            LocalDateTime fa = a.getFechaFin() != null ? a.getFechaFin() : (a.getFechaInicio() != null ? a.getFechaInicio() : a.getCreatedAt());
+            LocalDateTime fb = b.getFechaFin() != null ? b.getFechaFin() : (b.getFechaInicio() != null ? b.getFechaInicio() : b.getCreatedAt());
+            if (fa == null && fb == null) return 0;
+            if (fa == null) return 1;
+            if (fb == null) return -1;
+            return fb.compareTo(fa);
+        });
+
+        int limit = Math.min(intentos.size(), 8);
+        List<ActividadRecienteDTO> resultado = new java.util.ArrayList<>();
+        LocalDateTime ahora = LocalDateTime.now();
+
+        String[] paletaColores = new String[]{"#10b981", "#3b82f6", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"};
+
+        for (int i = 0; i < limit; i++) {
+            IntentoCuestionario intento = intentos.get(i);
+            String nombreAlumno = "Alumno Anónimo";
+            if (intento.getUsuario() != null && intento.getUsuario().getNombre() != null && !intento.getUsuario().getNombre().trim().isEmpty()) {
+                nombreAlumno = intento.getUsuario().getNombre().trim();
+            } else if (intento.getNombreInvitado() != null && !intento.getNombreInvitado().trim().isEmpty()) {
+                nombreAlumno = intento.getNombreInvitado().trim();
+            } else if (intento.getUsuario() != null && intento.getUsuario().getEmail() != null) {
+                nombreAlumno = intento.getUsuario().getEmail().split("@")[0];
+            }
+
+            // Iniciales
+            String iniciales = "AL";
+            String[] partes = nombreAlumno.trim().split("\\s+");
+            if (partes.length >= 2) {
+                iniciales = (partes[0].substring(0, 1) + partes[1].substring(0, 1)).toUpperCase();
+            } else if (nombreAlumno.length() >= 2) {
+                iniciales = nombreAlumno.substring(0, 2).toUpperCase();
+            } else if (nombreAlumno.length() == 1) {
+                iniciales = nombreAlumno.toUpperCase();
+            }
+
+            String cuestionarioTitulo = intento.getCuestionario() != null ? intento.getCuestionario().getTitulo() : "Cuestionario";
+
+            Double calificacion = intento.getCalificacion();
+            String notaTexto;
+            if (calificacion != null) {
+                if (calificacion % 1 == 0) {
+                    notaTexto = String.format("%.0f/20", calificacion);
+                } else {
+                    notaTexto = String.format("%.1f/20", calificacion);
+                }
+            } else {
+                notaTexto = "Pendiente";
+            }
+
+            LocalDateTime fechaHora = intento.getFechaFin() != null ? intento.getFechaFin() : (intento.getFechaInicio() != null ? intento.getFechaInicio() : intento.getCreatedAt());
+            String tiempoRelativo = "Recientemente";
+            if (fechaHora != null) {
+                long minutos = java.time.Duration.between(fechaHora, ahora).toMinutes();
+                if (minutos < 1) {
+                    tiempoRelativo = "Hace un momento";
+                } else if (minutos < 60) {
+                    tiempoRelativo = "Hace " + minutos + " min";
+                } else {
+                    long horas = java.time.Duration.between(fechaHora, ahora).toHours();
+                    if (horas < 24) {
+                        tiempoRelativo = "Hace " + horas + " h";
+                    } else {
+                        long dias = java.time.Duration.between(fechaHora, ahora).toDays();
+                        if (dias < 7) {
+                            tiempoRelativo = "Hace " + dias + (dias == 1 ? " día" : " días");
+                        } else {
+                            tiempoRelativo = fechaHora.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                        }
+                    }
+                }
+            }
+
+            String colorAvatar = paletaColores[Math.abs(nombreAlumno.hashCode()) % paletaColores.length];
+
+            resultado.add(new ActividadRecienteDTO(
+                    intento.getId(),
+                    nombreAlumno,
+                    iniciales,
+                    colorAvatar,
+                    cuestionarioTitulo,
+                    calificacion,
+                    notaTexto,
+                    tiempoRelativo,
+                    fechaHora
+            ));
+        }
+
+        return resultado;
+    }
+
     // Obtener intentos por id de cuestionario
     public List<IntentoCuestionario> obtenerIntentosPorCuestionario(UUID cuestionarioId) {
         return intentoRepository.findByCuestionarioId(cuestionarioId);

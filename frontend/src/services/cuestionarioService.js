@@ -43,3 +43,8 @@ export const calificarIntento = async (intentoId, calificacion) => {
     const response = await api.put(`/intentos/${intentoId}/calificar`, { calificacion });
     return response.data;
 };
+
+export const obtenerActividadReciente = async () => {
+    const response = await api.get('/intentos/recientes');
+    return response.data;
+};
