@@ -188,3 +188,26 @@ npm run dev
 * **PROFESOR:** Crea, edita, comparte, audita y analiza estadísticas de cuestionarios.
 * **ALUMNO:** Ingresa con código de acceso, completa evaluaciones y consulta su puntuación.
 * **ADMIN:** Administración y control global de cuentas y usuarios en la plataforma.
+
+---
+
+## 🧪 Pruebas de Carga y Concurrencia
+
+El sistema incluye una suite automatizada para simular múltiples envíos simultáneos de cuestionarios evaluando el comportamiento del pool de conexiones `HikariCP` y la consistencia de datos en **PostgreSQL**:
+
+```bash
+# Ejecutar prueba estándar (50 envíos simultáneos)
+npm run test:load
+
+# Ejecutar con concurrencia personalizada (ej. 100 envíos)
+npm run test:load:100
+
+# O mediante PowerShell en Windows:
+powershell -ExecutionPolicy Bypass -File scripts/ejecutar_pruebas_carga.ps1 -Concurrencia 50 -CodigoCuestionario 148177
+```
+
+**Métricas evaluadas:**
+- Tasa de éxito (% de respuestas con HTTP 201 Created).
+- Rendimiento (Throughput en peticiones/segundo).
+- Latencia mínima, promedio, mediana (P50), P90, P95 y máxima (ms).
+- Verificación de integridad transaccional ACID en PostgreSQL.

@@ -1,0 +1,13 @@
+{
+  "name": "sis-cuestionarios-nativatec",
+  "version": "1.0.0",
+  "description": "Sistema de Gestión y Evaluación de Cuestionarios NativaTec",
+  "scripts": {
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && ./mvnw spring-boot:run",
+    "test:load": "node backend/scripts/load_test_concurrency.js 50 148177",
+    "test:load:25": "node backend/scripts/load_test_concurrency.js 25 148177",
+    "test:load:100": "node backend/scripts/load_test_concurrency.js 100 148177",
+    "test:load:200": "node backend/scripts/load_test_concurrency.js 200 148177"
+  }
+}
