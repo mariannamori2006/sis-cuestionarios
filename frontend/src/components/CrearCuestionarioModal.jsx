@@ -9,6 +9,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
     const [titulo, setTitulo] = useState('');
     const [materia, setMateria] = useState('Matemáticas');
     const [descripcion, setDescripcion] = useState('');
+    const [tiempoLimiteMinutos, setTiempoLimiteMinutos] = useState(0);
 
     // Lista de preguntas para la creación/edición manual
     const [preguntas, setPreguntas] = useState([
@@ -35,6 +36,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
 
         if (cuestionarioAEditar) {
             setTitulo(cuestionarioAEditar.titulo || '');
+            setTiempoLimiteMinutos(cuestionarioAEditar.tiempoLimiteMinutos || 0);
 
             // Extraer materia si viene formateada como "[Materia] Descripción"
             const descOriginal = cuestionarioAEditar.descripcion || '';
@@ -112,6 +114,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
             setTitulo('');
             setMateria('Matemáticas');
             setDescripcion('');
+            setTiempoLimiteMinutos(0);
             setPreguntas([
                 {
                     enunciado: '',
@@ -247,6 +250,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                 titulo: titulo.trim(),
                 descripcion: `[${materia}] ${descripcion.trim()}`,
                 codigoAcceso: cuestionarioAEditar?.codigoAcceso,
+                tiempoLimiteMinutos: parseInt(tiempoLimiteMinutos, 10) || 0,
                 preguntas: preguntasFormateadas
             };
 
@@ -389,7 +393,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                 />
                             </div>
 
-                            {/* MATERIA Y DESCRIPCIÓN */}
+                            {/* MATERIA Y TEMPORIZADOR */}
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#475569', marginBottom: '6px', letterSpacing: '0.5px' }}>
@@ -420,13 +424,11 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                 </div>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#475569', marginBottom: '6px', letterSpacing: '0.5px' }}>
-                                        DESCRIPCIÓN
+                                        ⏱️ LÍMITE DE TIEMPO (TEMPORIZADOR)
                                     </label>
-                                    <input
-                                        type="text"
-                                        value={descripcion}
-                                        onChange={(e) => setDescripcion(e.target.value)}
-                                        placeholder="Breve descripción o indicaciones..."
+                                    <select
+                                        value={tiempoLimiteMinutos}
+                                        onChange={(e) => setTiempoLimiteMinutos(Number(e.target.value))}
                                         style={{
                                             width: '100%',
                                             padding: '12px',
@@ -434,10 +436,46 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                             border: '1px solid #cbd5e1',
                                             outline: 'none',
                                             fontSize: '14px',
-                                            boxSizing: 'border-box'
+                                            backgroundColor: '#fff',
+                                            boxSizing: 'border-box',
+                                            fontWeight: tiempoLimiteMinutos > 0 ? '600' : 'normal',
+                                            color: tiempoLimiteMinutos > 0 ? '#1d4ed8' : '#0f172a'
                                         }}
-                                    />
+                                    >
+                                        <option value={0}>Sin límite de tiempo</option>
+                                        <option value={5}>5 minutos (Evaluación rápida)</option>
+                                        <option value={10}>10 minutos</option>
+                                        <option value={15}>15 minutos</option>
+                                        <option value={20}>20 minutos</option>
+                                        <option value={30}>30 minutos</option>
+                                        <option value={45}>45 minutos</option>
+                                        <option value={60}>60 minutos (1 hora)</option>
+                                        <option value={90}>90 minutos (1h 30m)</option>
+                                        <option value={120}>120 minutos (2 horas)</option>
+                                    </select>
                                 </div>
+                            </div>
+
+                            {/* DESCRIPCIÓN */}
+                            <div>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#475569', marginBottom: '6px', letterSpacing: '0.5px' }}>
+                                    DESCRIPCIÓN O INDICACIONES
+                                </label>
+                                <input
+                                    type="text"
+                                    value={descripcion}
+                                    onChange={(e) => setDescripcion(e.target.value)}
+                                    placeholder="Breve descripción o indicaciones para el alumno..."
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #cbd5e1',
+                                        outline: 'none',
+                                        fontSize: '14px',
+                                        boxSizing: 'border-box'
+                                    }}
+                                />
                             </div>
 
                             {/* PREGUNTAS */}

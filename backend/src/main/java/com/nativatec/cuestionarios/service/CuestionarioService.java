@@ -100,6 +100,7 @@ public class CuestionarioService {
         return cuestionarioRepository.findById(id).map(existente -> {
             existente.setTitulo(modificado.getTitulo());
             existente.setDescripcion(modificado.getDescripcion());
+            existente.setTiempoLimiteMinutos(modificado.getTiempoLimiteMinutos());
 
             if (modificado.getCodigoAcceso() != null && !modificado.getCodigoAcceso().trim().isEmpty()) {
                 existente.setCodigoAcceso(modificado.getCodigoAcceso().trim());

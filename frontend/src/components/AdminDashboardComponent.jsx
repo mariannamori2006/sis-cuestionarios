@@ -935,9 +935,16 @@ export default function AdminDashboardComponent() {
                                     <div key={c.id} style={{ background: '#fff', borderRadius: '14px', padding: '22px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                         <div>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                                                <span style={{ background: '#eff6ff', color: '#2563eb', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '600' }}>
-                                                    {c.preguntas ? `${c.preguntas.length} Preguntas` : 'Evaluación'}
-                                                </span>
+                                                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                                    <span style={{ background: '#eff6ff', color: '#2563eb', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '600' }}>
+                                                        {c.preguntas ? `${c.preguntas.length} Preguntas` : 'Evaluación'}
+                                                    </span>
+                                                    {c.tiempoLimiteMinutos > 0 && (
+                                                        <span style={{ background: '#fef3c7', color: '#b45309', padding: '4px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                                            <Clock size={11} /> {c.tiempoLimiteMinutos}m
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <button
                                                     onClick={() => handleCopiarCodigo(c.codigoAcceso)}
                                                     title="Copiar código de acceso"

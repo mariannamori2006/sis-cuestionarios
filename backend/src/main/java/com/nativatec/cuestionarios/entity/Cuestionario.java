@@ -38,6 +38,10 @@ public class Cuestionario {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // Límite de tiempo en minutos (0 o null significa sin límite de tiempo)
+    @Column(name = "tiempo_limite_minutos")
+    private Integer tiempoLimiteMinutos = 0;
+
     @OneToMany(mappedBy = "cuestionario", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Pregunta> preguntas = new ArrayList<>();
@@ -56,6 +60,9 @@ public class Cuestionario {
         }
         if (activo == null) {
             activo = true;
+        }
+        if (tiempoLimiteMinutos == null) {
+            tiempoLimiteMinutos = 0;
         }
         // Generar un código de acceso de 6 números automáticamente si no viene definido
         if (codigoAcceso == null || codigoAcceso.trim().isEmpty()) {
@@ -100,6 +107,14 @@ public class Cuestionario {
 
     public void setCodigoAcceso(String codigoAcceso) {
         this.codigoAcceso = codigoAcceso;
+    }
+
+    public Integer getTiempoLimiteMinutos() {
+        return tiempoLimiteMinutos != null ? tiempoLimiteMinutos : 0;
+    }
+
+    public void setTiempoLimiteMinutos(Integer tiempoLimiteMinutos) {
+        this.tiempoLimiteMinutos = tiempoLimiteMinutos != null ? tiempoLimiteMinutos : 0;
     }
 
     public Usuario getCreadoPor() {

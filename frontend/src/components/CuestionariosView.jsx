@@ -16,7 +16,8 @@ import {
     Share2,
     Edit3,
     ClipboardCheck,
-    Trash2
+    Trash2,
+    Clock
 } from 'lucide-react';
 
 export default function CuestionariosView({ cuestionarios, estadisticas, onRecargarCuestionarios }) {
@@ -192,7 +193,7 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                                 border: '1px solid #e2e8f0'
                             }}>
                                 <div>
-                                    {/* Categoría, Respuestas */}
+                                    {/* Categoría, Respuestas y Temporizador */}
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                                         <span style={{
                                             backgroundColor: '#eff6ff',
@@ -204,6 +205,32 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                                         }}>
                                             {respuestasCount} {respuestasCount === 1 ? 'respuesta' : 'respuestas'}
                                         </span>
+                                        {cuestionario.tiempoLimiteMinutos > 0 ? (
+                                            <span style={{
+                                                backgroundColor: '#fef3c7',
+                                                color: '#b45309',
+                                                padding: '4px 10px',
+                                                borderRadius: '20px',
+                                                fontSize: '11px',
+                                                fontWeight: '600',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '4px'
+                                            }}>
+                                                <Clock size={12} /> {cuestionario.tiempoLimiteMinutos} min
+                                            </span>
+                                        ) : (
+                                            <span style={{
+                                                backgroundColor: '#f1f5f9',
+                                                color: '#64748b',
+                                                padding: '4px 10px',
+                                                borderRadius: '20px',
+                                                fontSize: '11px',
+                                                fontWeight: '500'
+                                            }}>
+                                                Sin límite
+                                            </span>
+                                        )}
                                     </div>
 
                                     {/* Título y Descripción */}

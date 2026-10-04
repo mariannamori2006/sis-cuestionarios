@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import logoNativa from '../images/logoNativa.jpeg';
-import { Award, CheckCircle, LogOut, Clock } from 'lucide-react';
+import { Award, CheckCircle, LogOut, Clock, AlertTriangle, AlertCircle } from 'lucide-react';
 import { responderCuestionario } from '../services/cuestionarioService';
 
 export default function ResolverCuestionario() {
@@ -19,6 +19,28 @@ export default function ResolverCuestionario() {
     const [loading, setLoading] = useState(true);
     const [enviando, setEnviando] = useState(false);
 
+    // Estados del Temporizador con Auto-Envío
+    const [tiempoTotalSegundos, setTiempoTotalSegundos] = useState(0);
+    const [tiempoRestanteSegundos, setTiempoRestanteSegundos] = useState(null);
+    const [autoEnviadoPorTiempo, setAutoEnviadoPorTiempo] = useState(false);
+    
+    // Ref para acceder al estado más reciente de respuestas dentro del callback del timer
+    const respuestasRef = useRef(respuestasSeleccionadas);
+    const enviandoRef = useRef(enviando);
+    const resultadoRef = useRef(resultado);
+
+    useEffect(() => {
+        respuestasRef.current = respuestasSeleccionadas;
+    }, [respuestasSeleccionadas]);
+
+    useEffect(() => {
+        enviandoRef.current = enviando;
+    }, [enviando]);
+
+    useEffect(() => {
+        resultadoRef.current = resultado;
+    }, [resultado]);
+
     useEffect(() => {
         const nombre = sessionStorage.getItem('nombreParticipante');
         if (!nombre || !nombre.trim()) {
@@ -30,6 +52,12 @@ export default function ResolverCuestionario() {
         axios.get(`http://localhost:8080/api/cuestionarios/resolver/${id}`)
             .then(res => {
                 setCuestionario(res.data);
+                const minutos = res.data.tiempoLimiteMinutos || 0;
+                if (minutos > 0) {
+                    const segs = minutos * 60;
+                    setTiempoTotalSegundos(segs);
+                    setTiempoRestanteSegundos(segs);
+                }
                 setLoading(false);
             })
             .catch(err => {
@@ -37,6 +65,37 @@ export default function ResolverCuestionario() {
                 setLoading(false);
             });
     }, [id, navigate]);
+
+    // Timer regresivo
+    useEffect(() => {
+        if (!comenzado || !cuestionario || resultado || enviando) return;
+
+        const minutos = cuestionario.tiempoLimiteMinutos || 0;
+        if (minutos <= 0) return;
+
+        const total = minutos * 60;
+        if (tiempoRestanteSegundos === null) {
+            setTiempoTotalSegundos(total);
+            setTiempoRestanteSegundos(total);
+        }
+
+        const interval = setInterval(() => {
+            setTiempoRestanteSegundos(prev => {
+                if (prev === null) return total;
+                if (prev <= 1) {
+                    clearInterval(interval);
+                    // Disparar auto-envío si aún no se envió
+                    if (!enviandoRef.current && !resultadoRef.current) {
+                        ejecutarAutoEnvioPorTiempo();
+                    }
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [comenzado, cuestionario, resultado]);
 
     const handleIniciarConNombre = (e) => {
         e.preventDefault();
@@ -60,46 +119,107 @@ export default function ResolverCuestionario() {
         }));
     };
 
-    const handleSubmitEvaluacion = async (e) => {
-        e.preventDefault();
-
-        if (!cuestionario) return;
-
-        setEnviando(true);
-
-        const respuestasPayload = (cuestionario.preguntas || []).map((pregunta, pIndex) => {
+    // Función que arma el payload de respuestas
+    const construirPayloadRespuestas = (respuestasActuales) => {
+        return (cuestionario.preguntas || []).map((pregunta, pIndex) => {
             const pKey = pregunta.id || pIndex;
             const esEscrita = pregunta.tipo === 'RESPUESTA_CORTA' || pregunta.tipo === 'Respuesta escrita';
             
             if (esEscrita) {
                 return {
                     preguntaId: pregunta.id || null,
-                    respuestaTexto: (respuestasSeleccionadas[pKey] || '').toString().trim()
+                    respuestaTexto: (respuestasActuales[pKey] || '').toString().trim()
                 };
             }
 
-            const opcionId = respuestasSeleccionadas[pKey];
+            const opcionId = respuestasActuales[pKey];
             return {
                 preguntaId: pregunta.id || null,
                 opcionSeleccionadaId: opcionId || null
             };
         });
+    };
+
+    // Auto-envío disparado al llegar a 00:00
+    const ejecutarAutoEnvioPorTiempo = async () => {
+        if (!cuestionario || enviandoRef.current || resultadoRef.current) return;
+        
+        setEnviando(true);
+        setAutoEnviadoPorTiempo(true);
+
+        const payload = construirPayloadRespuestas(respuestasRef.current);
 
         try {
             const resultadoBackend = await responderCuestionario({
                 cuestionarioId: cuestionario.id,
-                nombreParticipante: (nombreParticipante || 'Anónimo').trim(),
-                respuestas: respuestasPayload
+                nombreParticipante: (sessionStorage.getItem('nombreParticipante') || nombreParticipante || 'Anónimo').trim(),
+                respuestas: payload
             });
 
             setResultado({
                 nota: resultadoBackend.notaFormateada || (resultadoBackend.requiereRevision ? 'Pendiente de revisión' : `${resultadoBackend.calificacion} / 20`),
                 mensaje: resultadoBackend.mensaje,
-                requiereRevision: Boolean(resultadoBackend.requiereRevision)
+                requiereRevision: Boolean(resultadoBackend.requiereRevision),
+                porTiempo: true
+            });
+        } catch (err) {
+            console.error("Error en auto-envío por tiempo:", err);
+            // Fallback de contingencia
+            let totalPreguntas = cuestionario.preguntas?.length || 0;
+            let aciertos = 0;
+            let tieneEscritas = false;
+
+            (cuestionario.preguntas || []).forEach((pregunta, pIndex) => {
+                const pKey = pregunta.id || pIndex;
+                const esEscrita = pregunta.tipo === 'RESPUESTA_CORTA' || pregunta.tipo === 'Respuesta escrita';
+                if (esEscrita) {
+                    tieneEscritas = true;
+                } else {
+                    const opcionSeleccionadaId = respuestasRef.current[pKey];
+                    if (pregunta.opciones) {
+                        const opcionElegida = pregunta.opciones.find((op, oIndex) => (op.id || oIndex) === opcionSeleccionadaId);
+                        if (opcionElegida && (opcionElegida.correcta === true || opcionElegida.esCorrecta === true)) {
+                            aciertos++;
+                        }
+                    }
+                }
+            });
+
+            setResultado({
+                nota: tieneEscritas ? 'Pendiente de revisión' : `${((aciertos / (totalPreguntas || 1)) * 20).toFixed(1)} / 20`,
+                mensaje: 'El tiempo límite finalizó. Tus respuestas registradas hasta el momento han sido guardadas y evaluadas.',
+                requiereRevision: tieneEscritas,
+                porTiempo: true
+            });
+        } finally {
+            setEnviando(false);
+        }
+    };
+
+    // Envío manual por parte del estudiante
+    const handleSubmitEvaluacion = async (e) => {
+        if (e) e.preventDefault();
+
+        if (!cuestionario || enviando) return;
+
+        setEnviando(true);
+        const payload = construirPayloadRespuestas(respuestasSeleccionadas);
+
+        try {
+            const resultadoBackend = await responderCuestionario({
+                cuestionarioId: cuestionario.id,
+                nombreParticipante: (nombreParticipante || 'Anónimo').trim(),
+                respuestas: payload
+            });
+
+            setResultado({
+                nota: resultadoBackend.notaFormateada || (resultadoBackend.requiereRevision ? 'Pendiente de revisión' : `${resultadoBackend.calificacion} / 20`),
+                mensaje: resultadoBackend.mensaje,
+                requiereRevision: Boolean(resultadoBackend.requiereRevision),
+                porTiempo: false
             });
         } catch (err) {
             console.error("Error al enviar respuestas a la base de datos:", err);
-            // Fallback en caso de error de red
             let totalPreguntas = cuestionario.preguntas?.length || 0;
             let aciertos = 0;
             let tieneEscritas = false;
@@ -125,19 +245,29 @@ export default function ResolverCuestionario() {
                 setResultado({
                     nota: 'Pendiente de revisión',
                     mensaje: '¡Tus respuestas han sido enviadas con éxito! Al incluir preguntas escritas, tu profesor revisará tus respuestas y asignará tu calificación.',
-                    requiereRevision: true
+                    requiereRevision: true,
+                    porTiempo: false
                 });
             } else {
                 const notaCalculada = totalPreguntas > 0 ? ((aciertos / totalPreguntas) * 20).toFixed(1) : "20.0";
                 setResultado({
                     nota: `${notaCalculada} / 20`,
                     mensaje: `Has completado el cuestionario con ${aciertos} de ${totalPreguntas} aciertos.`,
-                    requiereRevision: false
+                    requiereRevision: false,
+                    porTiempo: false
                 });
             }
         } finally {
             setEnviando(false);
         }
+    };
+
+    // Formatear segundos a MM:SS
+    const formatearTiempo = (segundos) => {
+        if (segundos === null || segundos === undefined || segundos < 0) return '00:00';
+        const mins = Math.floor(segundos / 60);
+        const secs = segundos % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
 
     if (loading) {
@@ -159,23 +289,29 @@ export default function ResolverCuestionario() {
         );
     }
 
-    // Ingreso directo por QR o enlace ingresar nombre
+    // Pantalla de ingreso antes de comenzar
     if (!comenzado) {
         return (
             <div style={{ backgroundColor: '#0f172a', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif' }}>
-                <div style={{ backgroundColor: '#ffffff', padding: '36px', borderRadius: '20px', width: '100%', maxWidth: '420px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)' }}>
+                <div style={{ backgroundColor: '#ffffff', padding: '36px', borderRadius: '20px', width: '100%', maxWidth: '440px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)' }}>
                     <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                         <div style={{ marginBottom: '14px', display: 'flex', justifyContent: 'center' }}>
                             <img src={logoNativa} alt="NativaTec" style={{ height: '42px', objectFit: 'contain' }} />
                         </div>
                         <h2 style={{ margin: '0 0 6px 0', fontSize: '20px', color: '#0f172a' }}>{cuestionario.titulo}</h2>
                         <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>{cuestionario.descripcion || 'Evaluación académica'}</p>
+
+                        {cuestionario.tiempoLimiteMinutos > 0 && (
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#eff6ff', color: '#1d4ed8', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: '600', marginTop: '14px' }}>
+                                <Clock size={16} /> Límite de tiempo: {cuestionario.tiempoLimiteMinutos} minutos
+                            </div>
+                        )}
                     </div>
 
                     <form onSubmit={handleIniciarConNombre} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                         <div>
                             <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
-                                Tu Nombre o Apodo *
+                                Tu Nombre Completo *
                             </label>
                             <input
                                 type="text"
@@ -218,8 +354,65 @@ export default function ResolverCuestionario() {
         );
     }
 
+    const tieneTemporizador = (cuestionario.tiempoLimiteMinutos || 0) > 0;
+    const porcentajeTiempo = tiempoTotalSegundos > 0 && tiempoRestanteSegundos !== null
+        ? Math.max(0, Math.min(100, (tiempoRestanteSegundos / tiempoTotalSegundos) * 100))
+        : 100;
+
+    const esTiempoCritico = tieneTemporizador && tiempoRestanteSegundos !== null && tiempoRestanteSegundos <= 60;
+    const esTiempoPoco = tieneTemporizador && tiempoRestanteSegundos !== null && porcentajeTiempo <= 25 && !esTiempoCritico;
+
     return (
         <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh', padding: '40px 20px', fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif' }}>
+            
+            {/* BARRA FLOTANTE DE TEMPORIZADOR */}
+            {tieneTemporizador && !resultado && (
+                <div style={{
+                    maxWidth: '700px',
+                    margin: '0 auto 16px auto',
+                    backgroundColor: '#ffffff',
+                    borderRadius: '14px',
+                    padding: '14px 20px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+                    border: esTiempoCritico ? '2px solid #ef4444' : esTiempoPoco ? '2px solid #f59e0b' : '1px solid #e2e8f0',
+                    transition: 'all 0.3s ease'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Clock size={20} color={esTiempoCritico ? '#ef4444' : esTiempoPoco ? '#d97706' : '#2563eb'} />
+                            <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>
+                                TIEMPO RESTANTE
+                            </span>
+                        </div>
+                        <div style={{
+                            fontSize: '20px',
+                            fontWeight: 'bold',
+                            fontFamily: 'monospace',
+                            color: esTiempoCritico ? '#dc2626' : esTiempoPoco ? '#d97706' : '#0f172a',
+                            letterSpacing: '1px'
+                        }}>
+                            {formatearTiempo(tiempoRestanteSegundos)}
+                        </div>
+                    </div>
+
+                    {/* Barra de progreso regresiva */}
+                    <div style={{ width: '100%', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{
+                            width: `${porcentajeTiempo}%`,
+                            height: '100%',
+                            backgroundColor: esTiempoCritico ? '#ef4444' : esTiempoPoco ? '#f59e0b' : '#10b981',
+                            transition: 'width 1s linear, background-color 0.5s ease'
+                        }} />
+                    </div>
+
+                    {esTiempoCritico && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#dc2626', fontSize: '11px', fontWeight: '600', marginTop: '6px' }}>
+                            <AlertTriangle size={14} /> ¡Menos de un minuto! Al llegar a 00:00 se enviará automáticamente.
+                        </div>
+                    )}
+                </div>
+            )}
+
             <div style={{ maxWidth: '700px', margin: '0 auto', backgroundColor: '#ffffff', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
 
                 {/* Cabecera del Examen */}
@@ -239,6 +432,24 @@ export default function ResolverCuestionario() {
 
                 {resultado ? (
                     <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                        {resultado.porTiempo && (
+                            <div style={{
+                                backgroundColor: '#fef3c7',
+                                color: '#92400e',
+                                padding: '12px 18px',
+                                borderRadius: '10px',
+                                fontSize: '13px',
+                                fontWeight: '600',
+                                marginBottom: '20px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                            }}>
+                                <Clock size={18} />
+                                ¡Tiempo agotado! Tu examen fue enviado automáticamente.
+                            </div>
+                        )}
+
                         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
                             <div style={{
                                 background: resultado.requiereRevision ? '#eff6ff' : '#ecfdf5',
@@ -337,7 +548,6 @@ export default function ResolverCuestionario() {
                                                                 name={`pregunta_${pKey}`}
                                                                 checked={isChecked}
                                                                 onChange={() => handleSelectOpcion(pKey, oKey)}
-                                                                required
                                                                 style={{ accentColor: '#2563eb', width: '18px', height: '18px' }}
                                                             />
                                                             <span>{opcion.texto || opcion.textoOpcion}</span>
@@ -355,7 +565,6 @@ export default function ResolverCuestionario() {
                                                     value={respuestasSeleccionadas[pKey] || ''}
                                                     onChange={(e) => handleTextoRespuesta(pKey, e.target.value)}
                                                     placeholder="Escribe tu respuesta aquí..."
-                                                    required
                                                     style={{
                                                         width: '100%',
                                                         padding: '12px 14px',
@@ -398,7 +607,6 @@ export default function ResolverCuestionario() {
                                                                 name={`pregunta_${pKey}`}
                                                                 checked={isChecked}
                                                                 onChange={() => handleSelectOpcion(pKey, oKey)}
-                                                                required
                                                                 style={{ accentColor: '#2563eb' }}
                                                             />
                                                             <span>{opcion.texto || opcion.textoOpcion}</span>
