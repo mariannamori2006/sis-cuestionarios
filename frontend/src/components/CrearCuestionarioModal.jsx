@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { crearCuestionario, actualizarCuestionario } from '../services/cuestionarioService';
-import { X, UploadCloud, Download, Plus, Trash2, CheckCircle2, Type, CheckSquare } from 'lucide-react';
+import { descargarPlantillaExcel, procesarArchivoPreguntas } from '../services/excelService';
+import { X, UploadCloud, Download, Plus, Trash2, CheckCircle2, Type, CheckSquare, Shuffle, AlertCircle } from 'lucide-react';
 
 export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionarioCreado, cuestionarioAEditar = null }) {
     const [tabActiva, setTabActiva] = useState('manual'); // 'manual' o 'importar'
@@ -10,6 +11,15 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
     const [materia, setMateria] = useState('Matemáticas');
     const [descripcion, setDescripcion] = useState('');
     const [tiempoLimiteMinutos, setTiempoLimiteMinutos] = useState(0);
+    const [ordenAleatorio, setOrdenAleatorio] = useState(false);
+
+    // Estados para la importación de archivos Excel / CSV
+    const [arrastrando, setArrastrando] = useState(false);
+    const [cargandoImportacion, setCargandoImportacion] = useState(false);
+    const [errorImportacion, setErrorImportacion] = useState('');
+    const [resumenImportacion, setResumenImportacion] = useState(null);
+    const [preguntasImportadasPendientes, setPreguntasImportadasPendientes] = useState([]);
+    const fileInputRef = useRef(null);
 
     // Lista de preguntas para la creación/edición manual
     const [preguntas, setPreguntas] = useState([
@@ -37,6 +47,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
         if (cuestionarioAEditar) {
             setTitulo(cuestionarioAEditar.titulo || '');
             setTiempoLimiteMinutos(cuestionarioAEditar.tiempoLimiteMinutos || 0);
+            setOrdenAleatorio(Boolean(cuestionarioAEditar.ordenAleatorio));
 
             // Extraer materia si viene formateada como "[Materia] Descripción"
             const descOriginal = cuestionarioAEditar.descripcion || '';
@@ -115,6 +126,10 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
             setMateria('Matemáticas');
             setDescripcion('');
             setTiempoLimiteMinutos(0);
+            setOrdenAleatorio(false);
+            setResumenImportacion(null);
+            setPreguntasImportadasPendientes([]);
+            setErrorImportacion('');
             setPreguntas([
                 {
                     enunciado: '',
@@ -130,6 +145,62 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
         }
         setError('');
     }, [isOpen, cuestionarioAEditar]);
+
+    // Manejar selección y lectura de archivo para importar
+    const handleProcesarArchivo = async (file) => {
+        if (!file) return;
+        try {
+            setCargandoImportacion(true);
+            setErrorImportacion('');
+            setResumenImportacion(null);
+
+            const resultado = await procesarArchivoPreguntas(file);
+            setPreguntasImportadasPendientes(resultado.preguntas);
+            setResumenImportacion({
+                ...resultado.resumen,
+                nombreArchivo: file.name
+            });
+        } catch (err) {
+            console.error("Error al procesar archivo:", err);
+            setErrorImportacion(err.message || "Error al procesar el archivo.");
+        } finally {
+            setCargandoImportacion(false);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+        }
+    };
+
+    const handleFileSelect = (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            handleProcesarArchivo(file);
+        }
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setArrastrando(false);
+        const file = e.dataTransfer.files?.[0];
+        if (file) {
+            handleProcesarArchivo(file);
+        }
+    };
+
+    const aplicarPreguntasImportadas = (reemplazarExistentes) => {
+        if (!preguntasImportadasPendientes || preguntasImportadasPendientes.length === 0) return;
+
+        if (reemplazarExistentes) {
+            setPreguntas(preguntasImportadasPendientes);
+        } else {
+            // Añadir al final ignorando la plantilla vacía si solo había una pregunta sin enunciado
+            const preguntasValidasActuales = preguntas.filter(p => p.enunciado && p.enunciado.trim() !== '');
+            setPreguntas([...preguntasValidasActuales, ...preguntasImportadasPendientes]);
+        }
+
+        // Cambiar a la pestaña manual para que el profesor vea y edite las preguntas importadas
+        setTabActiva('manual');
+    };
 
     if (!isOpen) return null;
 
@@ -251,6 +322,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                 descripcion: `[${materia}] ${descripcion.trim()}`,
                 codigoAcceso: cuestionarioAEditar?.codigoAcceso,
                 tiempoLimiteMinutos: parseInt(tiempoLimiteMinutos, 10) || 0,
+                ordenAleatorio: Boolean(ordenAleatorio),
                 preguntas: preguntasFormateadas
             };
 
@@ -454,6 +526,51 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                         <option value={120}>120 minutos (2 horas)</option>
                                     </select>
                                 </div>
+                            </div>
+
+                            {/* PREGUNTAS EN ORDEN ALEATORIO */}
+                            <div
+                                onClick={() => setOrdenAleatorio(!ordenAleatorio)}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    padding: '12px 16px',
+                                    backgroundColor: ordenAleatorio ? '#eff6ff' : '#f8fafc',
+                                    border: ordenAleatorio ? '1px solid #93c5fd' : '1px solid #e2e8f0',
+                                    borderRadius: '10px',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    boxSizing: 'border-box'
+                                }}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <div style={{
+                                        width: '36px',
+                                        height: '36px',
+                                        borderRadius: '8px',
+                                        backgroundColor: ordenAleatorio ? '#dbeafe' : '#e2e8f0',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}>
+                                        <Shuffle size={18} color={ordenAleatorio ? '#1d4ed8' : '#64748b'} />
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '13px', fontWeight: '700', color: ordenAleatorio ? '#1e40af' : '#1e293b' }}>
+                                            Preguntas en orden aleatorio
+                                        </div>
+                                        <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                            Cada alumno recibirá las preguntas en un orden distinto al iniciar el examen
+                                        </div>
+                                    </div>
+                                </div>
+                                <input
+                                    type="checkbox"
+                                    checked={ordenAleatorio}
+                                    onChange={(e) => setOrdenAleatorio(e.target.checked)}
+                                    style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#2563eb' }}
+                                />
                             </div>
 
                             {/* DESCRIPCIÓN */}
@@ -738,50 +855,180 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                     ) : (
                         /* PESTAÑA IMPORTAR ARCHIVO */
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '10px 0' }}>
-                            <div style={{
-                                border: '2px dashed #cbd5e1',
-                                borderRadius: '12px',
-                                padding: '40px 20px',
-                                textAlign: 'center',
-                                backgroundColor: '#f8fafc',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center'
-                            }}>
-                                <UploadCloud size={40} color="#3b82f6" style={{ marginBottom: '12px' }} />
-                                <div style={{ fontSize: '15px', fontWeight: '600', color: '#0f172a', marginBottom: '4px' }}>Arrastra tu archivo aquí</div>
-                                <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '12px' }}>o haz clic para seleccionar</div>
-                                <div style={{ fontSize: '12px', color: '#94a3b8' }}>Excel (.xlsx, .xls) o CSV</div>
-                            </div>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                accept=".xlsx, .xls, .csv"
+                                onChange={handleFileSelect}
+                                style={{ display: 'none' }}
+                            />
 
-                            <button
-                                type="button"
-                                onClick={() => alert('Descargando plantilla de ejemplo...')}
+                            {/* ZONA DE ARRASTRE Y SELECCIÓN */}
+                            <div
+                                onDragOver={(e) => { e.preventDefault(); setArrastrando(true); }}
+                                onDragLeave={() => setArrastrando(false)}
+                                onDrop={handleDrop}
+                                onClick={() => fileInputRef.current && fileInputRef.current.click()}
                                 style={{
-                                    alignSelf: 'flex-start',
-                                    backgroundColor: '#f1f5f9',
-                                    border: '1px solid #cbd5e1',
-                                    padding: '8px 14px',
-                                    borderRadius: '8px',
-                                    fontSize: '13px',
-                                    fontWeight: '600',
-                                    color: '#334155',
-                                    cursor: 'pointer',
+                                    border: arrastrando ? '2px dashed #2563eb' : '2px dashed #cbd5e1',
+                                    borderRadius: '14px',
+                                    padding: '36px 20px',
+                                    textAlign: 'center',
+                                    backgroundColor: arrastrando ? '#eff6ff' : '#f8fafc',
                                     display: 'flex',
+                                    flexDirection: 'column',
                                     alignItems: 'center',
-                                    gap: '8px'
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    boxShadow: arrastrando ? '0 4px 12px rgba(37, 99, 235, 0.1)' : 'none'
                                 }}
                             >
-                                <Download size={15} /> Descargar plantilla de ejemplo
-                            </button>
+                                <UploadCloud size={44} color={arrastrando ? '#2563eb' : '#3b82f6'} style={{ marginBottom: '12px' }} />
+                                <div style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a', marginBottom: '4px' }}>
+                                    {cargandoImportacion ? 'Leyendo y validando archivo...' : 'Arrastra tu archivo aquí o haz clic para seleccionarlo'}
+                                </div>
+                                <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '14px' }}>
+                                    Formatos compatibles: Libros de Excel (.xlsx, .xls) o archivos CSV (.csv)
+                                </div>
+                                <span style={{
+                                    fontSize: '12px',
+                                    color: '#1d4ed8',
+                                    backgroundColor: '#dbeafe',
+                                    padding: '6px 14px',
+                                    borderRadius: '20px',
+                                    fontWeight: '600',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px'
+                                }}>
+                                    📁 Seleccionar desde mi dispositivo
+                                </span>
+                            </div>
 
+                            {/* ALERTA DE ERROR EN IMPORTACIÓN */}
+                            {errorImportacion && (
+                                <div style={{
+                                    backgroundColor: '#fef2f2',
+                                    border: '1px solid #fecaca',
+                                    color: '#991b1b',
+                                    padding: '12px 16px',
+                                    borderRadius: '10px',
+                                    fontSize: '13px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px'
+                                }}>
+                                    <AlertCircle size={20} color="#dc2626" />
+                                    <span>{errorImportacion}</span>
+                                </div>
+                            )}
+
+                            {/* RESULTADO Y CONFIRMACIÓN DE IMPORTACIÓN */}
+                            {resumenImportacion && (
+                                <div style={{
+                                    backgroundColor: '#f0fdf4',
+                                    border: '1px solid #bbf7d0',
+                                    borderRadius: '12px',
+                                    padding: '18px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '12px'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#166534', fontWeight: '700', fontSize: '14px' }}>
+                                        <CheckCircle2 size={20} color="#16a34a" />
+                                        <span>¡Se procesaron {resumenImportacion.total} preguntas de "{resumenImportacion.nombreArchivo}"!</span>
+                                    </div>
+
+                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', fontSize: '12px' }}>
+                                        <span style={{ backgroundColor: '#dcfce7', color: '#15803d', padding: '4px 10px', borderRadius: '6px', fontWeight: '600' }}>
+                                            🔘 {resumenImportacion.multiples} Opción múltiple
+                                        </span>
+                                        <span style={{ backgroundColor: '#dcfce7', color: '#15803d', padding: '4px 10px', borderRadius: '6px', fontWeight: '600' }}>
+                                            ⚖️ {resumenImportacion.verdaderoFalso} Verdadero/Falso
+                                        </span>
+                                        <span style={{ backgroundColor: '#dcfce7', color: '#15803d', padding: '4px 10px', borderRadius: '6px', fontWeight: '600' }}>
+                                            ✍️ {resumenImportacion.escritas} Respuesta escrita
+                                        </span>
+                                    </div>
+
+                                    <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+                                        <button
+                                            type="button"
+                                            onClick={() => aplicarPreguntasImportadas(true)}
+                                            style={{
+                                                backgroundColor: '#16a34a',
+                                                color: '#ffffff',
+                                                border: 'none',
+                                                padding: '10px 16px',
+                                                borderRadius: '8px',
+                                                fontWeight: '600',
+                                                fontSize: '13px',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px'
+                                            }}
+                                        >
+                                            <CheckSquare size={16} /> Reemplazar preguntas ({resumenImportacion.total})
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => aplicarPreguntasImportadas(false)}
+                                            style={{
+                                                backgroundColor: '#ffffff',
+                                                color: '#16a34a',
+                                                border: '1px solid #16a34a',
+                                                padding: '10px 16px',
+                                                borderRadius: '8px',
+                                                fontWeight: '600',
+                                                fontSize: '13px',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px'
+                                            }}
+                                        >
+                                            <Plus size={16} /> Añadir a las existentes (+{resumenImportacion.total})
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* BOTÓN DESCARGAR PLANTILLA EXCEL */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <button
+                                    type="button"
+                                    onClick={descargarPlantillaExcel}
+                                    style={{
+                                        backgroundColor: '#ffffff',
+                                        border: '1px solid #cbd5e1',
+                                        padding: '10px 16px',
+                                        borderRadius: '8px',
+                                        fontSize: '13px',
+                                        fontWeight: '600',
+                                        color: '#334155',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                                    }}
+                                >
+                                    <Download size={16} color="#059669" /> Descargar plantilla de ejemplo (.xlsx)
+                                </button>
+                                <span style={{ fontSize: '12px', color: '#64748b' }}>
+                                    Incluye ejemplos y hoja de instrucciones
+                                </span>
+                            </div>
+
+                            {/* GUÍA DE COLUMNAS */}
                             <div style={{ backgroundColor: '#f1f5f9', padding: '16px', borderRadius: '10px', fontSize: '13px', color: '#475569', lineHeight: '1.5' }}>
-                                <strong>Formato esperado:</strong>
-                                <ul style={{ margin: '6px 0 0 0', paddingLeft: '20px' }}>
-                                    <li>Columna A: Tipo (multiple / truefalse / short)</li>
-                                    <li>Columna B: Texto de la pregunta</li>
-                                    <li>Columnas C-F: Opciones (para opción múltiple)</li>
-                                    <li>Columna G: Respuesta correcta</li>
+                                <strong style={{ color: '#0f172a' }}>Columnas requeridas en la plantilla:</strong>
+                                <ul style={{ margin: '8px 0 0 0', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                    <li><strong>Columna A (Tipo):</strong> <code>multiple</code>, <code>truefalse</code>, o <code>short</code>.</li>
+                                    <li><strong>Columna B (Pregunta):</strong> Texto del enunciado.</li>
+                                    <li><strong>Columnas C a F:</strong> Alternativas (A, B, C, D) para opción múltiple.</li>
+                                    <li><strong>Columna G (Respuesta correcta):</strong> Letra (A, B, C, D), texto de la opción o "Verdadero"/"Falso".</li>
                                 </ul>
                             </div>
                         </div>

@@ -42,6 +42,10 @@ public class Cuestionario {
     @Column(name = "tiempo_limite_minutos")
     private Integer tiempoLimiteMinutos = 0;
 
+    // Preguntas en orden aleatorio
+    @Column(name = "orden_aleatorio")
+    private Boolean ordenAleatorio = false;
+
     @OneToMany(mappedBy = "cuestionario", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Pregunta> preguntas = new ArrayList<>();
@@ -63,6 +67,9 @@ public class Cuestionario {
         }
         if (tiempoLimiteMinutos == null) {
             tiempoLimiteMinutos = 0;
+        }
+        if (ordenAleatorio == null) {
+            ordenAleatorio = false;
         }
         // Generar un código de acceso de 6 números automáticamente si no viene definido
         if (codigoAcceso == null || codigoAcceso.trim().isEmpty()) {
@@ -115,6 +122,14 @@ public class Cuestionario {
 
     public void setTiempoLimiteMinutos(Integer tiempoLimiteMinutos) {
         this.tiempoLimiteMinutos = tiempoLimiteMinutos != null ? tiempoLimiteMinutos : 0;
+    }
+
+    public Boolean getOrdenAleatorio() {
+        return ordenAleatorio != null ? ordenAleatorio : false;
+    }
+
+    public void setOrdenAleatorio(Boolean ordenAleatorio) {
+        this.ordenAleatorio = ordenAleatorio != null ? ordenAleatorio : false;
     }
 
     public Usuario getCreadoPor() {

@@ -3,7 +3,8 @@ import CrearCuestionarioModal from './CrearCuestionarioModal';
 import CompartirCuestionarioModal from './CompartirCuestionarioModal';
 import AuditoriaResultadosModal from './AuditoriaResultadosModal';
 import EliminarCuestionarioModal from './EliminarCuestionarioModal';
-import { obtenerCuestionarioPorId, eliminarCuestionario } from '../services/cuestionarioService';
+import { obtenerCuestionarioPorId, eliminarCuestionario, obtenerAuditoriaCuestionario } from '../services/cuestionarioService';
+import { exportarNotasExcel } from '../services/excelService';
 import {
     Search,
     Plus,
@@ -17,13 +18,16 @@ import {
     Edit3,
     ClipboardCheck,
     Trash2,
-    Clock
+    Clock,
+    Shuffle,
+    Download
 } from 'lucide-react';
 
 export default function CuestionariosView({ cuestionarios, estadisticas, onRecargarCuestionarios }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [cuestionarioAEditar, setCuestionarioAEditar] = useState(null);
     const [cargandoEdicionId, setCargandoEdicionId] = useState(null);
+    const [descargandoExcelId, setDescargandoExcelId] = useState(null);
     const [cuestionarioParaCompartir, setCuestionarioParaCompartir] = useState(null);
     const [cuestionarioParaAuditar, setCuestionarioParaAuditar] = useState(null);
     const [cuestionarioParaEliminar, setCuestionarioParaEliminar] = useState(null);
@@ -77,6 +81,19 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
             console.error('Error al eliminar el cuestionario:', err);
             alert('No se pudo eliminar el cuestionario.');
             throw err;
+        }
+    };
+
+    const handleDescargarExcelDirecto = async (cuestionario) => {
+        try {
+            setDescargandoExcelId(cuestionario.id);
+            const dataAuditoria = await obtenerAuditoriaCuestionario(cuestionario.id);
+            exportarNotasExcel(cuestionario, dataAuditoria);
+        } catch (err) {
+            console.error('Error al descargar las notas en Excel:', err);
+            alert('No se pudieron exportar las notas del cuestionario. Asegúrate de que el servidor esté activo.');
+        } finally {
+            setDescargandoExcelId(null);
         }
     };
 
@@ -231,6 +248,21 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                                                 Sin límite
                                             </span>
                                         )}
+                                        {cuestionario.ordenAleatorio && (
+                                            <span style={{
+                                                backgroundColor: '#f5f3ff',
+                                                color: '#6d28d9',
+                                                padding: '4px 10px',
+                                                borderRadius: '20px',
+                                                fontSize: '11px',
+                                                fontWeight: '600',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '4px'
+                                            }}>
+                                                <Shuffle size={12} /> Aleatorio
+                                            </span>
+                                        )}
                                     </div>
 
                                     {/* Título y Descripción */}
@@ -262,6 +294,25 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                                 }}>
                                     <button onClick={() => setCuestionarioParaCompartir(cuestionario)} style={{ background: 'none', border: 'none', color: '#10b981', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', fontWeight: '600' }}>
                                         <Share2 size={16} /> Compartir
+                                    </button>
+                                    <button
+                                        onClick={() => handleDescargarExcelDirecto(cuestionario)}
+                                        disabled={descargandoExcelId === cuestionario.id}
+                                        title="Descargar calificaciones en archivo Excel (.xlsx)"
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            color: '#059669',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            fontWeight: '600',
+                                            opacity: descargandoExcelId === cuestionario.id ? 0.6 : 1
+                                        }}
+                                    >
+                                        <Download size={16} /> {descargandoExcelId === cuestionario.id ? 'Descargando...' : 'Excel'}
                                     </button>
                                     <button
                                         onClick={() => handleEditarCuestionario(cuestionario)}

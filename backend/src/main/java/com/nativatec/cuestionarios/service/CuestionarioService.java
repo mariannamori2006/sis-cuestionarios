@@ -101,6 +101,9 @@ public class CuestionarioService {
             existente.setTitulo(modificado.getTitulo());
             existente.setDescripcion(modificado.getDescripcion());
             existente.setTiempoLimiteMinutos(modificado.getTiempoLimiteMinutos());
+            if (modificado.getOrdenAleatorio() != null) {
+                existente.setOrdenAleatorio(modificado.getOrdenAleatorio());
+            }
 
             if (modificado.getCodigoAcceso() != null && !modificado.getCodigoAcceso().trim().isEmpty()) {
                 existente.setCodigoAcceso(modificado.getCodigoAcceso().trim());

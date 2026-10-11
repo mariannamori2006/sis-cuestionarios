@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { obtenerAuditoriaCuestionario, calificarIntento } from '../services/cuestionarioService';
-import { X, ChevronDown, ChevronUp, CheckCircle, XCircle, Edit2, Save, Users, Award, Clock } from 'lucide-react';
+import { exportarNotasExcel } from '../services/excelService';
+import { X, ChevronDown, ChevronUp, CheckCircle, XCircle, Edit2, Save, Users, Award, Clock, Download, FileSpreadsheet } from 'lucide-react';
 
 export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario, onActualizado }) {
     const [loading, setLoading] = useState(true);
@@ -72,6 +73,15 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
         }
     };
 
+    const handleExportarExcel = () => {
+        try {
+            exportarNotasExcel(cuestionario, auditoriaData);
+        } catch (err) {
+            console.error('Error al exportar notas a Excel:', err);
+            alert('No se pudo exportar el archivo de notas.');
+        }
+    };
+
     const titulo = auditoriaData?.titulo || cuestionario?.titulo || 'Cuestionario';
     const totalParticipantes = auditoriaData?.totalParticipantes ?? 0;
     const promedio = auditoriaData?.promedio ?? (cuestionario?.promedioCalificacion || 0.0);
@@ -116,7 +126,31 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
                         </span>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <button
+                            type="button"
+                            onClick={handleExportarExcel}
+                            disabled={intentos.length === 0}
+                            title={intentos.length === 0 ? "No hay evaluaciones registradas para descargar" : "Descargar notas en Excel"}
+                            style={{
+                                backgroundColor: intentos.length > 0 ? '#10b981' : '#cbd5e1',
+                                color: '#ffffff',
+                                border: 'none',
+                                borderRadius: '8px',
+                                padding: '8px 14px',
+                                fontSize: '13px',
+                                fontWeight: '600',
+                                cursor: intentos.length > 0 ? 'pointer' : 'not-allowed',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                transition: 'all 0.2s',
+                                boxShadow: intentos.length > 0 ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
+                            }}
+                        >
+                            <Download size={15} /> Descargar Excel
+                        </button>
+
                         <div style={{ textAlign: 'right' }}>
                             <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                                 Promedio

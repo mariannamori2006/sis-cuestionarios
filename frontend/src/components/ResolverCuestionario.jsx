@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import logoNativa from '../images/logoNativa.jpeg';
-import { Award, CheckCircle, LogOut, Clock, AlertTriangle, AlertCircle } from 'lucide-react';
+import { Award, CheckCircle, LogOut, Clock, AlertTriangle, AlertCircle, Shuffle } from 'lucide-react';
 import { responderCuestionario } from '../services/cuestionarioService';
 
 export default function ResolverCuestionario() {
@@ -51,8 +51,20 @@ export default function ResolverCuestionario() {
         // Obtenemos los detalles del cuestionario y sus preguntas desde el backend
         axios.get(`http://localhost:8080/api/cuestionarios/resolver/${id}`)
             .then(res => {
-                setCuestionario(res.data);
-                const minutos = res.data.tiempoLimiteMinutos || 0;
+                const data = res.data;
+
+                // Si el cuestionario tiene activado el orden aleatorio, mezclar el orden de las preguntas
+                if (data && data.ordenAleatorio && Array.isArray(data.preguntas) && data.preguntas.length > 1) {
+                    const mezcladas = [...data.preguntas];
+                    for (let i = mezcladas.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [mezcladas[i], mezcladas[j]] = [mezcladas[j], mezcladas[i]];
+                    }
+                    data.preguntas = mezcladas;
+                }
+
+                setCuestionario(data);
+                const minutos = data?.tiempoLimiteMinutos || 0;
                 if (minutos > 0) {
                     const segs = minutos * 60;
                     setTiempoTotalSegundos(segs);
@@ -301,11 +313,18 @@ export default function ResolverCuestionario() {
                         <h2 style={{ margin: '0 0 6px 0', fontSize: '20px', color: '#0f172a' }}>{cuestionario.titulo}</h2>
                         <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>{cuestionario.descripcion || 'Evaluación académica'}</p>
 
-                        {cuestionario.tiempoLimiteMinutos > 0 && (
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#eff6ff', color: '#1d4ed8', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: '600', marginTop: '14px' }}>
-                                <Clock size={16} /> Límite de tiempo: {cuestionario.tiempoLimiteMinutos} minutos
-                            </div>
-                        )}
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '14px' }}>
+                            {cuestionario.tiempoLimiteMinutos > 0 && (
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#eff6ff', color: '#1d4ed8', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: '600' }}>
+                                    <Clock size={16} /> Límite de tiempo: {cuestionario.tiempoLimiteMinutos} minutos
+                                </div>
+                            )}
+                            {cuestionario.ordenAleatorio && (
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#f5f3ff', color: '#6d28d9', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: '600' }}>
+                                    <Shuffle size={15} /> Preguntas en orden aleatorio
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <form onSubmit={handleIniciarConNombre} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
