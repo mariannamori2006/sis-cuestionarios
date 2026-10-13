@@ -24,6 +24,17 @@ export const register = async (nombre, apellido, email, password, rol = 'PROFESO
     return response.data;
 };
 
+export const googleLogin = async (idToken, rol = 'PROFESOR') => {
+    const response = await axios.post(API_URL + 'google', {
+        idToken,
+        rol
+    });
+    if (response.data.accessToken) {
+        localStorage.setItem('user', JSON.stringify(response.data));
+    }
+    return response.data;
+};
+
 export const logout = () => {
     localStorage.removeItem('user');
 };

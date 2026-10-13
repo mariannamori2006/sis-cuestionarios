@@ -21,10 +21,13 @@ public class CuestionarioController {
     @Autowired
     private CuestionarioService cuestionarioService;
 
-    // 1. Obtener todos los cuestionarios (GET: /api/cuestionarios) - Todos los
-    // autenticados
+    // 1. Obtener cuestionarios (GET: /api/cuestionarios) - Filtrado por profesor o global para admin
     @GetMapping
-    public ResponseEntity<List<Cuestionario>> obtenerTodos() {
+    public ResponseEntity<List<Cuestionario>> obtenerTodos(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails != null && userDetails.getUsuario() != null && userDetails.getUsuario().getRol() == com.nativatec.cuestionarios.entity.Usuario.RolUsuario.PROFESOR) {
+            List<Cuestionario> cuestionarios = cuestionarioService.obtenerPorProfesor(userDetails.getUsuario().getId());
+            return ResponseEntity.ok(cuestionarios);
+        }
         List<Cuestionario> cuestionarios = cuestionarioService.obtenerTodos();
         return ResponseEntity.ok(cuestionarios);
     }

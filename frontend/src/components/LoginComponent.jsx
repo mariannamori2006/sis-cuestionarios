@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login, register } from '../services/authService';
+import { login, register, googleLogin } from '../services/authService';
+import GoogleAuthButton from './GoogleAuthButton';
 import logoNativa from '../images/logoNativa.jpeg';
 import { Mail, Lock, User, LogIn, UserPlus } from 'lucide-react';
 
@@ -70,6 +71,24 @@ export default function LoginComponent() {
             }, 800);
         } catch (err) {
             const msg = err.response?.data?.message || 'Error al registrar la cuenta. Verifica los datos.';
+            setError(msg);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGoogleSuccess = async (idToken) => {
+        setError('');
+        setSuccessMessage('');
+        setLoading(true);
+        try {
+            const data = await googleLogin(idToken, isRegister ? rol : 'PROFESOR');
+            setSuccessMessage(data.message || '¡Acceso correcto! Redirigiendo...');
+            setTimeout(() => {
+                redireccionarSegunRol(data);
+            }, 700);
+        } catch (err) {
+            const msg = err.response?.data?.message || 'Error al autenticar con Google. Intenta nuevamente.';
             setError(msg);
         } finally {
             setLoading(false);
@@ -220,6 +239,32 @@ export default function LoginComponent() {
                         </div>
                     )}
 
+                    {/* Botón oficial de Google Identity (OAuth 2.0) */}
+                    <div style={{ marginBottom: '16px' }}>
+                        <GoogleAuthButton
+                            onGoogleSuccess={handleGoogleSuccess}
+                            onError={(msg) => setError(msg)}
+                            text={isRegister ? 'signup_with' : 'signin_with'}
+                            disabled={loading}
+                        />
+                    </div>
+
+                    {/* Divisor estético */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        margin: '16px 0 20px 0',
+                        color: '#94a3b8',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em'
+                    }}>
+                        <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }} />
+                        <span style={{ padding: '0 12px' }}>o continúa con correo</span>
+                        <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }} />
+                    </div>
+
                     {!isRegister ? (
                         /* FORMULARIO DE LOGIN */
                         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
@@ -233,7 +278,7 @@ export default function LoginComponent() {
                                         type="email"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        placeholder="ejemplo@nativatec.edu"
+                                        placeholder="ejemplo@gmail.com"
                                         required
                                         style={{
                                             width: '100%',

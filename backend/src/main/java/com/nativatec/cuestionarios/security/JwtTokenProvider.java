@@ -34,6 +34,18 @@ public class JwtTokenProvider {
                 .compact();
     }
 
+    public String generateTokenFromEmail(String email) {
+        Date ahora = new Date();
+        Date fechaExpiracion = new Date(ahora.getTime() + jwtExpirationMs);
+
+        return Jwts.builder()
+                .subject(email)
+                .issuedAt(ahora)
+                .expiration(fechaExpiracion)
+                .signWith(jwtSecret)
+                .compact();
+    }
+
     public String obtenerEmailDelToken(String token) {
         Claims claims = Jwts.parser()
                 .verifyWith(jwtSecret)

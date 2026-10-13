@@ -40,6 +40,23 @@ public class CuestionarioService {
         return cuestionarios;
     }
 
+    // Listar cuestionarios de un profesor específico con sus métricas calculadas
+    public List<Cuestionario> obtenerPorProfesor(UUID profesorId) {
+        List<Cuestionario> cuestionarios = cuestionarioRepository.findByCreadoPorId(profesorId);
+        for (Cuestionario c : cuestionarios) {
+            if (c.getId() != null) {
+                Long totalRespuestas = intentoRepository.contarRespuestasPorCuestionario(c.getId());
+                Long alumnosUnicos = intentoRepository.contarAlumnosUnicosPorCuestionario(c.getId());
+                Double avg = intentoRepository.obtenerPromedioPorCuestionario(c.getId());
+
+                c.setTotalRespuestas(totalRespuestas != null ? totalRespuestas : 0L);
+                c.setAlumnosUnicos(alumnosUnicos != null ? alumnosUnicos : 0L);
+                c.setPromedioCalificacion(avg != null ? Math.round(avg * 10.0) / 10.0 : 0.0);
+            }
+        }
+        return cuestionarios;
+    }
+
     // Buscar cuestionario por id
     public Optional<Cuestionario> obtenerPorId(UUID id) {
         Optional<Cuestionario> optional = cuestionarioRepository.findById(id);

@@ -32,6 +32,18 @@ public interface IntentoCuestionarioRepository extends JpaRepository<IntentoCues
 
     @Query("SELECT COUNT(DISTINCT LOWER(TRIM(COALESCE(i.usuario.email, i.usuario.nombre, i.nombreInvitado)))) FROM IntentoCuestionario i WHERE i.cuestionario.id = :cuestionarioId AND (i.usuario IS NOT NULL OR (i.nombreInvitado IS NOT NULL AND TRIM(i.nombreInvitado) <> ''))")
     Long contarAlumnosUnicosPorCuestionario(@Param("cuestionarioId") UUID cuestionarioId);
+
+    @Query("SELECT AVG(i.calificacion) FROM IntentoCuestionario i WHERE i.cuestionario.creadoPor.id = :usuarioId AND i.calificacion IS NOT NULL")
+    Double obtenerPromedioPorProfesor(@Param("usuarioId") UUID usuarioId);
+
+    @Query("SELECT COUNT(i) FROM IntentoCuestionario i WHERE i.cuestionario.creadoPor.id = :usuarioId")
+    Long contarTotalRespuestasPorProfesor(@Param("usuarioId") UUID usuarioId);
+
+    @Query("SELECT COUNT(DISTINCT LOWER(TRIM(COALESCE(i.usuario.email, i.usuario.nombre, i.nombreInvitado)))) FROM IntentoCuestionario i WHERE i.cuestionario.creadoPor.id = :usuarioId AND (i.usuario IS NOT NULL OR (i.nombreInvitado IS NOT NULL AND TRIM(i.nombreInvitado) <> ''))")
+    Long contarAlumnosUnicosPorProfesor(@Param("usuarioId") UUID usuarioId);
+
+    @Query("SELECT i FROM IntentoCuestionario i WHERE i.cuestionario.creadoPor.id = :usuarioId")
+    List<IntentoCuestionario> findByCreadoPorProfesorId(@Param("usuarioId") UUID usuarioId);
 }
 
 

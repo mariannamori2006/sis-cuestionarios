@@ -1,5 +1,6 @@
 package com.nativatec.cuestionarios.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -11,4 +12,6 @@ import com.nativatec.cuestionarios.entity.Cuestionario;
 @Repository
 public interface CuestionarioRepository extends JpaRepository<Cuestionario, UUID> {
     Optional<Cuestionario> findByCodigoAcceso(String codigoAcceso);
+    List<Cuestionario> findByCreadoPorId(UUID creadoPorId);
+    Long countByCreadoPorId(UUID creadoPorId);
 }

@@ -214,6 +214,22 @@ public class IntentoCuestionarioService {
         return new EstadisticasDashboardDTO(promedioCalculado, totalCuestionarios, totalRespuestas, alumnosUnicos);
     }
 
+    // Obtener estadísticas filtradas exclusivamente por el profesor autenticado
+    public EstadisticasDashboardDTO obtenerEstadisticasPorProfesor(UUID profesorId) {
+        Double avg = intentoRepository.obtenerPromedioPorProfesor(profesorId);
+        Double promedioCalculado = (avg != null) ? Math.round(avg * 10.0) / 10.0 : 0.0;
+
+        Long totalCuestionarios = cuestionarioRepository.countByCreadoPorId(profesorId);
+        Long totalRespuestas = intentoRepository.contarTotalRespuestasPorProfesor(profesorId);
+        Long alumnosUnicos = intentoRepository.contarAlumnosUnicosPorProfesor(profesorId);
+
+        if (totalCuestionarios == null) totalCuestionarios = 0L;
+        if (totalRespuestas == null) totalRespuestas = 0L;
+        if (alumnosUnicos == null) alumnosUnicos = 0L;
+
+        return new EstadisticasDashboardDTO(promedioCalculado, totalCuestionarios, totalRespuestas, alumnosUnicos);
+    }
+
     // Obtener estadísticas detalladas completas para el módulo de estadísticas
     @Transactional(readOnly = true)
     public EstadisticasDetalladasDTO obtenerEstadisticasDetalladas() {
@@ -275,6 +291,88 @@ public class IntentoCuestionarioService {
             String fechaStr = c.getCreatedAt() != null ? c.getCreatedAt().format(formatter) : "2026-09-01";
 
             cuestionariosResumen.add(new CuestionarioEstadisticaItemDTO(
+                    c.getId(),
+                    c.getTitulo(),
+                    materia,
+                    respCount,
+                    pregCount,
+                    fechaStr
+            ));
+        }
+
+        return new EstadisticasDetalladasDTO(
+                totalRespuestas,
+                tasaAprobacion,
+                promedioGeneral,
+                alumnosUnicos,
+                distribucion,
+                cuestionariosResumen
+        );
+    }
+
+    // Obtener estadísticas detalladas filtradas por profesor
+    @Transactional(readOnly = true)
+    public EstadisticasDetalladasDTO obtenerEstadisticasDetalladasPorProfesor(UUID profesorId) {
+        Long totalRespuestas = intentoRepository.contarTotalRespuestasPorProfesor(profesorId);
+        if (totalRespuestas == null) totalRespuestas = 0L;
+
+        Long alumnosUnicos = intentoRepository.contarAlumnosUnicosPorProfesor(profesorId);
+        if (alumnosUnicos == null) alumnosUnicos = 0L;
+
+        Double avg = intentoRepository.obtenerPromedioPorProfesor(profesorId);
+        Double promedioGeneral = (avg != null) ? Math.round(avg * 10.0) / 10.0 : 0.0;
+
+        List<IntentoCuestionario> intentos = intentoRepository.findByCreadoPorProfesorId(profesorId);
+        int totalCalificados = 0;
+        int totalAprobados = 0;
+        long c18_20 = 0, c15_17 = 0, c11_14 = 0, c0_10 = 0;
+
+        for (IntentoCuestionario i : intentos) {
+            if (i.getCalificacion() != null) {
+                totalCalificados++;
+                double nota = i.getCalificacion();
+                if (nota >= 11.0) {
+                    totalAprobados++;
+                }
+                if (nota >= 17.5) {
+                    c18_20++;
+                } else if (nota >= 14.5) {
+                    c15_17++;
+                } else if (nota >= 10.5) {
+                    c11_14++;
+                } else {
+                    c0_10++;
+                }
+            }
+        }
+
+        double tasaAprobacion = totalCalificados > 0
+                ? Math.round(((double) totalAprobados / totalCalificados * 100.0) * 10.0) / 10.0
+                : 0.0;
+
+        com.nativatec.cuestionarios.dto.DistribucionCalificacionesDTO distribucion = 
+                new com.nativatec.cuestionarios.dto.DistribucionCalificacionesDTO(c18_20, c15_17, c11_14, c0_10);
+
+        List<Cuestionario> cuestionarios = cuestionarioRepository.findByCreadoPorId(profesorId);
+        List<com.nativatec.cuestionarios.dto.CuestionarioEstadisticaItemDTO> cuestionariosResumen = new java.util.ArrayList<>();
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        for (Cuestionario c : cuestionarios) {
+            Long respCount = intentoRepository.contarRespuestasPorCuestionario(c.getId());
+            if (respCount == null) respCount = 0L;
+            int pregCount = c.getPreguntas() != null ? c.getPreguntas().size() : 0;
+
+            String materia = "General";
+            if (c.getDescripcion() != null) {
+                java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("^\\[(.*?)\\]").matcher(c.getDescripcion());
+                if (matcher.find()) {
+                    materia = matcher.group(1);
+                }
+            }
+
+            String fechaStr = c.getCreatedAt() != null ? c.getCreatedAt().format(formatter) : "2026-09-01";
+
+            cuestionariosResumen.add(new com.nativatec.cuestionarios.dto.CuestionarioEstadisticaItemDTO(
                     c.getId(),
                     c.getTitulo(),
                     materia,
@@ -457,6 +555,17 @@ public class IntentoCuestionarioService {
     @Transactional(readOnly = true)
     public List<ActividadRecienteDTO> obtenerActividadReciente() {
         List<IntentoCuestionario> intentos = intentoRepository.findAll();
+        return procesarListaActividadReciente(intentos);
+    }
+
+    // Obtener los intentos más recientes de los cuestionarios creados por un profesor específico
+    @Transactional(readOnly = true)
+    public List<ActividadRecienteDTO> obtenerActividadRecientePorProfesor(UUID profesorId) {
+        List<IntentoCuestionario> intentos = intentoRepository.findByCreadoPorProfesorId(profesorId);
+        return procesarListaActividadReciente(intentos);
+    }
+
+    private List<ActividadRecienteDTO> procesarListaActividadReciente(List<IntentoCuestionario> intentos) {
         intentos.sort((a, b) -> {
             LocalDateTime fa = a.getFechaFin() != null ? a.getFechaFin() : (a.getFechaInicio() != null ? a.getFechaInicio() : a.getCreatedAt());
             LocalDateTime fb = b.getFechaFin() != null ? b.getFechaFin() : (b.getFechaInicio() != null ? b.getFechaInicio() : b.getCreatedAt());
