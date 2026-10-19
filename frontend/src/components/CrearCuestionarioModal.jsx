@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { crearCuestionario, actualizarCuestionario } from '../services/cuestionarioService';
 import { descargarPlantillaExcel, procesarArchivoPreguntas } from '../services/excelService';
-import { X, UploadCloud, Download, Plus, Trash2, CheckCircle2, Type, CheckSquare, Shuffle, AlertCircle } from 'lucide-react';
+import { X, UploadCloud, Download, Plus, Trash2, CheckCircle2, Type, CheckSquare, Shuffle, AlertCircle, Image as ImageIcon, Link2 } from 'lucide-react';
 
 export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionarioCreado, cuestionarioAEditar = null }) {
     const [tabActiva, setTabActiva] = useState('manual'); // 'manual' o 'importar'
@@ -26,6 +26,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
         {
             enunciado: '',
             tipo: 'Opción múltiple',
+            imagenUrl: '',
             opciones: [
                 { texto: '', correcta: true },
                 { texto: '', correcta: false },
@@ -102,6 +103,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                     return {
                         enunciado: p.enunciado || p.textoPregunta || '',
                         tipo: tipoModal,
+                        imagenUrl: p.imagenUrl || p.imagen_url || '',
                         opciones: opcionesModal
                     };
                 });
@@ -111,6 +113,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                     {
                         enunciado: '',
                         tipo: 'Opción múltiple',
+                        imagenUrl: '',
                         opciones: [
                             { texto: '', correcta: true },
                             { texto: '', correcta: false },
@@ -134,6 +137,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                 {
                     enunciado: '',
                     tipo: 'Opción múltiple',
+                    imagenUrl: '',
                     opciones: [
                         { texto: '', correcta: true },
                         { texto: '', correcta: false },
@@ -254,11 +258,37 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
         setPreguntas(nuevasPreguntas);
     };
 
+    // Actualizar imagenUrl de una pregunta (por URL directa o Base64)
+    const handleImagenChange = (pIndex, url) => {
+        const nuevasPreguntas = [...preguntas];
+        nuevasPreguntas[pIndex].imagenUrl = url;
+        setPreguntas(nuevasPreguntas);
+    };
+
+    // Subir imagen local convirtiéndola a Base64 dataURL
+    const handleSubirImagenLocal = (pIndex, file) => {
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            alert('Por favor selecciona un archivo de imagen válido (PNG, JPG, JPEG, WEBP, GIF, SVG).');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            alert('La imagen no debe superar los 5 MB de tamaño.');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            handleImagenChange(pIndex, e.target.result);
+        };
+        reader.readAsDataURL(file);
+    };
+
     // Añadir nueva pregunta
     const agregarPregunta = () => {
         setPreguntas([...preguntas, {
             enunciado: '',
             tipo: 'Opción múltiple',
+            imagenUrl: '',
             opciones: [
                 { texto: '', correcta: true },
                 { texto: '', correcta: false },
@@ -313,6 +343,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                     enunciado: p.enunciado,
                     tipo: tipoEnum,
                     orden: index + 1,
+                    imagenUrl: p.imagenUrl && p.imagenUrl.trim() !== '' ? p.imagenUrl.trim() : null,
                     opciones: opcionesFormateadas
                 };
             });
@@ -676,10 +707,137 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                                 border: '1px solid #cbd5e1',
                                                 fontSize: '14px',
                                                 backgroundColor: '#fff',
-                                                marginBottom: '14px',
+                                                marginBottom: '10px',
                                                 boxSizing: 'border-box'
                                             }}
                                         />
+
+                                        {/* SECCIÓN DE IMAGEN / DIAGRAMA DE LA PREGUNTA */}
+                                        <div style={{
+                                            backgroundColor: '#ffffff',
+                                            border: '1px solid #e2e8f0',
+                                            borderRadius: '8px',
+                                            padding: '10px 14px',
+                                            marginBottom: '14px'
+                                        }}>
+                                            {pregunta.imagenUrl ? (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <span style={{ fontSize: '11px', fontWeight: '700', color: '#2563eb', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                            <ImageIcon size={14} /> Imagen o diagrama ilustrativo
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleImagenChange(pIndex, '')}
+                                                            style={{
+                                                                background: 'transparent',
+                                                                border: 'none',
+                                                                color: '#ef4444',
+                                                                cursor: 'pointer',
+                                                                fontSize: '11px',
+                                                                fontWeight: '600',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '4px'
+                                                            }}
+                                                        >
+                                                            <Trash2 size={13} /> Quitar imagen
+                                                        </button>
+                                                    </div>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', backgroundColor: '#f8fafc', padding: '8px', borderRadius: '6px', border: '1px dashed #cbd5e1' }}>
+                                                        <img
+                                                            src={pregunta.imagenUrl}
+                                                            alt="Vista previa"
+                                                            onError={(e) => { e.target.style.display = 'none'; }}
+                                                            style={{
+                                                                maxHeight: '90px',
+                                                                maxWidth: '150px',
+                                                                objectFit: 'contain',
+                                                                borderRadius: '4px',
+                                                                backgroundColor: '#fff',
+                                                                border: '1px solid #e2e8f0'
+                                                            }}
+                                                        />
+                                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                                            <input
+                                                                type="text"
+                                                                value={pregunta.imagenUrl.startsWith('data:') ? 'Imagen local cargada desde tu equipo' : pregunta.imagenUrl}
+                                                                onChange={(e) => handleImagenChange(pIndex, e.target.value)}
+                                                                readOnly={pregunta.imagenUrl.startsWith('data:')}
+                                                                placeholder="URL de la imagen..."
+                                                                style={{
+                                                                    width: '100%',
+                                                                    padding: '6px 10px',
+                                                                    fontSize: '12px',
+                                                                    borderRadius: '6px',
+                                                                    border: '1px solid #cbd5e1',
+                                                                    outline: 'none',
+                                                                    color: '#475569',
+                                                                    boxSizing: 'border-box'
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#64748b' }}>
+                                                        <ImageIcon size={15} color="#94a3b8" />
+                                                        <span>¿Adjuntar imagen, gráfico o diagrama a este enunciado?</span>
+                                                    </div>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <label style={{
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            gap: '5px',
+                                                            fontSize: '12px',
+                                                            fontWeight: '600',
+                                                            color: '#2563eb',
+                                                            backgroundColor: '#eff6ff',
+                                                            padding: '5px 10px',
+                                                            borderRadius: '6px',
+                                                            cursor: 'pointer',
+                                                            border: '1px solid #bfdbfe'
+                                                        }}>
+                                                            📁 Subir imagen
+                                                            <input
+                                                                type="file"
+                                                                accept="image/*"
+                                                                style={{ display: 'none' }}
+                                                                onChange={(e) => {
+                                                                    const f = e.target.files?.[0];
+                                                                    if (f) handleSubirImagenLocal(pIndex, f);
+                                                                }}
+                                                            />
+                                                        </label>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const url = prompt('Pega el enlace / URL web de la imagen (ej: https://...):');
+                                                                if (url && url.trim()) {
+                                                                    handleImagenChange(pIndex, url.trim());
+                                                                }
+                                                            }}
+                                                            style={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: '5px',
+                                                                fontSize: '12px',
+                                                                fontWeight: '600',
+                                                                color: '#475569',
+                                                                backgroundColor: '#f1f5f9',
+                                                                padding: '5px 10px',
+                                                                borderRadius: '6px',
+                                                                cursor: 'pointer',
+                                                                border: '1px solid #cbd5e1'
+                                                            }}
+                                                        >
+                                                            <Link2 size={13} /> Enlace URL
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
 
                                         {/* TIPO 1: OPCIÓN MÚLTIPLE */}
                                         {pregunta.tipo === 'Opción múltiple' && (
@@ -949,6 +1107,11 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                         <span style={{ backgroundColor: '#dcfce7', color: '#15803d', padding: '4px 10px', borderRadius: '6px', fontWeight: '600' }}>
                                             ✍️ {resumenImportacion.escritas} Respuesta escrita
                                         </span>
+                                        {resumenImportacion.conImagenes > 0 && (
+                                            <span style={{ backgroundColor: '#e0e7ff', color: '#3730a3', padding: '4px 10px', borderRadius: '6px', fontWeight: '600' }}>
+                                                🖼️ {resumenImportacion.conImagenes} con imagen
+                                            </span>
+                                        )}
                                     </div>
 
                                     <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
@@ -1023,12 +1186,13 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
 
                             {/* GUÍA DE COLUMNAS */}
                             <div style={{ backgroundColor: '#f1f5f9', padding: '16px', borderRadius: '10px', fontSize: '13px', color: '#475569', lineHeight: '1.5' }}>
-                                <strong style={{ color: '#0f172a' }}>Columnas requeridas en la plantilla:</strong>
+                                <strong style={{ color: '#0f172a' }}>Columnas de la plantilla Excel:</strong>
                                 <ul style={{ margin: '8px 0 0 0', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                     <li><strong>Columna A (Tipo):</strong> <code>multiple</code>, <code>truefalse</code>, o <code>short</code>.</li>
                                     <li><strong>Columna B (Pregunta):</strong> Texto del enunciado.</li>
                                     <li><strong>Columnas C a F:</strong> Alternativas (A, B, C, D) para opción múltiple.</li>
                                     <li><strong>Columna G (Respuesta correcta):</strong> Letra (A, B, C, D), texto de la opción o "Verdadero"/"Falso".</li>
+                                    <li><strong>Columna H (URL Imagen - Opcional):</strong> Enlace web directo (https://...) a foto, gráfico o diagrama ilustrativo.</li>
                                 </ul>
                             </div>
                         </div>

@@ -507,7 +507,8 @@ public class IntentoCuestionarioService {
                 }
 
                 detallesDTO.add(new AuditoriaDetalleItemDTO(
-                        pId, enunciado, tipoPregunta, orden, respuestaAlumno, respuestaCorrecta, esCorrecta, esEscrita
+                        pId, enunciado, tipoPregunta, orden, respuestaAlumno, respuestaCorrecta, esCorrecta, esEscrita,
+                        p != null ? p.getImagenUrl() : null
                 ));
             }
 

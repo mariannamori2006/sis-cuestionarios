@@ -1,5 +1,6 @@
 package com.nativatec.cuestionarios.entity;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -38,6 +39,9 @@ public class Pregunta {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "imagen_url", columnDefinition = "TEXT")
+    private String imagenUrl;
 
     @OneToMany(mappedBy = "pregunta", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
@@ -88,6 +92,18 @@ public class Pregunta {
     @JsonProperty("enunciado")
     public void setTextoPregunta(String textoPregunta) {
         this.textoPregunta = textoPregunta;
+    }
+
+    @JsonProperty("imagenUrl")
+    @JsonAlias({"imagen_url", "imagen", "fotoUrl"})
+    public String getImagenUrl() {
+        return imagenUrl;
+    }
+
+    @JsonProperty("imagenUrl")
+    @JsonAlias({"imagen_url", "imagen", "fotoUrl"})
+    public void setImagenUrl(String imagenUrl) {
+        this.imagenUrl = imagenUrl;
     }
 
     // Getters y Setters habituales

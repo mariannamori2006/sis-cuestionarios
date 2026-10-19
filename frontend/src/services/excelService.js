@@ -14,7 +14,8 @@ export const descargarPlantillaExcel = () => {
         "Opción B",
         "Opción C",
         "Opción D",
-        "Respuesta Correcta"
+        "Respuesta Correcta",
+        "URL Imagen (Opcional)"
     ];
 
     const ejemplos = [
@@ -25,7 +26,18 @@ export const descargarPlantillaExcel = () => {
             "Lima",
             "Arequipa",
             "Trujillo",
-            "B"
+            "B",
+            ""
+        ],
+        [
+            "multiple",
+            "¿Qué estructura biológica ilustra este diagrama celular?",
+            "Célula vegetal",
+            "Célula animal",
+            "Bacteria procariota",
+            "Virus",
+            "B",
+            "https://images.unsplash.com/photo-1530497610245-94d3c16cda28?w=800"
         ],
         [
             "truefalse",
@@ -34,7 +46,8 @@ export const descargarPlantillaExcel = () => {
             "Falso",
             "",
             "",
-            "Verdadero"
+            "Verdadero",
+            ""
         ],
         [
             "multiple",
@@ -43,7 +56,8 @@ export const descargarPlantillaExcel = () => {
             "85",
             "90",
             "95",
-            "C"
+            "C",
+            ""
         ],
         [
             "short",
@@ -52,7 +66,8 @@ export const descargarPlantillaExcel = () => {
             "",
             "",
             "",
-            "Júpiter"
+            "Júpiter",
+            ""
         ],
         [
             "truefalse",
@@ -61,7 +76,8 @@ export const descargarPlantillaExcel = () => {
             "Falso",
             "",
             "",
-            "Falso"
+            "Falso",
+            ""
         ]
     ];
 
@@ -76,7 +92,8 @@ export const descargarPlantillaExcel = () => {
         { wch: 20 }, // Opción B
         { wch: 20 }, // Opción C
         { wch: 20 }, // Opción D
-        { wch: 22 }  // Respuesta Correcta
+        { wch: 22 }, // Respuesta Correcta
+        { wch: 35 }  // URL Imagen (Opcional)
     ];
 
     // Añadir hoja al libro
@@ -101,10 +118,15 @@ export const descargarPlantillaExcel = () => {
         ["4. Columna 'Respuesta Correcta':"],
         ["   - Para 'multiple': Indica la letra (A, B, C, D) o el número (1, 2, 3, 4) o el texto exacto."],
         ["   - Para 'truefalse': Escribe 'Verdadero' o 'Falso' (también 'V' o 'F')."],
-        ["   - Para 'short': Escribe la respuesta modelo."]
+        ["   - Para 'short': Escribe la respuesta modelo."],
+        [""],
+        ["5. Columna 'URL Imagen (Opcional)':"],
+        ["   - Enlace directo (https://...) a una imagen, gráfico o diagrama ilustrativo."],
+        ["   - Si la pregunta no lleva imagen, déjala en blanco."],
+        ["   - También puedes adjuntar imágenes desde tu PC en la pantalla de previsualización."]
     ];
     const wsInstrucciones = XLSX.utils.aoa_to_sheet(instrucciones);
-    wsInstrucciones['!cols'] = [{ wch: 75 }];
+    wsInstrucciones['!cols'] = [{ wch: 80 }];
     XLSX.utils.book_append_sheet(wb, wsInstrucciones, "Instrucciones");
 
     // Descargar archivo
@@ -156,11 +178,16 @@ export const procesarArchivoPreguntas = (file) => {
 
                 // Detectar si la primera fila es encabezado
                 let startIndex = 0;
+                let colImagenIndex = 7;
                 const primeraFila = rows[0].map(c => String(c).toLowerCase().trim());
                 if (
-                    primeraFila.some(c => c.includes('tipo') || c.includes('pregunta') || c.includes('enunciado') || c.includes('opci'))
+                    primeraFila.some(c => c.includes('tipo') || c.includes('pregunta') || c.includes('enunciado') || c.includes('opci') || c.includes('imagen'))
                 ) {
                     startIndex = 1;
+                    const idxImg = primeraFila.findIndex(c => c.includes('imagen') || c.includes('foto') || c.includes('grafico') || c.includes('diagrama') || c.includes('url'));
+                    if (idxImg !== -1) {
+                        colImagenIndex = idxImg;
+                    }
                 }
 
                 const preguntasProcesadas = [];
@@ -178,6 +205,7 @@ export const procesarArchivoPreguntas = (file) => {
                     const opcC = String(row[4] || '').trim();
                     const opcD = String(row[5] || '').trim();
                     const rawCorrecta = String(row[6] || '').trim();
+                    const rawImagen = String(row[colImagenIndex] || '').trim();
 
                     // Determinar tipo de pregunta
                     let tipo = 'Opción múltiple';
@@ -249,6 +277,7 @@ export const procesarArchivoPreguntas = (file) => {
                     preguntasProcesadas.push({
                         enunciado,
                         tipo,
+                        imagenUrl: rawImagen,
                         opciones
                     });
                 }
@@ -261,7 +290,8 @@ export const procesarArchivoPreguntas = (file) => {
                     total: preguntasProcesadas.length,
                     multiples: preguntasProcesadas.filter(p => p.tipo === 'Opción múltiple').length,
                     verdaderoFalso: preguntasProcesadas.filter(p => p.tipo === 'Verdadero/Falso').length,
-                    escritas: preguntasProcesadas.filter(p => p.tipo === 'Respuesta escrita').length
+                    escritas: preguntasProcesadas.filter(p => p.tipo === 'Respuesta escrita').length,
+                    conImagenes: preguntasProcesadas.filter(p => p.imagenUrl && p.imagenUrl.trim() !== '').length
                 };
 
                 resolve({

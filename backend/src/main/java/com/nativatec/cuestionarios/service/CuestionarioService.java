@@ -140,6 +140,7 @@ public class CuestionarioService {
 
                     act.setTextoPregunta(nueva.getTextoPregunta());
                     act.setTipo(nueva.getTipo());
+                    act.setImagenUrl(nueva.getImagenUrl());
                     act.setOrden(orden++);
 
                     if (nueva.getOpciones() != null) {

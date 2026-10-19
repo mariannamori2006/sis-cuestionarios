@@ -538,6 +538,35 @@ export default function ResolverCuestionario() {
                                             {pregunta.enunciado || pregunta.textoPregunta}
                                         </h4>
 
+                                        {/* IMAGEN / DIAGRAMA DE LA PREGUNTA (SI EXISTE) */}
+                                        {(pregunta.imagenUrl || pregunta.imagen_url) && (
+                                            <div style={{
+                                                margin: '0 0 16px 0',
+                                                padding: '12px',
+                                                backgroundColor: '#ffffff',
+                                                borderRadius: '10px',
+                                                border: '1px solid #cbd5e1',
+                                                textAlign: 'center',
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
+                                            }}>
+                                                <img
+                                                    src={pregunta.imagenUrl || pregunta.imagen_url}
+                                                    alt={`Diagrama o imagen ilustrativa para la pregunta ${index + 1}`}
+                                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                                    style={{
+                                                        maxWidth: '100%',
+                                                        maxHeight: '360px',
+                                                        borderRadius: '8px',
+                                                        objectFit: 'contain',
+                                                        display: 'inline-block'
+                                                    }}
+                                                />
+                                                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '6px', fontWeight: '500' }}>
+                                                    🔍 Diagrama / ilustración de referencia
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {/* TIPO 1: VERDADERO / FALSO */}
                                         {esVerdaderoFalso && (
                                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>

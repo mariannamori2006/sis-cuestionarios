@@ -482,6 +482,24 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
                                                                         )}
                                                                     </div>
 
+                                                                    {det.imagenUrl && (
+                                                                        <div style={{ margin: '8px 0' }}>
+                                                                            <img
+                                                                                src={det.imagenUrl}
+                                                                                alt="Referencia visual"
+                                                                                onError={(e) => { e.target.style.display = 'none'; }}
+                                                                                style={{
+                                                                                    maxHeight: '120px',
+                                                                                    maxWidth: '220px',
+                                                                                    borderRadius: '6px',
+                                                                                    border: '1px solid #cbd5e1',
+                                                                                    objectFit: 'contain',
+                                                                                    backgroundColor: '#ffffff'
+                                                                                }}
+                                                                            />
+                                                                        </div>
+                                                                    )}
+
                                                                     <div style={{ fontSize: '13px', color: '#334155', marginTop: '6px' }}>
                                                                         <strong>Respuesta enviada:</strong>{' '}
                                                                         <span style={{

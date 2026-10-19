@@ -11,12 +11,19 @@ public class AuditoriaDetalleItemDTO {
     private String respuestaCorrecta;
     private Boolean esCorrecta;
     private Boolean esEscrita;
+    private String imagenUrl;
 
     public AuditoriaDetalleItemDTO() {
     }
 
     public AuditoriaDetalleItemDTO(UUID preguntaId, String enunciado, String tipo, Integer orden,
                                   String respuestaAlumno, String respuestaCorrecta, Boolean esCorrecta, Boolean esEscrita) {
+        this(preguntaId, enunciado, tipo, orden, respuestaAlumno, respuestaCorrecta, esCorrecta, esEscrita, null);
+    }
+
+    public AuditoriaDetalleItemDTO(UUID preguntaId, String enunciado, String tipo, Integer orden,
+                                  String respuestaAlumno, String respuestaCorrecta, Boolean esCorrecta, Boolean esEscrita,
+                                  String imagenUrl) {
         this.preguntaId = preguntaId;
         this.enunciado = enunciado;
         this.tipo = tipo;
@@ -25,6 +32,7 @@ public class AuditoriaDetalleItemDTO {
         this.respuestaCorrecta = respuestaCorrecta;
         this.esCorrecta = esCorrecta;
         this.esEscrita = esEscrita;
+        this.imagenUrl = imagenUrl;
     }
 
     public UUID getPreguntaId() {
@@ -89,5 +97,13 @@ public class AuditoriaDetalleItemDTO {
 
     public void setEsEscrita(Boolean esEscrita) {
         this.esEscrita = esEscrita;
+    }
+
+    public String getImagenUrl() {
+        return imagenUrl;
+    }
+
+    public void setImagenUrl(String imagenUrl) {
+        this.imagenUrl = imagenUrl;
     }
 }
