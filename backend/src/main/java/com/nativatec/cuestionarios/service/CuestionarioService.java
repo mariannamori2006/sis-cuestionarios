@@ -121,6 +121,12 @@ public class CuestionarioService {
             if (modificado.getOrdenAleatorio() != null) {
                 existente.setOrdenAleatorio(modificado.getOrdenAleatorio());
             }
+            if (modificado.getModoSeguro() != null) {
+                existente.setModoSeguro(modificado.getModoSeguro());
+            }
+            if (modificado.getLimiteAdvertencias() != null) {
+                existente.setLimiteAdvertencias(modificado.getLimiteAdvertencias());
+            }
 
             if (modificado.getCodigoAcceso() != null && !modificado.getCodigoAcceso().trim().isEmpty()) {
                 existente.setCodigoAcceso(modificado.getCodigoAcceso().trim());

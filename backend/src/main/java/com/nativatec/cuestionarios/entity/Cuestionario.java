@@ -46,6 +46,14 @@ public class Cuestionario {
     @Column(name = "orden_aleatorio")
     private Boolean ordenAleatorio = false;
 
+    // Modo seguro / Detección de cambio de pestaña
+    @Column(name = "modo_seguro")
+    private Boolean modoSeguro = false;
+
+    // Límite de advertencias permitidas antes del auto-envío (por defecto 3)
+    @Column(name = "limite_advertencias")
+    private Integer limiteAdvertencias = 3;
+
     @OneToMany(mappedBy = "cuestionario", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Pregunta> preguntas = new ArrayList<>();
@@ -70,6 +78,12 @@ public class Cuestionario {
         }
         if (ordenAleatorio == null) {
             ordenAleatorio = false;
+        }
+        if (modoSeguro == null) {
+            modoSeguro = false;
+        }
+        if (limiteAdvertencias == null) {
+            limiteAdvertencias = 3;
         }
         // Generar un código de acceso de 6 números automáticamente si no viene definido
         if (codigoAcceso == null || codigoAcceso.trim().isEmpty()) {
@@ -208,5 +222,21 @@ public class Cuestionario {
 
     public void setPromedioCalificacion(Double promedioCalificacion) {
         this.promedioCalificacion = promedioCalificacion;
+    }
+
+    public Boolean getModoSeguro() {
+        return modoSeguro;
+    }
+
+    public void setModoSeguro(Boolean modoSeguro) {
+        this.modoSeguro = modoSeguro;
+    }
+
+    public Integer getLimiteAdvertencias() {
+        return limiteAdvertencias;
+    }
+
+    public void setLimiteAdvertencias(Integer limiteAdvertencias) {
+        this.limiteAdvertencias = limiteAdvertencias;
     }
 }

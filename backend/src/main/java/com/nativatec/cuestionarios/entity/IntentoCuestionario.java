@@ -32,6 +32,14 @@ public class IntentoCuestionario {
     @Column(name = "calificacion")
     private Double calificacion;
 
+    // Número de veces que el alumno abandonó la pestaña durante el examen
+    @Column(name = "advertencias")
+    private Integer advertencias = 0;
+
+    // Indica si el examen fue enviado automáticamente por exceder el límite de advertencias
+    @Column(name = "finalizado_por_infraccion")
+    private Boolean finalizadoPorInfraccion = false;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -49,6 +57,12 @@ public class IntentoCuestionario {
         }
         if (fechaInicio == null) {
             fechaInicio = now;
+        }
+        if (advertencias == null) {
+            advertencias = 0;
+        }
+        if (finalizadoPorInfraccion == null) {
+            finalizadoPorInfraccion = false;
         }
     }
 
@@ -128,5 +142,21 @@ public class IntentoCuestionario {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Integer getAdvertencias() {
+        return advertencias;
+    }
+
+    public void setAdvertencias(Integer advertencias) {
+        this.advertencias = advertencias;
+    }
+
+    public Boolean getFinalizadoPorInfraccion() {
+        return finalizadoPorInfraccion;
+    }
+
+    public void setFinalizadoPorInfraccion(Boolean finalizadoPorInfraccion) {
+        this.finalizadoPorInfraccion = finalizadoPorInfraccion;
     }
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { crearCuestionario, actualizarCuestionario } from '../services/cuestionarioService';
 import { descargarPlantillaExcel, procesarArchivoPreguntas } from '../services/excelService';
-import { X, UploadCloud, Download, Plus, Trash2, CheckCircle2, Type, CheckSquare, Shuffle, AlertCircle, Image as ImageIcon, Link2 } from 'lucide-react';
+import { X, UploadCloud, Download, Plus, Trash2, CheckCircle2, Type, CheckSquare, Shuffle, AlertCircle, Image as ImageIcon, Link2, ShieldAlert } from 'lucide-react';
 
 export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionarioCreado, cuestionarioAEditar = null }) {
     const [tabActiva, setTabActiva] = useState('manual'); // 'manual' o 'importar'
@@ -12,6 +12,8 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
     const [descripcion, setDescripcion] = useState('');
     const [tiempoLimiteMinutos, setTiempoLimiteMinutos] = useState(0);
     const [ordenAleatorio, setOrdenAleatorio] = useState(false);
+    const [modoSeguro, setModoSeguro] = useState(false);
+    const [limiteAdvertencias, setLimiteAdvertencias] = useState(3);
 
     // Estados para la importación de archivos Excel / CSV
     const [arrastrando, setArrastrando] = useState(false);
@@ -49,6 +51,8 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
             setTitulo(cuestionarioAEditar.titulo || '');
             setTiempoLimiteMinutos(cuestionarioAEditar.tiempoLimiteMinutos || 0);
             setOrdenAleatorio(Boolean(cuestionarioAEditar.ordenAleatorio));
+            setModoSeguro(Boolean(cuestionarioAEditar.modoSeguro));
+            setLimiteAdvertencias(cuestionarioAEditar.limiteAdvertencias || 3);
 
             // Extraer materia si viene formateada como "[Materia] Descripción"
             const descOriginal = cuestionarioAEditar.descripcion || '';
@@ -130,6 +134,8 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
             setDescripcion('');
             setTiempoLimiteMinutos(0);
             setOrdenAleatorio(false);
+            setModoSeguro(false);
+            setLimiteAdvertencias(3);
             setResumenImportacion(null);
             setPreguntasImportadasPendientes([]);
             setErrorImportacion('');
@@ -354,6 +360,8 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                 codigoAcceso: cuestionarioAEditar?.codigoAcceso,
                 tiempoLimiteMinutos: parseInt(tiempoLimiteMinutos, 10) || 0,
                 ordenAleatorio: Boolean(ordenAleatorio),
+                modoSeguro: Boolean(modoSeguro),
+                limiteAdvertencias: parseInt(limiteAdvertencias, 10) || 3,
                 preguntas: preguntasFormateadas
             };
 
@@ -602,6 +610,91 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                     onChange={(e) => setOrdenAleatorio(e.target.checked)}
                                     style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#2563eb' }}
                                 />
+                            </div>
+
+                            {/* MODO SEGURO / DETECCIÓN DE CAMBIO DE PESTAÑA */}
+                            <div style={{
+                                backgroundColor: modoSeguro ? '#fef2f2' : '#f8fafc',
+                                border: modoSeguro ? '1px solid #fca5a5' : '1px solid #e2e8f0',
+                                borderRadius: '10px',
+                                padding: '14px 16px',
+                                transition: 'all 0.2s',
+                                boxSizing: 'border-box'
+                            }}>
+                                <div
+                                    onClick={() => setModoSeguro(!modoSeguro)}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        <div style={{
+                                            width: '36px',
+                                            height: '36px',
+                                            borderRadius: '8px',
+                                            backgroundColor: modoSeguro ? '#fee2e2' : '#e2e8f0',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}>
+                                            <ShieldAlert size={18} color={modoSeguro ? '#dc2626' : '#64748b'} />
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '13px', fontWeight: '700', color: modoSeguro ? '#991b1b' : '#1e293b' }}>
+                                                Modo Seguro (Anti-Copia / Detección de cambio de pestaña)
+                                            </div>
+                                            <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                                Registra advertencias si el alumno abandona la pestaña del examen y auto-envía al llegar al límite
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        checked={modoSeguro}
+                                        onChange={(e) => setModoSeguro(e.target.checked)}
+                                        style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#dc2626' }}
+                                    />
+                                </div>
+
+                                {modoSeguro && (
+                                    <div style={{
+                                        marginTop: '12px',
+                                        paddingTop: '12px',
+                                        borderTop: '1px dashed #fca5a5',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        flexWrap: 'wrap',
+                                        gap: '10px'
+                                    }}>
+                                        <label style={{ fontSize: '12px', fontWeight: '600', color: '#7f1d1d' }}>
+                                            ⚠️ Máximo de advertencias permitidas antes del auto-envío:
+                                        </label>
+                                        <select
+                                            value={limiteAdvertencias}
+                                            onChange={(e) => setLimiteAdvertencias(Number(e.target.value))}
+                                            style={{
+                                                padding: '6px 12px',
+                                                borderRadius: '6px',
+                                                border: '1px solid #f87171',
+                                                fontSize: '12px',
+                                                fontWeight: '600',
+                                                backgroundColor: '#fff',
+                                                color: '#991b1b',
+                                                outline: 'none',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            <option value={1}>1 advertencia (Tolerancia estricta)</option>
+                                            <option value={2}>2 advertencias</option>
+                                            <option value={3}>3 advertencias (Recomendado)</option>
+                                            <option value={5}>5 advertencias (Flexible)</option>
+                                        </select>
+                                    </div>
+                                )}
                             </div>
 
                             {/* DESCRIPCIÓN */}

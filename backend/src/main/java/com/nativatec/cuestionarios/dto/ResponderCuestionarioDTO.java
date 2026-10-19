@@ -8,6 +8,8 @@ public class ResponderCuestionarioDTO {
     private String nombreParticipante;
     private UUID usuarioId;
     private List<RespuestaItemDTO> respuestas;
+    private Integer advertencias = 0;
+    private Boolean finalizadoPorInfraccion = false;
 
     public ResponderCuestionarioDTO() {
     }
@@ -42,6 +44,22 @@ public class ResponderCuestionarioDTO {
 
     public void setRespuestas(List<RespuestaItemDTO> respuestas) {
         this.respuestas = respuestas;
+    }
+
+    public Integer getAdvertencias() {
+        return advertencias;
+    }
+
+    public void setAdvertencias(Integer advertencias) {
+        this.advertencias = advertencias;
+    }
+
+    public Boolean getFinalizadoPorInfraccion() {
+        return finalizadoPorInfraccion;
+    }
+
+    public void setFinalizadoPorInfraccion(Boolean finalizadoPorInfraccion) {
+        this.finalizadoPorInfraccion = finalizadoPorInfraccion;
     }
 
     public static class RespuestaItemDTO {

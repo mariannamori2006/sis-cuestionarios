@@ -349,6 +349,7 @@ export const exportarNotasExcel = (cuestionario, auditoriaData) => {
             "Nota (/20)",
             "Nota (/100)",
             "Estado",
+            "Modo Seguro (Salidas)",
             "Fecha de envío",
             "Hora",
             "Observaciones"
@@ -363,9 +364,15 @@ export const exportarNotasExcel = (cuestionario, auditoriaData) => {
                 ? "EN REVISIÓN"
                 : (aprobado ? "APROBADO" : "DESAPROBADO");
 
+            const seguridad = intento.finalizadoPorInfraccion
+                ? `BLOQUEADO (${intento.advertencias || 0} advertencias)`
+                : (intento.advertencias > 0
+                    ? `${intento.advertencias} salida(s) de pestaña`
+                    : "Sin incidentes (0)");
+
             const observaciones = intento.tienePreguntasEscritas
                 ? "Incluye preguntas de respuesta escrita"
-                : "Calificación automática";
+                : (intento.finalizadoPorInfraccion ? "Auto-finalizado por superar límite de advertencias" : "Calificación automática");
 
             return [
                 index + 1,
@@ -373,6 +380,7 @@ export const exportarNotasExcel = (cuestionario, auditoriaData) => {
                 nota20.toFixed(1),
                 nota100,
                 estado,
+                seguridad,
                 intento.fecha || "—",
                 intento.hora || "—",
                 observaciones
@@ -395,9 +403,10 @@ export const exportarNotasExcel = (cuestionario, auditoriaData) => {
             { wch: 14 }, // Nota /20
             { wch: 14 }, // Nota /100
             { wch: 16 }, // Estado
+            { wch: 25 }, // Modo Seguro (Salidas)
             { wch: 16 }, // Fecha
             { wch: 12 }, // Hora
-            { wch: 36 }  // Observaciones
+            { wch: 42 }  // Observaciones
         ];
 
         XLSX.utils.book_append_sheet(wb, ws, "Calificaciones");

@@ -15,7 +15,8 @@ import {
     Search, 
     Trash2, 
     Edit2,
-    Shield, 
+    Shield,
+    ShieldAlert, 
     GraduationCap, 
     Award, 
     X, 
@@ -942,6 +943,11 @@ export default function AdminDashboardComponent() {
                                                     {c.tiempoLimiteMinutos > 0 && (
                                                         <span style={{ background: '#fef3c7', color: '#b45309', padding: '4px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                                                             <Clock size={11} /> {c.tiempoLimiteMinutos}m
+                                                        </span>
+                                                    )}
+                                                    {c.modoSeguro && (
+                                                        <span style={{ background: '#fef2f2', color: '#b91c1c', padding: '4px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                                            <ShieldAlert size={11} /> Seguro
                                                         </span>
                                                     )}
                                                 </div>

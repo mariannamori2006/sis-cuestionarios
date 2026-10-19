@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import logoNativa from '../images/logoNativa.jpeg';
-import { Award, CheckCircle, LogOut, Clock, AlertTriangle, AlertCircle, Shuffle } from 'lucide-react';
+import { Award, CheckCircle, LogOut, Clock, AlertTriangle, AlertCircle, Shuffle, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { responderCuestionario } from '../services/cuestionarioService';
 
 export default function ResolverCuestionario() {
@@ -23,15 +23,26 @@ export default function ResolverCuestionario() {
     const [tiempoTotalSegundos, setTiempoTotalSegundos] = useState(0);
     const [tiempoRestanteSegundos, setTiempoRestanteSegundos] = useState(null);
     const [autoEnviadoPorTiempo, setAutoEnviadoPorTiempo] = useState(false);
+
+    // Estados de Modo Seguro / Detección de cambio de pestaña
+    const [advertencias, setAdvertencias] = useState(0);
+    const [mostrarModalAdvertencia, setMostrarModalAdvertencia] = useState(false);
+    const [bloqueadoPorInfraccion, setBloqueadoPorInfraccion] = useState(false);
     
-    // Ref para acceder al estado más reciente de respuestas dentro del callback del timer
+    // Refs para acceder al estado más reciente de respuestas dentro del callback del timer y listeners
     const respuestasRef = useRef(respuestasSeleccionadas);
     const enviandoRef = useRef(enviando);
     const resultadoRef = useRef(resultado);
+    const advertenciasRef = useRef(0);
+    const ultimaSalidaRef = useRef(0);
 
     useEffect(() => {
         respuestasRef.current = respuestasSeleccionadas;
     }, [respuestasSeleccionadas]);
+
+    useEffect(() => {
+        advertenciasRef.current = advertencias;
+    }, [advertencias]);
 
     useEffect(() => {
         enviandoRef.current = enviando;
@@ -109,6 +120,49 @@ export default function ResolverCuestionario() {
         return () => clearInterval(interval);
     }, [comenzado, cuestionario, resultado]);
 
+    // Detección de cambio de pestaña / ventana (Modo Seguro Anti-Copia)
+    useEffect(() => {
+        if (!comenzado || !cuestionario || !cuestionario.modoSeguro || resultado || enviando) return;
+
+        const maxPermitido = cuestionario.limiteAdvertencias || 3;
+
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                // El alumno abandonó la pestaña o minimizó
+                ultimaSalidaRef.current = Date.now();
+            } else {
+                // El alumno regresó a la pestaña
+                const ahora = Date.now();
+                // Cooldown de 1200ms para evitar dobles registros
+                if (ahora - ultimaSalidaRef.current > 1200 || ultimaSalidaRef.current === 0) {
+                    const nuevoTotal = advertenciasRef.current + 1;
+                    advertenciasRef.current = nuevoTotal;
+                    setAdvertencias(nuevoTotal);
+
+                    if (nuevoTotal >= maxPermitido) {
+                        setBloqueadoPorInfraccion(true);
+                        setMostrarModalAdvertencia(false);
+                        ejecutarAutoEnvioPorInfraccion(nuevoTotal);
+                    } else {
+                        setMostrarModalAdvertencia(true);
+                    }
+                }
+            }
+        };
+
+        const handleWindowBlur = () => {
+            ultimaSalidaRef.current = Date.now();
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('blur', handleWindowBlur);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('blur', handleWindowBlur);
+        };
+    }, [comenzado, cuestionario, resultado, enviando]);
+
     const handleIniciarConNombre = (e) => {
         e.preventDefault();
         if (!nombreInput.trim()) return;
@@ -165,7 +219,9 @@ export default function ResolverCuestionario() {
             const resultadoBackend = await responderCuestionario({
                 cuestionarioId: cuestionario.id,
                 nombreParticipante: (sessionStorage.getItem('nombreParticipante') || nombreParticipante || 'Anónimo').trim(),
-                respuestas: payload
+                respuestas: payload,
+                advertencias: advertenciasRef.current,
+                finalizadoPorInfraccion: false
             });
 
             setResultado({
@@ -208,6 +264,54 @@ export default function ResolverCuestionario() {
         }
     };
 
+    // Auto-envío disparado al superar el límite de advertencias en Modo Seguro
+    const ejecutarAutoEnvioPorInfraccion = async (totalAdvertencias) => {
+        if (!cuestionario || enviandoRef.current || resultadoRef.current) return;
+
+        setEnviando(true);
+        const payload = construirPayloadRespuestas(respuestasRef.current);
+
+        try {
+            const resultadoBackend = await responderCuestionario({
+                cuestionarioId: cuestionario.id,
+                nombreParticipante: (sessionStorage.getItem('nombreParticipante') || nombreParticipante || 'Anónimo').trim(),
+                respuestas: payload,
+                advertencias: totalAdvertencias,
+                finalizadoPorInfraccion: true
+            });
+
+            setResultado({
+                nota: resultadoBackend.notaFormateada || (resultadoBackend.requiereRevision ? 'Pendiente de revisión' : `${resultadoBackend.calificacion} / 20`),
+                mensaje: `Evaluación finalizada automáticamente por superar el límite de ${totalAdvertencias} advertencias de cambio de pestaña.`,
+                requiereRevision: Boolean(resultadoBackend.requiereRevision),
+                porInfraccion: true
+            });
+        } catch (err) {
+            console.error("Error al auto-enviar por infracción:", err);
+            let totalPreguntas = cuestionario.preguntas?.length || 0;
+            let aciertos = 0;
+            (cuestionario.preguntas || []).forEach((pregunta, pIndex) => {
+                const pKey = pregunta.id || pIndex;
+                const opcionSeleccionadaId = respuestasRef.current[pKey];
+                if (pregunta.opciones) {
+                    const opcionElegida = pregunta.opciones.find((op, oIndex) => (op.id || oIndex) === opcionSeleccionadaId);
+                    if (opcionElegida && (opcionElegida.correcta === true || opcionElegida.esCorrecta === true)) {
+                        aciertos++;
+                    }
+                }
+            });
+
+            setResultado({
+                nota: `${((aciertos / (totalPreguntas || 1)) * 20).toFixed(1)} / 20`,
+                mensaje: `Evaluación finalizada automáticamente por superar el límite de ${totalAdvertencias} advertencias de cambio de pestaña.`,
+                requiereRevision: false,
+                porInfraccion: true
+            });
+        } finally {
+            setEnviando(false);
+        }
+    };
+
     // Envío manual por parte del estudiante
     const handleSubmitEvaluacion = async (e) => {
         if (e) e.preventDefault();
@@ -221,7 +325,9 @@ export default function ResolverCuestionario() {
             const resultadoBackend = await responderCuestionario({
                 cuestionarioId: cuestionario.id,
                 nombreParticipante: (nombreParticipante || 'Anónimo').trim(),
-                respuestas: payload
+                respuestas: payload,
+                advertencias: advertenciasRef.current,
+                finalizadoPorInfraccion: false
             });
 
             setResultado({
@@ -324,7 +430,28 @@ export default function ResolverCuestionario() {
                                     <Shuffle size={15} /> Preguntas en orden aleatorio
                                 </div>
                             )}
+                            {cuestionario.modoSeguro && (
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#fef2f2', color: '#dc2626', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: '600' }}>
+                                    <ShieldAlert size={15} /> Modo Seguro ({cuestionario.limiteAdvertencias || 3} advertencias máx.)
+                                </div>
+                            )}
                         </div>
+
+                        {cuestionario.modoSeguro && (
+                            <div style={{
+                                marginTop: '16px',
+                                padding: '12px 14px',
+                                backgroundColor: '#fff1f2',
+                                border: '1px solid #fecdd3',
+                                borderRadius: '10px',
+                                fontSize: '12px',
+                                color: '#9f1239',
+                                textAlign: 'left',
+                                lineHeight: '1.4'
+                            }}>
+                                <strong>⚠️ Modo Seguro Activado:</strong> Si sales de la pestaña, minimizas o abres otra aplicación, se registrará una advertencia. Si alcanzas las <strong>{cuestionario.limiteAdvertencias || 3} advertencias</strong>, tu examen se cerrará y calificará automáticamente.
+                            </div>
+                        )}
                     </div>
 
                     <form onSubmit={handleIniciarConNombre} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -446,6 +573,23 @@ export default function ResolverCuestionario() {
                     <div style={{ textAlign: 'right' }}>
                         <span style={{ fontSize: '12px', color: '#64748b', display: 'block' }}>Participante:</span>
                         <strong style={{ fontSize: '14px', color: '#0f172a' }}>{nombreParticipante}</strong>
+                        {cuestionario.modoSeguro && (
+                            <div style={{
+                                marginTop: '4px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                backgroundColor: advertencias > 0 ? '#fef2f2' : '#f0fdf4',
+                                color: advertencias > 0 ? '#dc2626' : '#16a34a',
+                                border: advertencias > 0 ? '1px solid #fca5a5' : '1px solid #bbf7d0',
+                                padding: '2px 8px',
+                                borderRadius: '12px',
+                                fontSize: '11px',
+                                fontWeight: '700'
+                            }}>
+                                <ShieldAlert size={12} /> Advertencias: {advertencias} / {cuestionario.limiteAdvertencias || 3}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -466,6 +610,25 @@ export default function ResolverCuestionario() {
                             }}>
                                 <Clock size={18} />
                                 ¡Tiempo agotado! Tu examen fue enviado automáticamente.
+                            </div>
+                        )}
+
+                        {resultado.porInfraccion && (
+                            <div style={{
+                                backgroundColor: '#fee2e2',
+                                color: '#991b1b',
+                                padding: '14px 20px',
+                                borderRadius: '10px',
+                                fontSize: '13px',
+                                fontWeight: '600',
+                                marginBottom: '20px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                border: '1px solid #fecaca'
+                            }}>
+                                <ShieldAlert size={20} color="#dc2626" />
+                                Evaluación finalizada automáticamente por superar el límite de advertencias (cambios de pestaña detectados: {advertencias}).
                             </div>
                         )}
 
@@ -691,6 +854,116 @@ export default function ResolverCuestionario() {
                     </form>
                 )}
             </div>
+
+            {/* MODAL DE ADVERTENCIA POR CAMBIO DE PESTAÑA */}
+            {mostrarModalAdvertencia && !resultado && !enviando && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100vw',
+                    height: '100vh',
+                    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+                    backdropFilter: 'blur(4px)',
+                    zIndex: 99999,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '20px',
+                    boxSizing: 'border-box'
+                }}>
+                    <div style={{
+                        backgroundColor: '#ffffff',
+                        borderRadius: '18px',
+                        padding: '32px 28px',
+                        maxWidth: '460px',
+                        width: '100%',
+                        textAlign: 'center',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+                        border: '1px solid #fecaca'
+                    }}>
+                        <div style={{
+                            width: '64px',
+                            height: '64px',
+                            borderRadius: '50%',
+                            backgroundColor: '#fee2e2',
+                            color: '#dc2626',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            margin: '0 auto 18px auto'
+                        }}>
+                            <ShieldAlert size={34} />
+                        </div>
+
+                        <div style={{
+                            display: 'inline-block',
+                            backgroundColor: '#fef2f2',
+                            color: '#b91c1c',
+                            fontWeight: '700',
+                            fontSize: '11px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.6px',
+                            padding: '4px 12px',
+                            borderRadius: '12px',
+                            marginBottom: '10px'
+                        }}>
+                            Advertencia #{advertencias} de {cuestionario.limiteAdvertencias || 3}
+                        </div>
+
+                        <h3 style={{ fontSize: '19px', fontWeight: '800', color: '#0f172a', margin: '0 0 10px 0' }}>
+                            ¡Abandonaste la pestaña del examen!
+                        </h3>
+
+                        <p style={{ fontSize: '14px', color: '#475569', lineHeight: '1.5', margin: '0 0 20px 0' }}>
+                            Se detectó que cambiaste de pestaña o minimizaste la ventana del navegador. Esta acción ha quedado registrada para tu profesor.
+                        </p>
+
+                        <div style={{
+                            backgroundColor: '#fff1f2',
+                            border: '1px dashed #fca5a5',
+                            padding: '12px 14px',
+                            borderRadius: '10px',
+                            fontSize: '13px',
+                            color: '#991b1b',
+                            marginBottom: '24px',
+                            fontWeight: '600'
+                        }}>
+                            {(cuestionario.limiteAdvertencias || 3) - advertencias > 0 ? (
+                                <>
+                                    ⚠️ Te quedan <strong>{(cuestionario.limiteAdvertencias || 3) - advertencias}</strong> {(cuestionario.limiteAdvertencias || 3) - advertencias === 1 ? 'advertencia' : 'advertencias'} antes de que el examen se envíe y califique automáticamente.
+                                </>
+                            ) : (
+                                <>
+                                    🚨 Has alcanzado el límite máximo de advertencias permitidas.
+                                </>
+                            )}
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => setMostrarModalAdvertencia(false)}
+                            style={{
+                                backgroundColor: '#dc2626',
+                                color: '#ffffff',
+                                border: 'none',
+                                borderRadius: '10px',
+                                padding: '12px 24px',
+                                fontSize: '14px',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                width: '100%',
+                                transition: 'background-color 0.2s',
+                                boxShadow: '0 4px 6px -1px rgba(220, 38, 38, 0.3)'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#b91c1c'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#dc2626'}
+                        >
+                            Entendido, regresar al examen
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

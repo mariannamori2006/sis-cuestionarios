@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { obtenerAuditoriaCuestionario, calificarIntento } from '../services/cuestionarioService';
 import { exportarNotasExcel } from '../services/excelService';
-import { X, ChevronDown, ChevronUp, CheckCircle, XCircle, Edit2, Save, Users, Award, Clock, Download, FileSpreadsheet } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, CheckCircle, XCircle, Edit2, Save, Users, Award, Clock, Download, FileSpreadsheet, ShieldAlert, ShieldCheck, AlertTriangle } from 'lucide-react';
 
 export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario, onActualizado }) {
     const [loading, setLoading] = useState(true);
@@ -216,7 +216,7 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
                         {/* CABECERA DE TABLA */}
                         <div style={{
                             display: 'grid',
-                            gridTemplateColumns: 'minmax(180px, 1.6fr) 110px 110px 80px 36px',
+                            gridTemplateColumns: 'minmax(180px, 1.3fr) 100px 140px 90px 70px 36px',
                             padding: '10px 8px',
                             borderBottom: '1px solid #e2e8f0',
                             fontSize: '11px',
@@ -228,6 +228,7 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
                         }}>
                             <div>ALUMNO</div>
                             <div>CALIFICACIÓN</div>
+                            <div>MODO SEGURO</div>
                             <div>FECHA</div>
                             <div>HORA</div>
                             <div></div>
@@ -266,7 +267,7 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
                                             onClick={() => toggleExpand(intento.intentoId)}
                                             style={{
                                                 display: 'grid',
-                                                gridTemplateColumns: 'minmax(180px, 1.6fr) 110px 110px 80px 36px',
+                                                gridTemplateColumns: 'minmax(180px, 1.3fr) 100px 140px 90px 70px 36px',
                                                 padding: '14px 8px',
                                                 alignItems: 'center',
                                                 cursor: 'pointer',
@@ -334,6 +335,53 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
                                                 )}
                                             </div>
 
+                                            {/* MODO SEGURO / INCIDENTES */}
+                                            <div>
+                                                {intento.finalizadoPorInfraccion ? (
+                                                    <span style={{
+                                                        backgroundColor: '#fee2e2',
+                                                        color: '#dc2626',
+                                                        fontSize: '11px',
+                                                        fontWeight: '700',
+                                                        padding: '3px 8px',
+                                                        borderRadius: '6px',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px'
+                                                    }} title={`Examen auto-enviado por superar ${intento.advertencias} advertencias de cambio de pestaña`}>
+                                                        <ShieldAlert size={12} /> Bloqueado ({intento.advertencias} adv.)
+                                                    </span>
+                                                ) : intento.advertencias > 0 ? (
+                                                    <span style={{
+                                                        backgroundColor: '#fef3c7',
+                                                        color: '#d97706',
+                                                        fontSize: '11px',
+                                                        fontWeight: '700',
+                                                        padding: '3px 8px',
+                                                        borderRadius: '6px',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px'
+                                                    }} title={`El alumno salió de la pestaña ${intento.advertencias} veces`}>
+                                                        <AlertTriangle size={12} /> {intento.advertencias} {intento.advertencias === 1 ? 'salida' : 'salidas'}
+                                                    </span>
+                                                ) : (
+                                                    <span style={{
+                                                        backgroundColor: '#f0fdf4',
+                                                        color: '#16a34a',
+                                                        fontSize: '11px',
+                                                        fontWeight: '600',
+                                                        padding: '3px 8px',
+                                                        borderRadius: '6px',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px'
+                                                    }}>
+                                                        <ShieldCheck size={12} /> Limpio
+                                                    </span>
+                                                )}
+                                            </div>
+
                                             {/* FECHA */}
                                             <div style={{ fontSize: '13px', color: '#64748b' }}>
                                                 {intento.fecha}
@@ -359,6 +407,28 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
                                                 borderRadius: '0 0 10px 10px',
                                                 fontSize: '13px'
                                             }}>
+                                                {/* ALERTA DE MODO SEGURO SI HUBO SALIDAS DE PESTAÑA */}
+                                                {(intento.advertencias > 0 || intento.finalizadoPorInfraccion) && (
+                                                    <div style={{
+                                                        backgroundColor: intento.finalizadoPorInfraccion ? '#fef2f2' : '#fffbeb',
+                                                        border: intento.finalizadoPorInfraccion ? '1px solid #fecaca' : '1px solid #fde68a',
+                                                        color: intento.finalizadoPorInfraccion ? '#991b1b' : '#92400e',
+                                                        padding: '10px 14px',
+                                                        borderRadius: '8px',
+                                                        fontSize: '12px',
+                                                        fontWeight: '600',
+                                                        marginBottom: '16px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '8px'
+                                                    }}>
+                                                        <ShieldAlert size={16} />
+                                                        {intento.finalizadoPorInfraccion
+                                                            ? `Infracción de Modo Seguro: El alumno abandonó la pestaña del examen ${intento.advertencias} veces. La prueba fue cerrada y calificada automáticamente.`
+                                                            : `Alerta de supervisión: El alumno abandonó o minimizó la pestaña ${intento.advertencias} ${intento.advertencias === 1 ? 'vez' : 'veces'} durante la resolución.`}
+                                                    </div>
+                                                )}
+
                                                 {/* BARRA DE ACCIÓN PARA CALIFICAR / MODIFICAR NOTA */}
                                                 <div style={{
                                                     display: 'flex',

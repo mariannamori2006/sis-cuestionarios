@@ -20,6 +20,7 @@ import {
     Trash2,
     Clock,
     Shuffle,
+    ShieldAlert,
     Download
 } from 'lucide-react';
 
@@ -261,6 +262,21 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                                                 gap: '4px'
                                             }}>
                                                 <Shuffle size={12} /> Aleatorio
+                                            </span>
+                                        )}
+                                        {cuestionario.modoSeguro && (
+                                            <span style={{
+                                                backgroundColor: '#fef2f2',
+                                                color: '#b91c1c',
+                                                padding: '4px 10px',
+                                                borderRadius: '20px',
+                                                fontSize: '11px',
+                                                fontWeight: '600',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '4px'
+                                            }}>
+                                                <ShieldAlert size={12} /> Modo Seguro ({cuestionario.limiteAdvertencias || 3} adv.)
                                             </span>
                                         )}
                                     </div>

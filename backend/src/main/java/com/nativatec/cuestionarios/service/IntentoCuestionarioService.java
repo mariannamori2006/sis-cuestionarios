@@ -89,6 +89,9 @@ public class IntentoCuestionarioService {
             usuarioRepository.findById(dto.getUsuarioId()).ifPresent(intento::setUsuario);
         }
 
+        intento.setAdvertencias(dto.getAdvertencias() != null ? dto.getAdvertencias() : 0);
+        intento.setFinalizadoPorInfraccion(Boolean.TRUE.equals(dto.getFinalizadoPorInfraccion()));
+
         intento.setFechaInicio(LocalDateTime.now());
         intento.setFechaFin(LocalDateTime.now());
 
@@ -182,9 +185,14 @@ public class IntentoCuestionarioService {
         intento.setCalificacion(calificacionFinal);
         intentoRepository.save(intento);
 
-        String mensaje = calificacionFinal >= 11.0
-                ? String.format("¡Excelente trabajo! Obtuviste %d de %d aciertos.", aciertos, totalPreguntas)
-                : String.format("Has completado el cuestionario con %d de %d aciertos. ¡Sigue practicando!", aciertos, totalPreguntas);
+        String mensaje;
+        if (Boolean.TRUE.equals(dto.getFinalizadoPorInfraccion())) {
+            mensaje = String.format("Examen finalizado automáticamente por superar el límite de advertencias al salir de la pestaña. Obtuviste %d de %d aciertos.", aciertos, totalPreguntas);
+        } else if (calificacionFinal >= 11.0) {
+            mensaje = String.format("¡Excelente trabajo! Obtuviste %d de %d aciertos.", aciertos, totalPreguntas);
+        } else {
+            mensaje = String.format("Has completado el cuestionario con %d de %d aciertos. ¡Sigue practicando!", aciertos, totalPreguntas);
+        }
 
         String notaFormateada = String.format("%.1f / 20", calificacionFinal);
 
@@ -521,6 +529,8 @@ public class IntentoCuestionarioService {
                     strFecha,
                     strHora,
                     tieneEscritas,
+                    intento.getAdvertencias(),
+                    intento.getFinalizadoPorInfraccion(),
                     detallesDTO
             ));
         }
