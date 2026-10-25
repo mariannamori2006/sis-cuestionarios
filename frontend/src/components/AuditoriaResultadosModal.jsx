@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { obtenerAuditoriaCuestionario, calificarIntento } from '../services/cuestionarioService';
 import { exportarNotasExcel } from '../services/excelService';
-import { X, ChevronDown, ChevronUp, CheckCircle, XCircle, Edit2, Save, Users, Award, Clock, Download, FileSpreadsheet, ShieldAlert, ShieldCheck, AlertTriangle } from 'lucide-react';
+import GraficasRendimientoAvanzadas from './GraficasRendimientoAvanzadas';
+import { X, ChevronDown, ChevronUp, CheckCircle, XCircle, Edit2, Save, Users, Award, Clock, Download, FileSpreadsheet, ShieldAlert, ShieldCheck, AlertTriangle, BarChart3 } from 'lucide-react';
 
 export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario, onActualizado }) {
     const [loading, setLoading] = useState(true);
@@ -13,6 +14,7 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
     const [editandoNotaId, setEditandoNotaId] = useState(null);
     const [notaInput, setNotaInput] = useState('');
     const [guardandoNota, setGuardandoNota] = useState(false);
+    const [subVista, setSubVista] = useState('alumnos'); // 'alumnos' o 'graficas'
 
     useEffect(() => {
         if (!isOpen || !cuestionario?.id) return;
@@ -87,6 +89,48 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
     const promedio = auditoriaData?.promedio ?? (cuestionario?.promedioCalificacion || 0.0);
     const intentos = auditoriaData?.intentos || [];
 
+    // Calcular estadísticas por pregunta de este cuestionario para las gráficas
+    const preguntasAuditoria = useMemo(() => {
+        if (!auditoriaData?.intentos || auditoriaData.intentos.length === 0) return [];
+        const stats = {};
+        auditoriaData.intentos.forEach(intento => {
+            (intento.detalles || []).forEach(d => {
+                const pKey = d.preguntaId || `${d.orden}-${d.enunciado}`;
+                if (!stats[pKey]) {
+                    stats[pKey] = {
+                        preguntaId: d.preguntaId || pKey,
+                        cuestionarioId: cuestionario?.id,
+                        cuestionarioTitulo: titulo,
+                        materia: auditoriaData.materia || cuestionario?.materia || 'General',
+                        enunciado: d.enunciado || `Pregunta ${d.orden || ''}`,
+                        orden: d.orden || 1,
+                        tipo: d.tipoPregunta || 'OPCION_MULTIPLE',
+                        totalRespuestas: 0,
+                        respuestasCorrectas: 0,
+                        respuestasIncorrectas: 0
+                    };
+                }
+                stats[pKey].totalRespuestas++;
+                if (d.esCorrecta === true) {
+                    stats[pKey].respuestasCorrectas++;
+                } else if (d.esCorrecta === false) {
+                    stats[pKey].respuestasIncorrectas++;
+                }
+            });
+        });
+
+        return Object.values(stats).map(s => {
+            const tasa = s.totalRespuestas > 0
+                ? Math.round((s.respuestasCorrectas / s.totalRespuestas) * 1000) / 10
+                : 0;
+            return {
+                ...s,
+                tasaAciertos: tasa,
+                dificultad: tasa >= 75 ? 'Baja' : tasa >= 50 ? 'Media' : 'Alta'
+            };
+        }).sort((a, b) => a.orden - b.orden);
+    }, [auditoriaData, cuestionario, titulo]);
+
     return (
         <div style={{
             position: 'fixed',
@@ -105,8 +149,8 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
                 backgroundColor: '#ffffff',
                 borderRadius: '20px',
                 width: '100%',
-                maxWidth: '720px',
-                maxHeight: '88vh',
+                maxWidth: '920px',
+                maxHeight: '90vh',
                 overflowY: 'auto',
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
                 display: 'flex',
@@ -211,10 +255,70 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
                         </p>
                     </div>
                 ) : (
-                    /* TABLA DE AUDITORÍA */
                     <div>
-                        {/* CABECERA DE TABLA */}
-                        <div style={{
+                        {/* SELECTOR DE PESTAÑA DENTRO DEL MODAL */}
+                        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
+                            <button
+                                type="button"
+                                onClick={() => setSubVista('alumnos')}
+                                style={{
+                                    padding: '7px 16px',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    fontSize: '13px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    background: subVista === 'alumnos' ? '#0f172a' : '#f1f5f9',
+                                    color: subVista === 'alumnos' ? '#ffffff' : '#64748b',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                👥 Evaluaciones de Alumnos ({intentos.length})
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setSubVista('graficas')}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '7px 16px',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    fontSize: '13px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    background: subVista === 'graficas' ? '#2563eb' : '#f1f5f9',
+                                    color: subVista === 'graficas' ? '#ffffff' : '#64748b',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                <BarChart3 size={15} /> Gráficas de Rendimiento del Examen
+                            </button>
+                        </div>
+
+                        {subVista === 'graficas' ? (
+                            <GraficasRendimientoAvanzadas
+                                rendimientoPreguntas={preguntasAuditoria}
+                                rendimientoMaterias={[{
+                                    materia: auditoriaData?.materia || cuestionario?.materia || 'General',
+                                    totalCuestionarios: 1,
+                                    totalPreguntas: preguntasAuditoria.length,
+                                    totalRespuestas: intentos.length * preguntasAuditoria.length,
+                                    respuestasCorrectas: preguntasAuditoria.reduce((sum, p) => sum + p.respuestasCorrectas, 0),
+                                    respuestasIncorrectas: preguntasAuditoria.reduce((sum, p) => sum + p.respuestasIncorrectas, 0),
+                                    tasaAciertos: Math.round((promedio / 20) * 100),
+                                    promedioNota: promedio,
+                                    color: '#2563eb'
+                                }]}
+                                cuestionarios={cuestionario ? [cuestionario] : []}
+                                tituloModulo="Rendimiento de este Cuestionario"
+                            />
+                        ) : (
+                            /* TABLA DE AUDITORÍA */
+                            <div>
+                                {/* CABECERA DE TABLA */}
+                                <div style={{
                             display: 'grid',
                             gridTemplateColumns: 'minmax(180px, 1.3fr) 100px 140px 90px 70px 36px',
                             padding: '10px 8px',
@@ -601,6 +705,8 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
                             })}
                         </div>
                     </div>
+                    )}
+                </div>
                 )}
             </div>
         </div>

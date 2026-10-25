@@ -89,6 +89,14 @@ public class IntentoCuestionarioController {
         return ResponseEntity.ok(auditoria);
     }
 
+    // Rendimiento y tasa de aciertos por pregunta de un cuestionario (GET: /api/intentos/rendimiento-preguntas/{cuestionarioId})
+    @GetMapping("/rendimiento-preguntas/{cuestionarioId}")
+    public ResponseEntity<List<com.nativatec.cuestionarios.dto.RendimientoPreguntaDTO>> obtenerRendimientoPreguntasPorCuestionario(
+            @PathVariable UUID cuestionarioId) {
+        List<com.nativatec.cuestionarios.dto.RendimientoPreguntaDTO> rendimiento = intentoService.obtenerRendimientoPreguntasPorCuestionario(cuestionarioId);
+        return ResponseEntity.ok(rendimiento);
+    }
+
     // Calificar o actualizar nota de un intento (PUT: /api/intentos/{intentoId}/calificar)
     @PutMapping("/{intentoId}/calificar")
     public ResponseEntity<IntentoCuestionario> calificarIntento(

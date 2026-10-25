@@ -308,13 +308,18 @@ public class IntentoCuestionarioService {
             ));
         }
 
+        List<RendimientoMateriaDTO> rendimientoMaterias = calcularRendimientoMaterias(listaCuestionarios);
+        List<RendimientoPreguntaDTO> rendimientoPreguntas = calcularRendimientoPreguntas(listaCuestionarios);
+
         return new EstadisticasDetalladasDTO(
                 totalRespuestas,
                 tasaAprobacion,
                 promedioGeneral,
                 alumnosUnicos,
                 distribucion,
-                cuestionariosResumen
+                cuestionariosResumen,
+                rendimientoMaterias,
+                rendimientoPreguntas
         );
     }
 
@@ -390,14 +395,207 @@ public class IntentoCuestionarioService {
             ));
         }
 
+        List<RendimientoMateriaDTO> rendimientoMaterias = calcularRendimientoMaterias(cuestionarios);
+        List<RendimientoPreguntaDTO> rendimientoPreguntas = calcularRendimientoPreguntas(cuestionarios);
+
         return new EstadisticasDetalladasDTO(
                 totalRespuestas,
                 tasaAprobacion,
                 promedioGeneral,
                 alumnosUnicos,
                 distribucion,
-                cuestionariosResumen
+                cuestionariosResumen,
+                rendimientoMaterias,
+                rendimientoPreguntas
         );
+    }
+
+    // Calcular rendimiento y tasa de aciertos agregados por materia
+    public List<RendimientoMateriaDTO> calcularRendimientoMaterias(List<Cuestionario> cuestionarios) {
+        java.util.Map<String, MateriaAccumulator> mapa = new java.util.LinkedHashMap<>();
+
+        for (Cuestionario c : cuestionarios) {
+            String materia = "General";
+            if (c.getDescripcion() != null) {
+                java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("^\\[(.*?)\\]").matcher(c.getDescripcion());
+                if (matcher.find()) {
+                    materia = matcher.group(1).trim();
+                }
+            }
+
+            MateriaAccumulator acc = mapa.computeIfAbsent(materia, k -> new MateriaAccumulator(k, obtenerColorMateria(k)));
+            acc.totalCuestionarios++;
+            if (c.getPreguntas() != null) {
+                acc.totalPreguntas += c.getPreguntas().size();
+            }
+
+            List<IntentoCuestionario> intentos = intentoRepository.findByCuestionarioId(c.getId());
+            for (IntentoCuestionario intento : intentos) {
+                if (intento.getCalificacion() != null) {
+                    acc.sumaNotas += intento.getCalificacion();
+                    acc.intentosConNota++;
+                }
+
+                List<DetalleIntento> detalles = detalleRepository.findByIntentoId(intento.getId());
+                for (DetalleIntento det : detalles) {
+                    acc.totalRespuestas++;
+                    boolean esCorrecta = false;
+                    if (det.getOpcionSeleccionada() != null) {
+                        esCorrecta = Boolean.TRUE.equals(det.getOpcionSeleccionada().getEsCorrecta());
+                    } else if (det.getRespuestaTexto() != null && det.getPregunta() != null && det.getPregunta().getOpciones() != null) {
+                        for (OpcionRespuesta opc : det.getPregunta().getOpciones()) {
+                            if (Boolean.TRUE.equals(opc.getEsCorrecta()) && opc.getTextoOpcion() != null) {
+                                if (opc.getTextoOpcion().trim().equalsIgnoreCase(det.getRespuestaTexto().trim())) {
+                                    esCorrecta = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (esCorrecta) {
+                        acc.correctas++;
+                    } else {
+                        acc.incorrectas++;
+                    }
+                }
+            }
+        }
+
+        List<RendimientoMateriaDTO> resultado = new java.util.ArrayList<>();
+        for (MateriaAccumulator acc : mapa.values()) {
+            double tasa = acc.totalRespuestas > 0
+                    ? Math.round(((double) acc.correctas / acc.totalRespuestas * 100.0) * 10.0) / 10.0
+                    : 0.0;
+            double prom = acc.intentosConNota > 0
+                    ? Math.round((acc.sumaNotas / acc.intentosConNota) * 10.0) / 10.0
+                    : 0.0;
+            resultado.add(new RendimientoMateriaDTO(
+                    acc.materia,
+                    acc.totalCuestionarios,
+                    acc.totalPreguntas,
+                    acc.totalRespuestas,
+                    acc.correctas,
+                    acc.incorrectas,
+                    tasa,
+                    prom,
+                    acc.color
+            ));
+        }
+
+        resultado.sort((a, b) -> Double.compare(b.getTasaAciertos(), a.getTasaAciertos()));
+        return resultado;
+    }
+
+    // Calcular rendimiento y tasa de aciertos para cada pregunta
+    public List<RendimientoPreguntaDTO> calcularRendimientoPreguntas(List<Cuestionario> cuestionarios) {
+        List<RendimientoPreguntaDTO> resultado = new java.util.ArrayList<>();
+
+        for (Cuestionario c : cuestionarios) {
+            String materia = "General";
+            if (c.getDescripcion() != null) {
+                java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("^\\[(.*?)\\]").matcher(c.getDescripcion());
+                if (matcher.find()) {
+                    materia = matcher.group(1).trim();
+                }
+            }
+
+            List<IntentoCuestionario> intentos = intentoRepository.findByCuestionarioId(c.getId());
+            java.util.Map<UUID, int[]> aciertosPorPregunta = new java.util.HashMap<>();
+
+            for (IntentoCuestionario intento : intentos) {
+                List<DetalleIntento> detalles = detalleRepository.findByIntentoId(intento.getId());
+                for (DetalleIntento det : detalles) {
+                    if (det.getPregunta() != null && det.getPregunta().getId() != null) {
+                        UUID pId = det.getPregunta().getId();
+                        int[] stats = aciertosPorPregunta.computeIfAbsent(pId, k -> new int[2]);
+                        stats[0]++;
+
+                        boolean esCorrecta = false;
+                        if (det.getOpcionSeleccionada() != null) {
+                            esCorrecta = Boolean.TRUE.equals(det.getOpcionSeleccionada().getEsCorrecta());
+                        } else if (det.getRespuestaTexto() != null && det.getPregunta() != null && det.getPregunta().getOpciones() != null) {
+                            for (OpcionRespuesta opc : det.getPregunta().getOpciones()) {
+                                if (Boolean.TRUE.equals(opc.getEsCorrecta()) && opc.getTextoOpcion() != null) {
+                                    if (opc.getTextoOpcion().trim().equalsIgnoreCase(det.getRespuestaTexto().trim())) {
+                                        esCorrecta = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (esCorrecta) {
+                            stats[1]++;
+                        }
+                    }
+                }
+            }
+
+            if (c.getPreguntas() != null) {
+                for (Pregunta p : c.getPreguntas()) {
+                    int[] stats = aciertosPorPregunta.getOrDefault(p.getId(), new int[]{0, 0});
+                    long totalResp = stats[0];
+                    long correctas = stats[1];
+                    long incorrectas = totalResp - correctas;
+                    double tasa = totalResp > 0
+                            ? Math.round(((double) correctas / totalResp * 100.0) * 10.0) / 10.0
+                            : 0.0;
+                    String dificultad = totalResp == 0 ? "Sin datos" : (tasa < 50.0 ? "Alta" : (tasa < 75.0 ? "Media" : "Baja"));
+
+                    resultado.add(new RendimientoPreguntaDTO(
+                            p.getId(),
+                            c.getId(),
+                            c.getTitulo(),
+                            materia,
+                            p.getTextoPregunta(),
+                            p.getOrden(),
+                            p.getTipo() != null ? p.getTipo().name() : "OPCION_MULTIPLE",
+                            totalResp,
+                            correctas,
+                            incorrectas,
+                            tasa,
+                            dificultad
+                    ));
+                }
+            }
+        }
+
+        return resultado;
+    }
+
+    public List<RendimientoPreguntaDTO> obtenerRendimientoPreguntasPorCuestionario(UUID cuestionarioId) {
+        Cuestionario c = cuestionarioRepository.findById(cuestionarioId).orElse(null);
+        if (c == null) return java.util.Collections.emptyList();
+        return calcularRendimientoPreguntas(java.util.Collections.singletonList(c));
+    }
+
+    private String obtenerColorMateria(String materia) {
+        if (materia == null) return "#64748b";
+        String mat = materia.toLowerCase().trim();
+        if (mat.contains("mate")) return "#3b82f6";
+        if (mat.contains("historia")) return "#f59e0b";
+        if (mat.contains("biolog")) return "#10b981";
+        if (mat.contains("inform") || mat.contains("program")) return "#8b5cf6";
+        if (mat.contains("fís") || mat.contains("fis")) return "#6366f1";
+        if (mat.contains("quím") || mat.contains("quim")) return "#f97316";
+        if (mat.contains("comunic") || mat.contains("leng")) return "#ec4899";
+        return "#0ea5e9";
+    }
+
+    private static class MateriaAccumulator {
+        String materia;
+        String color;
+        int totalCuestionarios = 0;
+        int totalPreguntas = 0;
+        long totalRespuestas = 0;
+        long correctas = 0;
+        long incorrectas = 0;
+        double sumaNotas = 0.0;
+        int intentosConNota = 0;
+
+        MateriaAccumulator(String materia, String color) {
+            this.materia = materia;
+            this.color = color;
+        }
     }
 
     // Obtener información completa para el modal de auditoría

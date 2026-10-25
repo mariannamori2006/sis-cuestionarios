@@ -4,6 +4,7 @@ import { logout, getCurrentUser } from '../services/authService';
 import { obtenerUsuarios, crearUsuario, actualizarUsuario, eliminarUsuario } from '../services/usuarioService';
 import { obtenerCuestionarios, obtenerEstadisticas, obtenerActividadReciente, eliminarCuestionario } from '../services/cuestionarioService';
 import AuditoriaResultadosModal from './AuditoriaResultadosModal';
+import EstadisticasView from './EstadisticasView';
 import logoNativa from '../images/logoNativa.jpeg';
 import { 
     LayoutDashboard, 
@@ -29,6 +30,7 @@ import {
     Eye,
     TrendingUp,
     BarChart2,
+    BarChart3,
     Copy,
     RefreshCw
 } from 'lucide-react';
@@ -400,6 +402,27 @@ export default function AdminDashboardComponent() {
                             }}
                         >
                             <FileText size={18} /> Cuestionarios Globales
+                        </button>
+                        <button
+                            onClick={() => setVistaActiva('estadisticas')}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px',
+                                width: '100%',
+                                padding: '12px 14px',
+                                background: vistaActiva === 'estadisticas' ? '#1e293b' : 'transparent',
+                                color: vistaActiva === 'estadisticas' ? '#ffffff' : '#94a3b8',
+                                border: 'none',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                textAlign: 'left',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <BarChart3 size={18} /> Estadísticas y Rendimiento
                         </button>
                         <button
                             onClick={() => setVistaActiva('configuracion')}
@@ -1100,6 +1123,11 @@ node backend/scripts/load_test_concurrency.js 50 148177
                             </pre>
                         </div>
                     </div>
+                )}
+
+                {/* VISTA: ESTADÍSTICAS Y RENDIMIENTO */}
+                {vistaActiva === 'estadisticas' && (
+                    <EstadisticasView />
                 )}
             </div>
 

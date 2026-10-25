@@ -53,3 +53,8 @@ export const obtenerEstadisticasDetalladas = async () => {
     const response = await api.get('/intentos/estadisticas-detalladas');
     return response.data;
 };
+
+export const obtenerRendimientoPreguntasPorCuestionario = async (cuestionarioId) => {
+    const response = await api.get(`/intentos/rendimiento-preguntas/${cuestionarioId}`);
+    return response.data;
+};
