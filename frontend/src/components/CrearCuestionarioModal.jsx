@@ -117,17 +117,18 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                         const opcVerdadero = opc.find(o => (o.texto || o.textoOpcion || '').toLowerCase().includes('verdadero'));
                         const opcFalso = opc.find(o => (o.texto || o.textoOpcion || '').toLowerCase().includes('falso'));
                         opcionesModal = [
-                            { texto: 'Verdadero', correcta: opcVerdadero ? Boolean(opcVerdadero.correcta ?? opcVerdadero.esCorrecta) : true },
-                            { texto: 'Falso', correcta: opcFalso ? Boolean(opcFalso.correcta ?? opcFalso.esCorrecta) : false }
+                            { id: opcVerdadero?.id, texto: 'Verdadero', correcta: opcVerdadero ? Boolean(opcVerdadero.correcta ?? opcVerdadero.esCorrecta) : true },
+                            { id: opcFalso?.id, texto: 'Falso', correcta: opcFalso ? Boolean(opcFalso.correcta ?? opcFalso.esCorrecta) : false }
                         ];
                     } else if (tipoModal === 'Respuesta escrita') {
                         const opc = p.opciones || [];
                         opcionesModal = [
-                            { texto: opc[0]?.texto || opc[0]?.textoOpcion || '', correcta: true }
+                            { id: opc[0]?.id, texto: opc[0]?.texto || opc[0]?.textoOpcion || '', correcta: true }
                         ];
                     } else {
                         opcionesModal = (p.opciones && p.opciones.length > 0)
                             ? p.opciones.map(o => ({
+                                id: o.id,
                                 texto: o.texto || o.textoOpcion || '',
                                 correcta: Boolean(o.correcta ?? o.esCorrecta)
                             }))
@@ -140,6 +141,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                     }
 
                     return {
+                        id: p.id,
                         enunciado: p.enunciado || p.textoPregunta || '',
                         tipo: tipoModal,
                         imagenUrl: p.imagenUrl || p.imagen_url || '',
@@ -375,24 +377,26 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                 if (p.tipo === 'Verdadero/Falso') {
                     tipoEnum = 'VERDADERO_FALSO';
                     opcionesFormateadas = [
-                        { texto: 'Verdadero', correcta: Boolean(p.opciones[0]?.correcta) },
-                        { texto: 'Falso', correcta: Boolean(p.opciones[1]?.correcta) }
+                        { id: p.opciones[0]?.id || null, texto: 'Verdadero', correcta: Boolean(p.opciones[0]?.correcta) },
+                        { id: p.opciones[1]?.id || null, texto: 'Falso', correcta: Boolean(p.opciones[1]?.correcta) }
                     ];
                 } else if (p.tipo === 'Respuesta escrita') {
                     tipoEnum = 'RESPUESTA_CORTA';
                     const respuestaEsperada = p.opciones?.[0]?.texto || '';
                     opcionesFormateadas = [
-                        { texto: respuestaEsperada.trim(), correcta: true }
+                        { id: p.opciones?.[0]?.id || null, texto: respuestaEsperada.trim(), correcta: true }
                     ];
                 } else {
                     tipoEnum = 'OPCION_MULTIPLE';
                     opcionesFormateadas = (p.opciones || []).map(o => ({
+                        id: o.id || null,
                         texto: o.texto,
                         correcta: Boolean(o.correcta)
                     }));
                 }
 
                 return {
+                    id: p.id || null,
                     enunciado: p.enunciado,
                     tipo: tipoEnum,
                     orden: index + 1,

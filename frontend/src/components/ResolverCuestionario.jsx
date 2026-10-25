@@ -242,6 +242,13 @@ export default function ResolverCuestionario() {
                 requiereRevision: Boolean(resultadoBackend.requiereRevision),
                 porTiempo: true
             });
+
+            try {
+                const dispActualizado = await verificarDisponibilidadCuestionario(cuestionario.id, (sessionStorage.getItem('nombreParticipante') || nombreParticipante || 'Anónimo').trim());
+                setEstadoDisponibilidad(dispActualizado);
+            } catch (e) {
+                console.warn("No se pudo refrescar disponibilidad tras autoenvío:", e);
+            }
         } catch (err) {
             console.error("Error en auto-envío por tiempo:", err);
             const errMsg = err.response?.data?.message || err.message;
@@ -358,6 +365,13 @@ export default function ResolverCuestionario() {
                 requiereRevision: Boolean(resultadoBackend.requiereRevision),
                 porTiempo: false
             });
+
+            try {
+                const dispActualizado = await verificarDisponibilidadCuestionario(cuestionario.id, (nombreParticipante || 'Anónimo').trim());
+                setEstadoDisponibilidad(dispActualizado);
+            } catch (e) {
+                console.warn("No se pudo refrescar disponibilidad tras envío:", e);
+            }
         } catch (err) {
             console.error("Error al enviar respuestas a la base de datos:", err);
             const errMsg = err.response?.data?.message || err.message;
@@ -418,6 +432,48 @@ export default function ResolverCuestionario() {
         const mins = Math.floor(segundos / 60);
         const secs = segundos % 60;
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    // Iniciar el siguiente intento disponible sin salir
+    const handleReintentar = async () => {
+        try {
+            setLoading(true);
+            const nombre = (sessionStorage.getItem('nombreParticipante') || nombreParticipante || 'Anónimo').trim();
+            const disp = await verificarDisponibilidadCuestionario(cuestionario.id, nombre);
+            setEstadoDisponibilidad(disp);
+
+            if (!disp.disponible) {
+                setLoading(false);
+                return;
+            }
+
+            if (cuestionario && cuestionario.ordenAleatorio && Array.isArray(cuestionario.preguntas) && cuestionario.preguntas.length > 1) {
+                const mezcladas = [...cuestionario.preguntas];
+                for (let i = mezcladas.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [mezcladas[i], mezcladas[j]] = [mezcladas[j], mezcladas[i]];
+                }
+                cuestionario.preguntas = mezcladas;
+            }
+
+            setRespuestasSeleccionadas({});
+            setResultado(null);
+            setAdvertencias(0);
+            advertenciasRef.current = 0;
+            setAutoEnviadoPorTiempo(false);
+            setBloqueadoPorInfraccion(false);
+
+            const minutos = cuestionario.tiempoLimiteMinutos || 0;
+            if (minutos > 0) {
+                const segs = minutos * 60;
+                setTiempoTotalSegundos(segs);
+                setTiempoRestanteSegundos(segs);
+            }
+        } catch (err) {
+            console.error("Error al iniciar nuevo intento:", err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (loading) {
@@ -802,24 +858,49 @@ export default function ResolverCuestionario() {
                             {resultado.mensaje}
                         </p>
 
-                        <button
-                            onClick={() => navigate('/alumno/login')}
-                            style={{
-                                backgroundColor: '#0f172a',
-                                color: '#fff',
-                                border: 'none',
-                                padding: '12px 24px',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontWeight: '600',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                fontSize: '14px'
-                            }}
-                        >
-                            <LogOut size={16} /> Salir de la Evaluación
-                        </button>
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '16px' }}>
+                            {/* Botón de Siguiente Intento si quedan intentos disponibles */}
+                            {estadoDisponibilidad && (estadoDisponibilidad.limiteIntentos === 0 || (estadoDisponibilidad.intentosRestantes !== null && estadoDisponibilidad.intentosRestantes > 0) || (estadoDisponibilidad.limiteIntentos > (estadoDisponibilidad.intentosRealizados || 1))) && (
+                                <button
+                                    onClick={handleReintentar}
+                                    style={{
+                                        backgroundColor: '#10b981',
+                                        color: '#ffffff',
+                                        border: 'none',
+                                        padding: '12px 24px',
+                                        borderRadius: '8px',
+                                        cursor: 'pointer',
+                                        fontWeight: '700',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        fontSize: '14px',
+                                        boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
+                                    }}
+                                >
+                                    <RotateCcw size={16} /> Realizar siguiente intento
+                                </button>
+                            )}
+
+                            <button
+                                onClick={() => navigate('/unirse')}
+                                style={{
+                                    backgroundColor: '#0f172a',
+                                    color: '#fff',
+                                    border: 'none',
+                                    padding: '12px 24px',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    fontWeight: '600',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    fontSize: '14px'
+                                }}
+                            >
+                                <LogOut size={16} /> Salir de la Evaluación
+                            </button>
+                        </div>
                     </div>
                 ) : (
                     <form onSubmit={handleSubmitEvaluacion} style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
