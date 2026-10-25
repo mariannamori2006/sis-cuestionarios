@@ -58,3 +58,9 @@ export const obtenerRendimientoPreguntasPorCuestionario = async (cuestionarioId)
     const response = await api.get(`/intentos/rendimiento-preguntas/${cuestionarioId}`);
     return response.data;
 };
+
+export const verificarDisponibilidadCuestionario = async (cuestionarioId, participante = '') => {
+    const params = participante ? `?participante=${encodeURIComponent(participante)}` : '';
+    const response = await api.get(`/intentos/disponibilidad/${cuestionarioId}${params}`);
+    return response.data;
+};

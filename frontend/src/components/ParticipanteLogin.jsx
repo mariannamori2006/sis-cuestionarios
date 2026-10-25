@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import logoNativa from '../images/logoNativa.jpeg';
-import { User, KeyRound, ArrowRight, CheckCircle2, AlertCircle, HelpCircle, ArrowLeft, BookOpen } from 'lucide-react';
+import { User, KeyRound, ArrowRight, CheckCircle2, AlertCircle, HelpCircle, ArrowLeft, BookOpen, Clock, RotateCcw } from 'lucide-react';
+import { verificarDisponibilidadCuestionario } from '../services/cuestionarioService';
 
 export default function ParticipanteLogin() {
     const navigate = useNavigate();
@@ -15,6 +16,7 @@ export default function ParticipanteLogin() {
     const [nombreParticipante, setNombreParticipante] = useState(sessionStorage.getItem('nombreParticipante') || '');
 
     const [cuestionario, setCuestionario] = useState(null);
+    const [disponibilidad, setDisponibilidad] = useState(null);
     const [validando, setValidando] = useState(false);
     const [error, setError] = useState('');
 
@@ -31,6 +33,18 @@ export default function ParticipanteLogin() {
 
             const response = await axios.get(`http://localhost:8080/api/cuestionarios/resolver/${codigo}`);
             if (response.data && response.data.id) {
+                // Verificar si tiene restricciones de ventana de fechas
+                try {
+                    const disp = await verificarDisponibilidadCuestionario(response.data.id, '');
+                    setDisponibilidad(disp);
+                    if (!disp.disponible && (disp.codigoEstado === 'NO_INICIADO' || disp.codigoEstado === 'FINALIZADO')) {
+                        setError(disp.mensaje);
+                        return;
+                    }
+                } catch (e) {
+                    console.warn("No se pudo verificar disponibilidad:", e);
+                }
+
                 setCuestionario(response.data);
                 setPaso(2); // Avanzar al paso 2
             } else {
@@ -49,7 +63,7 @@ export default function ParticipanteLogin() {
         verificarCodigo();
     };
 
-    const handleComenzarExamen = (e) => {
+    const handleComenzarExamen = async (e) => {
         e.preventDefault();
         if (!nombreParticipante.trim()) {
             setError('Por favor ingresa tu nombre o apodo para continuar.');
@@ -60,6 +74,22 @@ export default function ParticipanteLogin() {
             setError('Error de sesión. Por favor valida el código nuevamente.');
             setPaso(1);
             return;
+        }
+
+        try {
+            setValidando(true);
+            setError('');
+
+            // Validar si este participante específico aún tiene intentos disponibles
+            const disp = await verificarDisponibilidadCuestionario(cuestionario.id, nombreParticipante.trim());
+            if (!disp.disponible) {
+                setError(disp.mensaje);
+                return;
+            }
+        } catch (e) {
+            console.warn("Error en verificación de intentos:", e);
+        } finally {
+            setValidando(false);
         }
 
         // Guardamos el nombre del alumno en sessionStorage
@@ -290,6 +320,45 @@ export default function ParticipanteLogin() {
                                 {cuestionario.descripcion || 'Evaluación académica'} • {cuestionario.preguntas ? `${cuestionario.preguntas.length} preguntas` : ''}
                             </p>
                         </div>*/}
+
+                        {/* Información de disponibilidad e intentos */}
+                        {disponibilidad && (
+                            <div style={{
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                gap: '6px',
+                                marginBottom: '2px'
+                            }}>
+                                <span style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    fontSize: '11px',
+                                    fontWeight: '600',
+                                    color: '#6d28d9',
+                                    backgroundColor: '#ede9fe',
+                                    padding: '4px 8px',
+                                    borderRadius: '6px'
+                                }}>
+                                    <RotateCcw size={12} /> {disponibilidad.limiteIntentos === 0 ? 'Intentos ilimitados' : `${disponibilidad.limiteIntentos} intento(s) máx.`}
+                                </span>
+                                {disponibilidad.fechaFin && (
+                                    <span style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        fontSize: '11px',
+                                        fontWeight: '600',
+                                        color: '#991b1b',
+                                        backgroundColor: '#fee2e2',
+                                        padding: '4px 8px',
+                                        borderRadius: '6px'
+                                    }}>
+                                        <Clock size={12} /> Cierre programado
+                                    </span>
+                                )}
+                            </div>
+                        )}
 
                         <div>
                             <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>

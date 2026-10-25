@@ -54,6 +54,22 @@ public class Cuestionario {
     @Column(name = "limite_advertencias")
     private Integer limiteAdvertencias = 3;
 
+    // Ventana de disponibilidad: Fecha y hora de apertura
+    @Column(name = "fecha_inicio")
+    private LocalDateTime fechaInicio;
+
+    // Ventana de disponibilidad: Fecha y hora de cierre
+    @Column(name = "fecha_fin")
+    private LocalDateTime fechaFin;
+
+    // Límite de intentos permitidos (1 para formal, >1 para varios, 0 o null para ilimitados)
+    @Column(name = "limite_intentos")
+    private Integer limiteIntentos = 1;
+
+    // Criterio de ponderación de nota si hay varios intentos: "MEJOR_NOTA" o "ULTIMO_INTENTO"
+    @Column(name = "tipo_calificacion_intentos", length = 30)
+    private String tipoCalificacionIntentos = "MEJOR_NOTA";
+
     @OneToMany(mappedBy = "cuestionario", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Pregunta> preguntas = new ArrayList<>();
@@ -238,5 +254,37 @@ public class Cuestionario {
 
     public void setLimiteAdvertencias(Integer limiteAdvertencias) {
         this.limiteAdvertencias = limiteAdvertencias;
+    }
+
+    public LocalDateTime getFechaInicio() {
+        return fechaInicio;
+    }
+
+    public void setFechaInicio(LocalDateTime fechaInicio) {
+        this.fechaInicio = fechaInicio;
+    }
+
+    public LocalDateTime getFechaFin() {
+        return fechaFin;
+    }
+
+    public void setFechaFin(LocalDateTime fechaFin) {
+        this.fechaFin = fechaFin;
+    }
+
+    public Integer getLimiteIntentos() {
+        return limiteIntentos;
+    }
+
+    public void setLimiteIntentos(Integer limiteIntentos) {
+        this.limiteIntentos = limiteIntentos;
+    }
+
+    public String getTipoCalificacionIntentos() {
+        return tipoCalificacionIntentos;
+    }
+
+    public void setTipoCalificacionIntentos(String tipoCalificacionIntentos) {
+        this.tipoCalificacionIntentos = tipoCalificacionIntentos;
     }
 }

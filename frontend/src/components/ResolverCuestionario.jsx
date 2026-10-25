@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import logoNativa from '../images/logoNativa.jpeg';
-import { Award, CheckCircle, LogOut, Clock, AlertTriangle, AlertCircle, Shuffle, ShieldAlert, ShieldCheck } from 'lucide-react';
-import { responderCuestionario } from '../services/cuestionarioService';
+import { Award, CheckCircle, LogOut, Clock, AlertTriangle, AlertCircle, Shuffle, ShieldAlert, ShieldCheck, RotateCcw, Calendar } from 'lucide-react';
+import { responderCuestionario, verificarDisponibilidadCuestionario } from '../services/cuestionarioService';
 
 export default function ResolverCuestionario() {
     const { id } = useParams(); // ID o Código del cuestionario
@@ -14,6 +14,7 @@ export default function ResolverCuestionario() {
     const [comenzado, setComenzado] = useState(Boolean(sessionStorage.getItem('nombreParticipante')));
 
     const [cuestionario, setCuestionario] = useState(null);
+    const [estadoDisponibilidad, setEstadoDisponibilidad] = useState(null);
     const [respuestasSeleccionadas, setRespuestasSeleccionadas] = useState({});
     const [resultado, setResultado] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -61,7 +62,7 @@ export default function ResolverCuestionario() {
 
         // Obtenemos los detalles del cuestionario y sus preguntas desde el backend
         axios.get(`http://localhost:8080/api/cuestionarios/resolver/${id}`)
-            .then(res => {
+            .then(async res => {
                 const data = res.data;
 
                 // Si el cuestionario tiene activado el orden aleatorio, mezclar el orden de las preguntas
@@ -81,6 +82,17 @@ export default function ResolverCuestionario() {
                     setTiempoTotalSegundos(segs);
                     setTiempoRestanteSegundos(segs);
                 }
+
+                // Verificar disponibilidad de fecha/hora y límite de intentos para este participante
+                if (data && data.id) {
+                    try {
+                        const disp = await verificarDisponibilidadCuestionario(data.id, nombre);
+                        setEstadoDisponibilidad(disp);
+                    } catch (e) {
+                        console.warn("No se pudo verificar disponibilidad:", e);
+                    }
+                }
+
                 setLoading(false);
             })
             .catch(err => {
@@ -232,6 +244,16 @@ export default function ResolverCuestionario() {
             });
         } catch (err) {
             console.error("Error en auto-envío por tiempo:", err);
+            const errMsg = err.response?.data?.message || err.message;
+            if (err.response?.status === 400 || err.response?.status === 409 || err.response?.status === 403 || (errMsg && (errMsg.includes('plazo') || errMsg.includes('límite') || errMsg.includes('cerró') || errMsg.includes('abierto')))) {
+                setEstadoDisponibilidad({
+                    disponible: false,
+                    codigoEstado: (errMsg.includes('límite') || errMsg.includes('intento')) ? 'LIMITE_INTENTOS_ALCANZADO' : 'FINALIZADO',
+                    mensaje: errMsg
+                });
+                return;
+            }
+
             // Fallback de contingencia
             let totalPreguntas = cuestionario.preguntas?.length || 0;
             let aciertos = 0;
@@ -338,6 +360,16 @@ export default function ResolverCuestionario() {
             });
         } catch (err) {
             console.error("Error al enviar respuestas a la base de datos:", err);
+            const errMsg = err.response?.data?.message || err.message;
+            if (err.response?.status === 400 || err.response?.status === 409 || err.response?.status === 403 || (errMsg && (errMsg.includes('plazo') || errMsg.includes('límite') || errMsg.includes('cerró') || errMsg.includes('abierto')))) {
+                setEstadoDisponibilidad({
+                    disponible: false,
+                    codigoEstado: (errMsg.includes('límite') || errMsg.includes('intento')) ? 'LIMITE_INTENTOS_ALCANZADO' : 'FINALIZADO',
+                    mensaje: errMsg
+                });
+                return;
+            }
+
             let totalPreguntas = cuestionario.preguntas?.length || 0;
             let aciertos = 0;
             let tieneEscritas = false;
@@ -407,6 +439,85 @@ export default function ResolverCuestionario() {
         );
     }
 
+    // Pantalla de cuestionario no disponible (fecha/hora cerrada o límite de intentos superado)
+    if (estadoDisponibilidad && !estadoDisponibilidad.disponible) {
+        const esNoIniciado = estadoDisponibilidad.codigoEstado === 'NO_INICIADO';
+        const esFinalizado = estadoDisponibilidad.codigoEstado === 'FINALIZADO';
+        const esLimiteIntentos = estadoDisponibilidad.codigoEstado === 'LIMITE_INTENTOS_ALCANZADO';
+
+        return (
+            <div style={{ backgroundColor: '#0f172a', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif' }}>
+                <div style={{ backgroundColor: '#ffffff', padding: '36px', borderRadius: '20px', width: '100%', maxWidth: '480px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)', textAlign: 'center' }}>
+                    <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+                        <img src={logoNativa} alt="NativaTec" style={{ height: '42px', objectFit: 'contain' }} />
+                    </div>
+
+                    <div style={{
+                        width: '64px',
+                        height: '64px',
+                        borderRadius: '50%',
+                        margin: '0 auto 18px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: esNoIniciado ? '#fef3c7' : esFinalizado ? '#fee2e2' : '#ede9fe'
+                    }}>
+                        {esNoIniciado && <Clock size={32} color="#d97706" />}
+                        {esFinalizado && <AlertCircle size={32} color="#dc2626" />}
+                        {esLimiteIntentos && <Award size={32} color="#7c3aed" />}
+                    </div>
+
+                    <h2 style={{ fontSize: '20px', fontWeight: '800', color: '#0f172a', margin: '0 0 10px 0' }}>
+                        {esNoIniciado && 'Cuestionario Aún No Disponible'}
+                        {esFinalizado && 'Cuestionario Cerrado'}
+                        {esLimiteIntentos && 'Límite de Intentos Alcanzado'}
+                    </h2>
+
+                    <p style={{ fontSize: '14px', color: '#475569', lineHeight: '1.5', margin: '0 0 20px 0' }}>
+                        {estadoDisponibilidad.mensaje}
+                    </p>
+
+                    {estadoDisponibilidad.mejorNota !== null && estadoDisponibilidad.mejorNota !== undefined && (
+                        <div style={{
+                            backgroundColor: '#f8fafc',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '12px',
+                            padding: '14px 20px',
+                            marginBottom: '20px',
+                            display: 'inline-block'
+                        }}>
+                            <span style={{ fontSize: '11px', color: '#64748b', display: 'block', textTransform: 'uppercase', fontWeight: 'bold', letterSpacing: '0.5px' }}>
+                                Mejor Calificación Registrada
+                            </span>
+                            <span style={{ fontSize: '26px', fontWeight: '900', color: '#0f172a' }}>
+                                {estadoDisponibilidad.mejorNota.toFixed(1)} <span style={{ fontSize: '16px', color: '#64748b', fontWeight: '600' }}>/ 20</span>
+                            </span>
+                        </div>
+                    )}
+
+                    <div>
+                        <button
+                            onClick={() => navigate('/unirse')}
+                            style={{
+                                backgroundColor: '#0f172a',
+                                color: '#ffffff',
+                                border: 'none',
+                                padding: '12px 24px',
+                                borderRadius: '10px',
+                                fontWeight: '700',
+                                fontSize: '14px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            Volver al Portal de Alumnos
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     // Pantalla de ingreso antes de comenzar
     if (!comenzado) {
         return (
@@ -433,6 +544,16 @@ export default function ResolverCuestionario() {
                             {cuestionario.modoSeguro && (
                                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#fef2f2', color: '#dc2626', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: '600' }}>
                                     <ShieldAlert size={15} /> Modo Seguro ({cuestionario.limiteAdvertencias || 3} advertencias máx.)
+                                </div>
+                            )}
+                            {estadoDisponibilidad && estadoDisponibilidad.limiteIntentos !== null && (
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#ede9fe', color: '#6d28d9', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: '600' }}>
+                                    <RotateCcw size={15} /> {estadoDisponibilidad.limiteIntentos === 0 ? 'Intentos ilimitados' : `${estadoDisponibilidad.limiteIntentos} intento(s) permitido(s)`}
+                                </div>
+                            )}
+                            {estadoDisponibilidad && estadoDisponibilidad.fechaFin && (
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#fee2e2', color: '#991b1b', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: '600' }}>
+                                    <Calendar size={15} /> Cierre programado
                                 </div>
                             )}
                         </div>
@@ -573,9 +694,29 @@ export default function ResolverCuestionario() {
                     <div style={{ textAlign: 'right' }}>
                         <span style={{ fontSize: '12px', color: '#64748b', display: 'block' }}>Participante:</span>
                         <strong style={{ fontSize: '14px', color: '#0f172a' }}>{nombreParticipante}</strong>
+                        {estadoDisponibilidad && estadoDisponibilidad.limiteIntentos !== null && (
+                            <div style={{
+                                marginTop: '4px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                backgroundColor: '#ede9fe',
+                                color: '#6d28d9',
+                                border: '1px solid #ddd6fe',
+                                padding: '2px 8px',
+                                borderRadius: '12px',
+                                fontSize: '11px',
+                                fontWeight: '700'
+                            }}>
+                                <RotateCcw size={12} /> {estadoDisponibilidad.limiteIntentos === 0 
+                                    ? 'Práctica (Ilimitado)' 
+                                    : `Intento ${estadoDisponibilidad.intentosRealizados + 1} de ${estadoDisponibilidad.limiteIntentos}`}
+                            </div>
+                        )}
                         {cuestionario.modoSeguro && (
                             <div style={{
                                 marginTop: '4px',
+                                marginLeft: '6px',
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: '4px',

@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import com.nativatec.cuestionarios.dto.EstadoDisponibilidadDTO;
 import com.nativatec.cuestionarios.dto.EstadisticasDashboardDTO;
 import com.nativatec.cuestionarios.dto.ResponderCuestionarioDTO;
 import com.nativatec.cuestionarios.dto.ResultadoEvaluacionDTO;
@@ -57,6 +58,15 @@ public class IntentoCuestionarioController {
         }
         List<com.nativatec.cuestionarios.dto.ActividadRecienteDTO> recientes = intentoService.obtenerActividadReciente();
         return ResponseEntity.ok(recientes);
+    }
+
+    // Verificar disponibilidad por fechas y límites de intentos (GET: /api/intentos/disponibilidad/{cuestionarioId})
+    @GetMapping("/disponibilidad/{cuestionarioId}")
+    public ResponseEntity<EstadoDisponibilidadDTO> verificarDisponibilidad(
+            @PathVariable UUID cuestionarioId,
+            @RequestParam(required = false) String participante) {
+        EstadoDisponibilidadDTO disponibilidad = intentoService.verificarDisponibilidad(cuestionarioId, participante);
+        return ResponseEntity.ok(disponibilidad);
     }
 
     // Responder y guardar evaluación completa desde el portal de alumnos (POST: /api/intentos/responder)

@@ -44,6 +44,11 @@ public interface IntentoCuestionarioRepository extends JpaRepository<IntentoCues
 
     @Query("SELECT i FROM IntentoCuestionario i WHERE i.cuestionario.creadoPor.id = :usuarioId")
     List<IntentoCuestionario> findByCreadoPorProfesorId(@Param("usuarioId") UUID usuarioId);
+
+    @Query("SELECT i FROM IntentoCuestionario i WHERE i.cuestionario.id = :cuestionarioId AND (LOWER(TRIM(i.nombreInvitado)) = LOWER(TRIM(:nombre)) OR (i.usuario IS NOT NULL AND (LOWER(TRIM(i.usuario.nombre)) = LOWER(TRIM(:nombre)) OR LOWER(TRIM(i.usuario.email)) = LOWER(TRIM(:nombre)))))")
+    List<IntentoCuestionario> findByCuestionarioIdAndNombreParticipante(
+            @Param("cuestionarioId") UUID cuestionarioId,
+            @Param("nombre") String nombre);
 }
 
 

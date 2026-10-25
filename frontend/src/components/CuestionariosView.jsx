@@ -21,8 +21,57 @@ import {
     Clock,
     Shuffle,
     ShieldAlert,
-    Download
+    Download,
+    RotateCcw
 } from 'lucide-react';
+
+const obtenerEstadoDisponibilidadBadge = (c) => {
+    if (!c.fechaInicio && !c.fechaFin) return null;
+    const ahora = new Date();
+    const inicio = c.fechaInicio ? new Date(c.fechaInicio) : null;
+    const fin = c.fechaFin ? new Date(c.fechaFin) : null;
+
+    if (inicio && ahora < inicio) {
+        return {
+            texto: 'Programado',
+            color: '#b45309',
+            bg: '#fef3c7',
+            border: '#fde68a'
+        };
+    }
+    if (fin && ahora > fin) {
+        return {
+            texto: 'Cerrado',
+            color: '#b91c1c',
+            bg: '#fee2e2',
+            border: '#fca5a5'
+        };
+    }
+    return {
+        texto: 'Abierto',
+        color: '#15803d',
+        bg: '#dcfce7',
+        border: '#86efac'
+    };
+};
+
+const formatearRangoFechas = (c) => {
+    if (!c.fechaInicio && !c.fechaFin) return null;
+    const pad = (n) => String(n).padStart(2, '0');
+    const formatF = (dStr) => {
+        const d = new Date(dStr);
+        if (isNaN(d.getTime())) return '';
+        return `${d.getDate()}/${d.getMonth() + 1} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+
+    if (c.fechaInicio && c.fechaFin) {
+        return `${formatF(c.fechaInicio)} al ${formatF(c.fechaFin)}`;
+    }
+    if (c.fechaInicio) {
+        return `Abre: ${formatF(c.fechaInicio)}`;
+    }
+    return `Cierra: ${formatF(c.fechaFin)}`;
+};
 
 export default function CuestionariosView({ cuestionarios, estadisticas, onRecargarCuestionarios }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -199,6 +248,9 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                             ? `${cuestionario.promedioCalificacion.toFixed(1)} / 20`
                             : 'Sin intentos';
 
+                        const badgeEstado = obtenerEstadoDisponibilidadBadge(cuestionario);
+                        const rangoFechas = formatearRangoFechas(cuestionario);
+
                         return (
                             <div key={cuestionario.id} style={{
                                 backgroundColor: '#ffffff',
@@ -211,8 +263,8 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                                 border: '1px solid #e2e8f0'
                             }}>
                                 <div>
-                                    {/* Categoría, Respuestas y Temporizador */}
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                    {/* Categoría, Respuestas, Disponibilidad y Modos */}
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center', marginBottom: '12px' }}>
                                         <span style={{
                                             backgroundColor: '#eff6ff',
                                             color: '#1d4ed8',
@@ -223,11 +275,43 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                                         }}>
                                             {respuestasCount} {respuestasCount === 1 ? 'respuesta' : 'respuestas'}
                                         </span>
+
+                                        {badgeEstado && (
+                                            <span style={{
+                                                backgroundColor: badgeEstado.bg,
+                                                color: badgeEstado.color,
+                                                border: `1px solid ${badgeEstado.border}`,
+                                                padding: '3px 9px',
+                                                borderRadius: '20px',
+                                                fontSize: '11px',
+                                                fontWeight: '700'
+                                            }}>
+                                                ● {badgeEstado.texto}
+                                            </span>
+                                        )}
+
+                                        {/* Límite de Intentos */}
+                                        <span style={{
+                                            backgroundColor: '#ede9fe',
+                                            color: '#6d28d9',
+                                            padding: '3px 9px',
+                                            borderRadius: '20px',
+                                            fontSize: '11px',
+                                            fontWeight: '600',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '4px'
+                                        }}>
+                                            <RotateCcw size={11} /> {cuestionario.limiteIntentos === 0 
+                                                ? 'Práctica (Ilimitado)' 
+                                                : cuestionario.limiteIntentos ? `${cuestionario.limiteIntentos} intento${cuestionario.limiteIntentos > 1 ? 's' : ''}` : '1 intento'}
+                                        </span>
+
                                         {cuestionario.tiempoLimiteMinutos > 0 ? (
                                             <span style={{
                                                 backgroundColor: '#fef3c7',
                                                 color: '#b45309',
-                                                padding: '4px 10px',
+                                                padding: '3px 9px',
                                                 borderRadius: '20px',
                                                 fontSize: '11px',
                                                 fontWeight: '600',
@@ -235,25 +319,15 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                                                 alignItems: 'center',
                                                 gap: '4px'
                                             }}>
-                                                <Clock size={12} /> {cuestionario.tiempoLimiteMinutos} min
+                                                <Clock size={11} /> {cuestionario.tiempoLimiteMinutos} min
                                             </span>
-                                        ) : (
-                                            <span style={{
-                                                backgroundColor: '#f1f5f9',
-                                                color: '#64748b',
-                                                padding: '4px 10px',
-                                                borderRadius: '20px',
-                                                fontSize: '11px',
-                                                fontWeight: '500'
-                                            }}>
-                                                Sin límite
-                                            </span>
-                                        )}
+                                        ) : null}
+
                                         {cuestionario.ordenAleatorio && (
                                             <span style={{
                                                 backgroundColor: '#f5f3ff',
                                                 color: '#6d28d9',
-                                                padding: '4px 10px',
+                                                padding: '3px 9px',
                                                 borderRadius: '20px',
                                                 fontSize: '11px',
                                                 fontWeight: '600',
@@ -261,14 +335,15 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                                                 alignItems: 'center',
                                                 gap: '4px'
                                             }}>
-                                                <Shuffle size={12} /> Aleatorio
+                                                <Shuffle size={11} /> Aleatorio
                                             </span>
                                         )}
+
                                         {cuestionario.modoSeguro && (
                                             <span style={{
                                                 backgroundColor: '#fef2f2',
                                                 color: '#b91c1c',
-                                                padding: '4px 10px',
+                                                padding: '3px 9px',
                                                 borderRadius: '20px',
                                                 fontSize: '11px',
                                                 fontWeight: '600',
@@ -276,7 +351,7 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                                                 alignItems: 'center',
                                                 gap: '4px'
                                             }}>
-                                                <ShieldAlert size={12} /> Modo Seguro ({cuestionario.limiteAdvertencias || 3} adv.)
+                                                <ShieldAlert size={11} /> Seguro
                                             </span>
                                         )}
                                     </div>
@@ -291,7 +366,7 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
 
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#94a3b8', marginBottom: '20px' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                            <Calendar size={13} /> Creado recientemente
+                                            <Calendar size={13} /> {rangoFechas ? `Ventana: ${rangoFechas}` : 'Sin restricción de fecha'}
                                         </div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#64748b', fontWeight: '600' }}>
                                             <Award size={13} color="#9333ea" /> Promedio: {promCuestionario}

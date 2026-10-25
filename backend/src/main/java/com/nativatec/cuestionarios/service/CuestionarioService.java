@@ -128,6 +128,15 @@ public class CuestionarioService {
                 existente.setLimiteAdvertencias(modificado.getLimiteAdvertencias());
             }
 
+            existente.setFechaInicio(modificado.getFechaInicio());
+            existente.setFechaFin(modificado.getFechaFin());
+            if (modificado.getLimiteIntentos() != null) {
+                existente.setLimiteIntentos(modificado.getLimiteIntentos());
+            }
+            if (modificado.getTipoCalificacionIntentos() != null) {
+                existente.setTipoCalificacionIntentos(modificado.getTipoCalificacionIntentos());
+            }
+
             if (modificado.getCodigoAcceso() != null && !modificado.getCodigoAcceso().trim().isEmpty()) {
                 existente.setCodigoAcceso(modificado.getCodigoAcceso().trim());
             }

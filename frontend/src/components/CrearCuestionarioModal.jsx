@@ -1,7 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { crearCuestionario, actualizarCuestionario } from '../services/cuestionarioService';
 import { descargarPlantillaExcel, procesarArchivoPreguntas } from '../services/excelService';
-import { X, UploadCloud, Download, Plus, Trash2, CheckCircle2, Type, CheckSquare, Shuffle, AlertCircle, Image as ImageIcon, Link2, ShieldAlert } from 'lucide-react';
+import { X, UploadCloud, Download, Plus, Trash2, CheckCircle2, Type, CheckSquare, Shuffle, AlertCircle, Image as ImageIcon, Link2, ShieldAlert, Calendar, RotateCcw } from 'lucide-react';
+
+const formatDateTimeForInput = (dateVal) => {
+    if (!dateVal) return '';
+    try {
+        if (Array.isArray(dateVal)) {
+            const [y, m, d, h = 0, min = 0] = dateVal;
+            const pad = (n) => String(n).padStart(2, '0');
+            return `${y}-${pad(m)}-${pad(d)}T${pad(h)}:${pad(min)}`;
+        }
+        if (typeof dateVal === 'string') {
+            return dateVal.substring(0, 16);
+        }
+        const d = new Date(dateVal);
+        if (isNaN(d.getTime())) return '';
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    } catch {
+        return '';
+    }
+};
 
 export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionarioCreado, cuestionarioAEditar = null }) {
     const [tabActiva, setTabActiva] = useState('manual'); // 'manual' o 'importar'
@@ -14,6 +34,13 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
     const [ordenAleatorio, setOrdenAleatorio] = useState(false);
     const [modoSeguro, setModoSeguro] = useState(false);
     const [limiteAdvertencias, setLimiteAdvertencias] = useState(3);
+
+    // Control y flexibilidad de exámenes (Ventana de disponibilidad y Límite de intentos)
+    const [programarFechas, setProgramarFechas] = useState(false);
+    const [fechaInicio, setFechaInicio] = useState('');
+    const [fechaFin, setFechaFin] = useState('');
+    const [limiteIntentos, setLimiteIntentos] = useState(1);
+    const [tipoCalificacionIntentos, setTipoCalificacionIntentos] = useState('MEJOR_NOTA');
 
     // Estados para la importación de archivos Excel / CSV
     const [arrastrando, setArrastrando] = useState(false);
@@ -53,6 +80,14 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
             setOrdenAleatorio(Boolean(cuestionarioAEditar.ordenAleatorio));
             setModoSeguro(Boolean(cuestionarioAEditar.modoSeguro));
             setLimiteAdvertencias(cuestionarioAEditar.limiteAdvertencias || 3);
+
+            // Cargar configuración de disponibilidad y número de intentos
+            const tieneFechas = Boolean(cuestionarioAEditar.fechaInicio || cuestionarioAEditar.fechaFin);
+            setProgramarFechas(tieneFechas);
+            setFechaInicio(formatDateTimeForInput(cuestionarioAEditar.fechaInicio));
+            setFechaFin(formatDateTimeForInput(cuestionarioAEditar.fechaFin));
+            setLimiteIntentos(cuestionarioAEditar.limiteIntentos !== undefined && cuestionarioAEditar.limiteIntentos !== null ? cuestionarioAEditar.limiteIntentos : 1);
+            setTipoCalificacionIntentos(cuestionarioAEditar.tipoCalificacionIntentos || 'MEJOR_NOTA');
 
             // Extraer materia si viene formateada como "[Materia] Descripción"
             const descOriginal = cuestionarioAEditar.descripcion || '';
@@ -136,6 +171,11 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
             setOrdenAleatorio(false);
             setModoSeguro(false);
             setLimiteAdvertencias(3);
+            setProgramarFechas(false);
+            setFechaInicio('');
+            setFechaFin('');
+            setLimiteIntentos(1);
+            setTipoCalificacionIntentos('MEJOR_NOTA');
             setResumenImportacion(null);
             setPreguntasImportadasPendientes([]);
             setErrorImportacion('');
@@ -317,6 +357,13 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
             return;
         }
 
+        if (programarFechas) {
+            if (fechaInicio && fechaFin && new Date(fechaInicio) >= new Date(fechaFin)) {
+                setError('La fecha y hora de cierre debe ser posterior a la fecha y hora de apertura.');
+                return;
+            }
+        }
+
         try {
             setLoading(true);
             setError('');
@@ -362,6 +409,10 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                 ordenAleatorio: Boolean(ordenAleatorio),
                 modoSeguro: Boolean(modoSeguro),
                 limiteAdvertencias: parseInt(limiteAdvertencias, 10) || 3,
+                fechaInicio: programarFechas && fechaInicio ? (fechaInicio.length === 16 ? fechaInicio + ':00' : fechaInicio) : null,
+                fechaFin: programarFechas && fechaFin ? (fechaFin.length === 16 ? fechaFin + ':00' : fechaFin) : null,
+                limiteIntentos: parseInt(limiteIntentos, 10),
+                tipoCalificacionIntentos: tipoCalificacionIntentos || 'MEJOR_NOTA',
                 preguntas: preguntasFormateadas
             };
 
@@ -693,6 +744,204 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                             <option value={3}>3 advertencias (Recomendado)</option>
                                             <option value={5}>5 advertencias (Flexible)</option>
                                         </select>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* LÍMITE DE INTENTOS Y CRITERIO DE CALIFICACIÓN */}
+                            <div style={{
+                                backgroundColor: '#f8fafc',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '10px',
+                                padding: '14px 16px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '12px',
+                                boxSizing: 'border-box'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <div style={{
+                                            width: '36px',
+                                            height: '36px',
+                                            borderRadius: '8px',
+                                            backgroundColor: '#ede9fe',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}>
+                                            <RotateCcw size={18} color="#6d28d9" />
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
+                                                Límite de Intentos por Alumno
+                                            </div>
+                                            <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                                Controla si es una prueba sumativa única o una actividad de práctica
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <select
+                                        value={limiteIntentos}
+                                        onChange={(e) => setLimiteIntentos(Number(e.target.value))}
+                                        style={{
+                                            padding: '8px 12px',
+                                            borderRadius: '8px',
+                                            border: '1px solid #cbd5e1',
+                                            fontSize: '13px',
+                                            fontWeight: '600',
+                                            backgroundColor: '#fff',
+                                            color: '#1e293b',
+                                            outline: 'none',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <option value={1}>1 intento (Examen formal / Evaluativo)</option>
+                                        <option value={2}>2 intentos (Con recuperación)</option>
+                                        <option value={3}>3 intentos</option>
+                                        <option value={5}>5 intentos</option>
+                                        <option value={0}>Intentos Ilimitados (Práctica formativa)</option>
+                                    </select>
+                                </div>
+
+                                {limiteIntentos !== 1 && (
+                                    <div style={{
+                                        marginTop: '4px',
+                                        paddingTop: '10px',
+                                        borderTop: '1px dashed #cbd5e1',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        flexWrap: 'wrap',
+                                        gap: '10px'
+                                    }}>
+                                        <label style={{ fontSize: '12px', fontWeight: '600', color: '#475569' }}>
+                                            ⭐ Criterio de calificación en el registro de notas:
+                                        </label>
+                                        <select
+                                            value={tipoCalificacionIntentos}
+                                            onChange={(e) => setTipoCalificacionIntentos(e.target.value)}
+                                            style={{
+                                                padding: '6px 12px',
+                                                borderRadius: '6px',
+                                                border: '1px solid #cbd5e1',
+                                                fontSize: '12px',
+                                                fontWeight: '600',
+                                                backgroundColor: '#fff',
+                                                color: '#0f172a',
+                                                outline: 'none',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            <option value="MEJOR_NOTA">Guardar la nota más alta (Recomendado)</option>
+                                            <option value="ULTIMO_INTENTO">Guardar la nota del último intento</option>
+                                        </select>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* PROGRAMACIÓN POR FECHA Y HORA (VENTANA DE DISPONIBILIDAD) */}
+                            <div style={{
+                                backgroundColor: programarFechas ? '#f0fdf4' : '#f8fafc',
+                                border: programarFechas ? '1px solid #86efac' : '1px solid #e2e8f0',
+                                borderRadius: '10px',
+                                padding: '14px 16px',
+                                transition: 'all 0.2s',
+                                boxSizing: 'border-box'
+                            }}>
+                                <div
+                                    onClick={() => setProgramarFechas(!programarFechas)}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        <div style={{
+                                            width: '36px',
+                                            height: '36px',
+                                            borderRadius: '8px',
+                                            backgroundColor: programarFechas ? '#dcfce7' : '#e2e8f0',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}>
+                                            <Calendar size={18} color={programarFechas ? '#15803d' : '#64748b'} />
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '13px', fontWeight: '700', color: programarFechas ? '#166534' : '#1e293b' }}>
+                                                Programar Fecha y Hora de Disponibilidad
+                                            </div>
+                                            <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                                Define la ventana exacta en que el cuestionario se abre y se cierra
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        checked={programarFechas}
+                                        onChange={(e) => setProgramarFechas(e.target.checked)}
+                                        style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#16a34a' }}
+                                    />
+                                </div>
+
+                                {programarFechas && (
+                                    <div style={{
+                                        marginTop: '14px',
+                                        paddingTop: '12px',
+                                        borderTop: '1px dashed #86efac',
+                                        display: 'grid',
+                                        gridTemplateColumns: '1fr 1fr',
+                                        gap: '14px'
+                                    }}>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#166534', marginBottom: '6px' }}>
+                                                🟢 FECHA Y HORA DE APERTURA:
+                                            </label>
+                                            <input
+                                                type="datetime-local"
+                                                value={fechaInicio}
+                                                onChange={(e) => setFechaInicio(e.target.value)}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '10px 12px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #86efac',
+                                                    backgroundColor: '#fff',
+                                                    fontSize: '13px',
+                                                    outline: 'none',
+                                                    boxSizing: 'border-box'
+                                                }}
+                                            />
+                                            <span style={{ fontSize: '11px', color: '#15803d', marginTop: '4px', display: 'block' }}>
+                                                Antes de esta fecha/hora estará bloqueado.
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#991b1b', marginBottom: '6px' }}>
+                                                🔴 FECHA Y HORA DE CIERRE:
+                                            </label>
+                                            <input
+                                                type="datetime-local"
+                                                value={fechaFin}
+                                                onChange={(e) => setFechaFin(e.target.value)}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '10px 12px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #fca5a5',
+                                                    backgroundColor: '#fff',
+                                                    fontSize: '13px',
+                                                    outline: 'none',
+                                                    boxSizing: 'border-box'
+                                                }}
+                                            />
+                                            <span style={{ fontSize: '11px', color: '#b91c1c', marginTop: '4px', display: 'block' }}>
+                                                Llegada esta fecha/hora no se aceptarán más intentos.
+                                            </span>
+                                        </div>
                                     </div>
                                 )}
                             </div>

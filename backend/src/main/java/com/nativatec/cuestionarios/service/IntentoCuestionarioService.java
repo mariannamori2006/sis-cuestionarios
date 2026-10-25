@@ -81,6 +81,12 @@ public class IntentoCuestionarioService {
         Cuestionario cuestionario = cuestionarioRepository.findById(dto.getCuestionarioId())
                 .orElseThrow(() -> new RuntimeException("Cuestionario no encontrado"));
 
+        // Validar ventana de disponibilidad por fechas y límite de intentos
+        EstadoDisponibilidadDTO disp = verificarDisponibilidad(dto.getCuestionarioId(), dto.getNombreParticipante());
+        if (!disp.isDisponible()) {
+            throw new IllegalStateException(disp.getMensaje());
+        }
+
         IntentoCuestionario intento = new IntentoCuestionario();
         intento.setCuestionario(cuestionario);
         intento.setNombreInvitado(dto.getNombreParticipante() != null ? dto.getNombreParticipante().trim() : "Anónimo");
@@ -566,6 +572,101 @@ public class IntentoCuestionarioService {
         Cuestionario c = cuestionarioRepository.findById(cuestionarioId).orElse(null);
         if (c == null) return java.util.Collections.emptyList();
         return calcularRendimientoPreguntas(java.util.Collections.singletonList(c));
+    }
+
+    // Verificar si el cuestionario está disponible por fechas y si el alumno no ha superado sus intentos
+    public EstadoDisponibilidadDTO verificarDisponibilidad(UUID cuestionarioId, String nombreParticipante) {
+        Cuestionario c = cuestionarioRepository.findById(cuestionarioId)
+                .orElseThrow(() -> new RuntimeException("Cuestionario no encontrado con ID: " + cuestionarioId));
+
+        LocalDateTime ahora = LocalDateTime.now();
+        java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+        // 1. Verificar fecha de inicio
+        if (c.getFechaInicio() != null && ahora.isBefore(c.getFechaInicio())) {
+            String strInicio = c.getFechaInicio().format(dtf);
+            return new EstadoDisponibilidadDTO(
+                    c.getId(),
+                    false,
+                    "NO_INICIADO",
+                    "Este cuestionario aún no está abierto. Estará disponible a partir del " + strInicio + ".",
+                    c.getFechaInicio(),
+                    c.getFechaFin(),
+                    c.getLimiteIntentos(),
+                    0,
+                    c.getLimiteIntentos(),
+                    null,
+                    c.getTipoCalificacionIntentos()
+            );
+        }
+
+        // 2. Verificar fecha de cierre
+        if (c.getFechaFin() != null && ahora.isAfter(c.getFechaFin())) {
+            String strFin = c.getFechaFin().format(dtf);
+            return new EstadoDisponibilidadDTO(
+                    c.getId(),
+                    false,
+                    "FINALIZADO",
+                    "El plazo para resolver este cuestionario ha finalizado (cerró el " + strFin + ").",
+                    c.getFechaInicio(),
+                    c.getFechaFin(),
+                    c.getLimiteIntentos(),
+                    0,
+                    0,
+                    null,
+                    c.getTipoCalificacionIntentos()
+            );
+        }
+
+        // 3. Verificar límite de intentos del participante
+        int intentosRealizados = 0;
+        Double mejorNota = null;
+        if (nombreParticipante != null && !nombreParticipante.trim().isEmpty()) {
+            List<IntentoCuestionario> previos = intentoRepository.findByCuestionarioIdAndNombreParticipante(c.getId(), nombreParticipante.trim());
+            intentosRealizados = previos.size();
+            for (IntentoCuestionario i : previos) {
+                if (i.getCalificacion() != null) {
+                    if (mejorNota == null || i.getCalificacion() > mejorNota) {
+                        mejorNota = i.getCalificacion();
+                    }
+                }
+            }
+
+            Integer limite = c.getLimiteIntentos();
+            if (limite != null && limite > 0 && intentosRealizados >= limite) {
+                String notaStr = mejorNota != null ? String.format("%.1f/20", mejorNota) : "Pendiente";
+                return new EstadoDisponibilidadDTO(
+                        c.getId(),
+                        false,
+                        "LIMITE_INTENTOS_ALCANZADO",
+                        "Has alcanzado el límite máximo permitido de " + limite + " intento(s) para este examen. Tu mejor calificación registrada es: " + notaStr + ".",
+                        c.getFechaInicio(),
+                        c.getFechaFin(),
+                        limite,
+                        intentosRealizados,
+                        0,
+                        mejorNota,
+                        c.getTipoCalificacionIntentos()
+                );
+            }
+        }
+
+        Integer limite = c.getLimiteIntentos();
+        Integer restantes = (limite != null && limite > 0) ? Math.max(0, limite - intentosRealizados) : null;
+
+        return new EstadoDisponibilidadDTO(
+                c.getId(),
+                true,
+                "DISPONIBLE",
+                "Cuestionario disponible para resolver.",
+                c.getFechaInicio(),
+                c.getFechaFin(),
+                limite,
+                intentosRealizados,
+                restantes,
+                mejorNota,
+                c.getTipoCalificacionIntentos()
+        );
     }
 
     private String obtenerColorMateria(String materia) {
