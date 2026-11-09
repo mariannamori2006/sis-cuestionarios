@@ -139,6 +139,10 @@ public class CuestionarioService {
             if (modificado.getTipoCalificacionIntentos() != null) {
                 existente.setTipoCalificacionIntentos(modificado.getTipoCalificacionIntentos());
             }
+            if (modificado.getMostrarRetroalimentacion() != null) {
+                existente.setMostrarRetroalimentacion(modificado.getMostrarRetroalimentacion());
+            }
+            existente.setGruposPermitidos(modificado.getGruposPermitidos());
 
             if (modificado.getCodigoAcceso() != null && !modificado.getCodigoAcceso().trim().isEmpty()) {
                 existente.setCodigoAcceso(modificado.getCodigoAcceso().trim());
@@ -206,6 +210,8 @@ public class CuestionarioService {
                         act.setTextoPregunta(nueva.getTextoPregunta());
                         act.setTipo(nueva.getTipo());
                         act.setImagenUrl(nueva.getImagenUrl());
+                        act.setExplicacion(nueva.getExplicacion());
+                        act.setPuntos(nueva.getPuntos());
                         act.setOrden(orden++);
 
                         if (nueva.getOpciones() != null) {

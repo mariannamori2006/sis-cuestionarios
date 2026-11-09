@@ -10,6 +10,7 @@ public class AuditoriaCuestionarioDTO {
     private String materia;
     private Integer totalParticipantes;
     private Double promedio;
+    private List<String> grupos = new ArrayList<>();
     private List<AuditoriaIntentoItemDTO> intentos = new ArrayList<>();
 
     public AuditoriaCuestionarioDTO() {
@@ -72,5 +73,13 @@ public class AuditoriaCuestionarioDTO {
 
     public void setIntentos(List<AuditoriaIntentoItemDTO> intentos) {
         this.intentos = intentos;
+    }
+
+    public List<String> getGrupos() {
+        return grupos;
+    }
+
+    public void setGrupos(List<String> grupos) {
+        this.grupos = grupos;
     }
 }

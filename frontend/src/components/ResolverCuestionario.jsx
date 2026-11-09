@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import logoNativa from '../images/logoNativa.jpeg';
-import { Award, CheckCircle, LogOut, Clock, AlertTriangle, AlertCircle, Shuffle, ShieldAlert, ShieldCheck, RotateCcw, Calendar } from 'lucide-react';
+import { Award, CheckCircle, LogOut, Clock, AlertTriangle, AlertCircle, Shuffle, ShieldAlert, ShieldCheck, RotateCcw, Calendar, Lightbulb, BookOpen, Check, X, Filter, Users } from 'lucide-react';
 import { responderCuestionario, verificarDisponibilidadCuestionario } from '../services/cuestionarioService';
 
 export default function ResolverCuestionario() {
@@ -11,6 +11,7 @@ export default function ResolverCuestionario() {
 
     const [nombreParticipante, setNombreParticipante] = useState(sessionStorage.getItem('nombreParticipante') || '');
     const [nombreInput, setNombreInput] = useState('');
+    const [grupoInput, setGrupoInput] = useState(sessionStorage.getItem('grupoParticipante') || '');
     const [comenzado, setComenzado] = useState(Boolean(sessionStorage.getItem('nombreParticipante')));
 
     const [cuestionario, setCuestionario] = useState(null);
@@ -19,6 +20,7 @@ export default function ResolverCuestionario() {
     const [resultado, setResultado] = useState(null);
     const [loading, setLoading] = useState(true);
     const [enviando, setEnviando] = useState(false);
+    const [filtroRetro, setFiltroRetro] = useState('todas'); // 'todas', 'correctas', 'incorrectas'
 
     // Estados del Temporizador con Auto-Envío
     const [tiempoTotalSegundos, setTiempoTotalSegundos] = useState(0);
@@ -179,6 +181,9 @@ export default function ResolverCuestionario() {
         e.preventDefault();
         if (!nombreInput.trim()) return;
         sessionStorage.setItem('nombreParticipante', nombreInput.trim());
+        if (grupoInput.trim()) {
+            sessionStorage.setItem('grupoParticipante', grupoInput.trim());
+        }
         setNombreParticipante(nombreInput.trim());
         setComenzado(true);
     };
@@ -218,6 +223,60 @@ export default function ResolverCuestionario() {
         });
     };
 
+    // Generar estructura normalizada de retroalimentación en caso de fallback
+    const generarRetroalimentacionCliente = (preguntasList, respuestasMap) => {
+        if (!preguntasList || !Array.isArray(preguntasList)) return [];
+        return preguntasList.map((pregunta, pIndex) => {
+            const pKey = pregunta.id || pIndex;
+            const esEscrita = pregunta.tipo === 'RESPUESTA_CORTA' || pregunta.tipo === 'Respuesta escrita';
+            const opcionSeleccionadaId = respuestasMap ? respuestasMap[pKey] : null;
+            let respuestaAlumno = 'Sin responder';
+            let respuestaCorrecta = '';
+            let esCorrecta = false;
+
+            const opcionesDTO = (pregunta.opciones || []).map((op, oIdx) => {
+                const opKey = op.id || oIdx;
+                const esOpcCorrecta = Boolean(op.correcta || op.esCorrecta);
+                const fueElegida = opcionSeleccionadaId === opKey;
+                const textoOpc = op.texto || op.textoOpcion || '';
+
+                if (fueElegida) {
+                    respuestaAlumno = textoOpc;
+                    if (esOpcCorrecta) esCorrecta = true;
+                }
+                if (esOpcCorrecta) {
+                    respuestaCorrecta = textoOpc;
+                }
+
+                return {
+                    id: op.id,
+                    texto: textoOpc,
+                    esCorrecta: esOpcCorrecta,
+                    fueSeleccionada: fueElegida
+                };
+            });
+
+            if (esEscrita) {
+                respuestaAlumno = respuestasMap ? (respuestasMap[pKey] || '(Sin respuesta enviada)') : '';
+                esCorrecta = null;
+            }
+
+            return {
+                preguntaId: pregunta.id,
+                enunciado: pregunta.enunciado || pregunta.textoPregunta,
+                tipo: pregunta.tipo || 'OPCION_MULTIPLE',
+                orden: pIndex + 1,
+                imagenUrl: pregunta.imagenUrl || pregunta.imagen_url,
+                respuestaAlumno,
+                respuestaCorrecta,
+                esCorrecta,
+                esEscrita,
+                explicacion: pregunta.explicacion || pregunta.retroalimentacion || pregunta.justificacion || '',
+                opciones: opcionesDTO
+            };
+        });
+    };
+
     // Auto-envío disparado al llegar a 00:00
     const ejecutarAutoEnvioPorTiempo = async () => {
         if (!cuestionario || enviandoRef.current || resultadoRef.current) return;
@@ -231,6 +290,7 @@ export default function ResolverCuestionario() {
             const resultadoBackend = await responderCuestionario({
                 cuestionarioId: cuestionario.id,
                 nombreParticipante: (sessionStorage.getItem('nombreParticipante') || nombreParticipante || 'Anónimo').trim(),
+                grupo: (sessionStorage.getItem('grupoParticipante') || grupoInput || '').trim() || null,
                 respuestas: payload,
                 advertencias: advertenciasRef.current,
                 finalizadoPorInfraccion: false
@@ -240,6 +300,10 @@ export default function ResolverCuestionario() {
                 nota: resultadoBackend.notaFormateada || (resultadoBackend.requiereRevision ? 'Pendiente de revisión' : `${resultadoBackend.calificacion} / 20`),
                 mensaje: resultadoBackend.mensaje,
                 requiereRevision: Boolean(resultadoBackend.requiereRevision),
+                mostrarRetroalimentacion: resultadoBackend.mostrarRetroalimentacion !== false,
+                retroalimentacion: (resultadoBackend.retroalimentacion && resultadoBackend.retroalimentacion.length > 0)
+                    ? resultadoBackend.retroalimentacion
+                    : generarRetroalimentacionCliente(cuestionario.preguntas, respuestasRef.current),
                 porTiempo: true
             });
 
@@ -286,6 +350,8 @@ export default function ResolverCuestionario() {
                 nota: tieneEscritas ? 'Pendiente de revisión' : `${((aciertos / (totalPreguntas || 1)) * 20).toFixed(1)} / 20`,
                 mensaje: 'El tiempo límite finalizó. Tus respuestas registradas hasta el momento han sido guardadas y evaluadas.',
                 requiereRevision: tieneEscritas,
+                mostrarRetroalimentacion: true,
+                retroalimentacion: generarRetroalimentacionCliente(cuestionario.preguntas, respuestasRef.current),
                 porTiempo: true
             });
         } finally {
@@ -304,6 +370,7 @@ export default function ResolverCuestionario() {
             const resultadoBackend = await responderCuestionario({
                 cuestionarioId: cuestionario.id,
                 nombreParticipante: (sessionStorage.getItem('nombreParticipante') || nombreParticipante || 'Anónimo').trim(),
+                grupo: (sessionStorage.getItem('grupoParticipante') || grupoInput || '').trim() || null,
                 respuestas: payload,
                 advertencias: totalAdvertencias,
                 finalizadoPorInfraccion: true
@@ -313,6 +380,10 @@ export default function ResolverCuestionario() {
                 nota: resultadoBackend.notaFormateada || (resultadoBackend.requiereRevision ? 'Pendiente de revisión' : `${resultadoBackend.calificacion} / 20`),
                 mensaje: `Evaluación finalizada automáticamente por superar el límite de ${totalAdvertencias} advertencias de cambio de pestaña.`,
                 requiereRevision: Boolean(resultadoBackend.requiereRevision),
+                mostrarRetroalimentacion: resultadoBackend.mostrarRetroalimentacion !== false,
+                retroalimentacion: (resultadoBackend.retroalimentacion && resultadoBackend.retroalimentacion.length > 0)
+                    ? resultadoBackend.retroalimentacion
+                    : generarRetroalimentacionCliente(cuestionario.preguntas, respuestasRef.current),
                 porInfraccion: true
             });
         } catch (err) {
@@ -334,6 +405,8 @@ export default function ResolverCuestionario() {
                 nota: `${((aciertos / (totalPreguntas || 1)) * 20).toFixed(1)} / 20`,
                 mensaje: `Evaluación finalizada automáticamente por superar el límite de ${totalAdvertencias} advertencias de cambio de pestaña.`,
                 requiereRevision: false,
+                mostrarRetroalimentacion: true,
+                retroalimentacion: generarRetroalimentacionCliente(cuestionario.preguntas, respuestasRef.current),
                 porInfraccion: true
             });
         } finally {
@@ -351,9 +424,11 @@ export default function ResolverCuestionario() {
         const payload = construirPayloadRespuestas(respuestasSeleccionadas);
 
         try {
+            const nombreParticipanteFinal = (sessionStorage.getItem('nombreParticipante') || nombreParticipante || 'Anónimo').trim();
             const resultadoBackend = await responderCuestionario({
                 cuestionarioId: cuestionario.id,
-                nombreParticipante: (nombreParticipante || 'Anónimo').trim(),
+                nombreParticipante: nombreParticipanteFinal,
+                grupo: (sessionStorage.getItem('grupoParticipante') || grupoInput || '').trim() || null,
                 respuestas: payload,
                 advertencias: advertenciasRef.current,
                 finalizadoPorInfraccion: false
@@ -363,14 +438,23 @@ export default function ResolverCuestionario() {
                 nota: resultadoBackend.notaFormateada || (resultadoBackend.requiereRevision ? 'Pendiente de revisión' : `${resultadoBackend.calificacion} / 20`),
                 mensaje: resultadoBackend.mensaje,
                 requiereRevision: Boolean(resultadoBackend.requiereRevision),
+                mostrarRetroalimentacion: resultadoBackend.mostrarRetroalimentacion !== false,
+                retroalimentacion: (resultadoBackend.retroalimentacion && resultadoBackend.retroalimentacion.length > 0)
+                    ? resultadoBackend.retroalimentacion
+                    : generarRetroalimentacionCliente(cuestionario.preguntas, respuestasSeleccionadas),
                 porTiempo: false
             });
 
             try {
-                const dispActualizado = await verificarDisponibilidadCuestionario(cuestionario.id, (nombreParticipante || 'Anónimo').trim());
+                const dispActualizado = await verificarDisponibilidadCuestionario(cuestionario.id, nombreParticipanteFinal);
                 setEstadoDisponibilidad(dispActualizado);
             } catch (e) {
                 console.warn("No se pudo refrescar disponibilidad tras envío:", e);
+                setEstadoDisponibilidad(prev => prev ? {
+                    ...prev,
+                    intentosRealizados: (prev.intentosRealizados || 0) + 1,
+                    intentosRestantes: prev.limiteIntentos > 0 ? Math.max(0, (prev.intentosRestantes ?? prev.limiteIntentos) - 1) : null
+                } : prev);
             }
         } catch (err) {
             console.error("Error al enviar respuestas a la base de datos:", err);
@@ -410,6 +494,8 @@ export default function ResolverCuestionario() {
                     nota: 'Pendiente de revisión',
                     mensaje: '¡Tus respuestas han sido enviadas con éxito! Al incluir preguntas escritas, tu profesor revisará tus respuestas y asignará tu calificación.',
                     requiereRevision: true,
+                    mostrarRetroalimentacion: true,
+                    retroalimentacion: generarRetroalimentacionCliente(cuestionario.preguntas, respuestasSeleccionadas),
                     porTiempo: false
                 });
             } else {
@@ -418,6 +504,8 @@ export default function ResolverCuestionario() {
                     nota: `${notaCalculada} / 20`,
                     mensaje: `Has completado el cuestionario con ${aciertos} de ${totalPreguntas} aciertos.`,
                     requiereRevision: false,
+                    mostrarRetroalimentacion: true,
+                    retroalimentacion: generarRetroalimentacionCliente(cuestionario.preguntas, respuestasSeleccionadas),
                     porTiempo: false
                 });
             }
@@ -655,6 +743,49 @@ export default function ResolverCuestionario() {
                             />
                         </div>
 
+                        <div>
+                            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+                                Grupo o Sección (Opcional)
+                            </label>
+                            {cuestionario.gruposPermitidos ? (
+                                <select
+                                    value={grupoInput}
+                                    onChange={(e) => setGrupoInput(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #cbd5e1',
+                                        outline: 'none',
+                                        fontSize: '14px',
+                                        backgroundColor: '#fff',
+                                        boxSizing: 'border-box'
+                                    }}
+                                >
+                                    <option value="">-- Selecciona tu grupo --</option>
+                                    {cuestionario.gruposPermitidos.split(',').map(g => g.trim()).filter(Boolean).map(grp => (
+                                        <option key={grp} value={grp}>{grp}</option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <input
+                                    type="text"
+                                    value={grupoInput}
+                                    onChange={(e) => setGrupoInput(e.target.value)}
+                                    placeholder="Ej. 5to A, Grupo 1"
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #cbd5e1',
+                                        outline: 'none',
+                                        fontSize: '14px',
+                                        boxSizing: 'border-box'
+                                    }}
+                                />
+                            )}
+                        </div>
+
                         <button
                             type="submit"
                             style={{
@@ -859,28 +990,76 @@ export default function ResolverCuestionario() {
                         </p>
 
                         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '16px' }}>
-                            {/* Botón de Siguiente Intento si quedan intentos disponibles */}
-                            {estadoDisponibilidad && (estadoDisponibilidad.limiteIntentos === 0 || (estadoDisponibilidad.intentosRestantes !== null && estadoDisponibilidad.intentosRestantes > 0) || (estadoDisponibilidad.limiteIntentos > (estadoDisponibilidad.intentosRealizados || 1))) && (
-                                <button
-                                    onClick={handleReintentar}
-                                    style={{
-                                        backgroundColor: '#10b981',
-                                        color: '#ffffff',
-                                        border: 'none',
-                                        padding: '12px 24px',
-                                        borderRadius: '8px',
-                                        cursor: 'pointer',
-                                        fontWeight: '700',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '8px',
-                                        fontSize: '14px',
-                                        boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
-                                    }}
-                                >
-                                    <RotateCcw size={16} /> Realizar siguiente intento
-                                </button>
-                            )}
+                            {/* Botón de Siguiente Intento: NUNCA se muestra si el examen es de intento único (límite === 1) */}
+                            {(() => {
+                                const limiteConfig = cuestionario?.limiteIntentos !== undefined && cuestionario?.limiteIntentos !== null
+                                    ? cuestionario.limiteIntentos
+                                    : (estadoDisponibilidad?.limiteIntentos !== undefined && estadoDisponibilidad?.limiteIntentos !== null
+                                        ? estadoDisponibilidad.limiteIntentos
+                                        : 1);
+
+                                // 1. Si el examen es formal/evaluativo de 1 solo intento, NUNCA mostrar reintento
+                                if (limiteConfig === 1) {
+                                    return null;
+                                }
+
+                                // 2. Si es práctica libre/ilimitada (límite === 0), siempre puede reintentar
+                                if (limiteConfig === 0) {
+                                    return (
+                                        <button
+                                            onClick={handleReintentar}
+                                            style={{
+                                                backgroundColor: '#10b981',
+                                                color: '#ffffff',
+                                                border: 'none',
+                                                padding: '12px 24px',
+                                                borderRadius: '8px',
+                                                cursor: 'pointer',
+                                                fontWeight: '700',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                fontSize: '14px',
+                                                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
+                                            }}
+                                        >
+                                            <RotateCcw size={16} /> Realizar siguiente intento
+                                        </button>
+                                    );
+                                }
+
+                                // 3. Si permite varios intentos (ej. 2, 3 o 5): verificar si aún le quedan disponibles
+                                const restantes = estadoDisponibilidad?.intentosRestantes;
+                                const puede = (restantes !== null && restantes !== undefined)
+                                    ? restantes > 0
+                                    : (estadoDisponibilidad?.intentosRealizados ? estadoDisponibilidad.intentosRealizados < limiteConfig : false);
+
+                                if (!puede) {
+                                    return null;
+                                }
+
+                                return (
+                                    <button
+                                        onClick={handleReintentar}
+                                        style={{
+                                            backgroundColor: '#10b981',
+                                            color: '#ffffff',
+                                            border: 'none',
+                                            padding: '12px 24px',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            fontWeight: '700',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            fontSize: '14px',
+                                            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
+                                        }}
+                                    >
+                                        <RotateCcw size={16} /> Realizar siguiente intento
+                                    </button>
+                                );
+                            })()}
 
                             <button
                                 onClick={() => navigate('/unirse')}
@@ -901,6 +1080,467 @@ export default function ResolverCuestionario() {
                                 <LogOut size={16} /> Salir de la Evaluación
                             </button>
                         </div>
+
+                        {/* SECCIÓN DE RETROALIMENTACIÓN PEDAGÓGICA INMEDIATA */}
+                        {resultado.mostrarRetroalimentacion !== false && resultado.retroalimentacion && resultado.retroalimentacion.length > 0 && (() => {
+                            const retroLista = resultado.retroalimentacion;
+                            const totalRetro = retroLista.length;
+                            const totalAciertos = retroLista.filter(r => r.esCorrecta === true).length;
+                            const totalErrores = retroLista.filter(r => r.esCorrecta === false).length;
+                            const totalEscritas = retroLista.filter(r => r.esEscrita).length;
+
+                            const listaFiltrada = retroLista.filter(r => {
+                                if (filtroRetro === 'correctas') return r.esCorrecta === true;
+                                if (filtroRetro === 'incorrectas') return r.esCorrecta === false;
+                                return true;
+                            });
+
+                            return (
+                                <div style={{
+                                    marginTop: '36px',
+                                    textAlign: 'left',
+                                    borderTop: '2px dashed #e2e8f0',
+                                    paddingTop: '28px'
+                                }}>
+                                    {/* Cabecera de la Retroalimentación */}
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'flex-start',
+                                        flexWrap: 'wrap',
+                                        gap: '14px',
+                                        marginBottom: '20px'
+                                    }}>
+                                        <div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                                <div style={{
+                                                    width: '32px',
+                                                    height: '32px',
+                                                    borderRadius: '8px',
+                                                    backgroundColor: '#fef3c7',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}>
+                                                    <Lightbulb size={18} color="#d97706" />
+                                                </div>
+                                                <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a', margin: 0 }}>
+                                                    Retroalimentación y Explicación Pedagógica
+                                                </h3>
+                                            </div>
+                                            <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+                                                Revisa detalladamente cada pregunta para comprender las respuestas correctas y afianzar tu aprendizaje.
+                                            </p>
+                                        </div>
+
+                                        {/* Insignias de métricas rápidas */}
+                                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                            <div style={{
+                                                backgroundColor: '#f0fdf4',
+                                                border: '1px solid #bbf7d0',
+                                                color: '#15803d',
+                                                padding: '4px 10px',
+                                                borderRadius: '20px',
+                                                fontSize: '12px',
+                                                fontWeight: '700',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '4px'
+                                            }}>
+                                                <CheckCircle size={14} /> {totalAciertos} {totalAciertos === 1 ? 'Acierto' : 'Aciertos'}
+                                            </div>
+                                            {totalErrores > 0 && (
+                                                <div style={{
+                                                    backgroundColor: '#fef2f2',
+                                                    border: '1px solid #fecaca',
+                                                    color: '#b91c1c',
+                                                    padding: '4px 10px',
+                                                    borderRadius: '20px',
+                                                    fontSize: '12px',
+                                                    fontWeight: '700',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px'
+                                                }}>
+                                                    <AlertCircle size={14} /> {totalErrores} {totalErrores === 1 ? 'Error' : 'Errores'}
+                                                </div>
+                                            )}
+                                            {totalEscritas > 0 && (
+                                                <div style={{
+                                                    backgroundColor: '#eff6ff',
+                                                    border: '1px solid #bfdbfe',
+                                                    color: '#1e40af',
+                                                    padding: '4px 10px',
+                                                    borderRadius: '20px',
+                                                    fontSize: '12px',
+                                                    fontWeight: '700',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px'
+                                                }}>
+                                                    <Clock size={14} /> {totalEscritas} en revisión
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Barra de Filtros */}
+                                    <div style={{
+                                        display: 'flex',
+                                        gap: '8px',
+                                        marginBottom: '20px',
+                                        backgroundColor: '#f8fafc',
+                                        padding: '6px',
+                                        borderRadius: '10px',
+                                        border: '1px solid #e2e8f0',
+                                        width: 'fit-content'
+                                    }}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setFiltroRetro('todas')}
+                                            style={{
+                                                padding: '6px 14px',
+                                                borderRadius: '8px',
+                                                border: 'none',
+                                                backgroundColor: filtroRetro === 'todas' ? '#0f172a' : 'transparent',
+                                                color: filtroRetro === 'todas' ? '#ffffff' : '#64748b',
+                                                fontSize: '12px',
+                                                fontWeight: '700',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            Todas ({totalRetro})
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setFiltroRetro('correctas')}
+                                            style={{
+                                                padding: '6px 14px',
+                                                borderRadius: '8px',
+                                                border: 'none',
+                                                backgroundColor: filtroRetro === 'correctas' ? '#10b981' : 'transparent',
+                                                color: filtroRetro === 'correctas' ? '#ffffff' : '#64748b',
+                                                fontSize: '12px',
+                                                fontWeight: '700',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            Solo Aciertos ({totalAciertos})
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setFiltroRetro('incorrectas')}
+                                            style={{
+                                                padding: '6px 14px',
+                                                borderRadius: '8px',
+                                                border: 'none',
+                                                backgroundColor: filtroRetro === 'incorrectas' ? '#ef4444' : 'transparent',
+                                                color: filtroRetro === 'incorrectas' ? '#ffffff' : '#64748b',
+                                                fontSize: '12px',
+                                                fontWeight: '700',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            Solo Errores ({totalErrores})
+                                        </button>
+                                    </div>
+
+                                    {/* Lista de Preguntas con Retroalimentación */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                        {listaFiltrada.map((item, qIdx) => {
+                                            const esCorrecto = item.esCorrecta === true;
+                                            const esIncorrecto = item.esCorrecta === false;
+                                            const esEscrita = item.esEscrita;
+
+                                            return (
+                                                <div
+                                                    key={item.preguntaId || qIdx}
+                                                    style={{
+                                                        backgroundColor: '#ffffff',
+                                                        borderRadius: '14px',
+                                                        border: esCorrecto ? '1px solid #bbf7d0' : esIncorrecto ? '1px solid #fecaca' : '1px solid #e2e8f0',
+                                                        boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                                                        padding: '20px',
+                                                        transition: 'all 0.2s'
+                                                    }}
+                                                >
+                                                    {/* Cabecera de la Pregunta */}
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                        marginBottom: '10px',
+                                                        flexWrap: 'wrap',
+                                                        gap: '8px'
+                                                    }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                            <span style={{ fontSize: '11px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                                                Pregunta {item.orden || qIdx + 1} • {item.tipo === 'VERDADERO_FALSO' || item.tipo === 'Verdadero/Falso' ? 'Verdadero / Falso' : item.tipo === 'RESPUESTA_CORTA' || item.tipo === 'Respuesta escrita' ? 'Respuesta Escrita' : 'Opción Múltiple'}
+                                                            </span>
+                                                            {item.puntosAsignados !== undefined && item.puntosAsignados !== null && (
+                                                                <span style={{
+                                                                    fontSize: '11px',
+                                                                    fontWeight: '700',
+                                                                    backgroundColor: esCorrecto ? '#ecfdf5' : '#f8fafc',
+                                                                    color: esCorrecto ? '#047857' : '#64748b',
+                                                                    border: `1px solid ${esCorrecto ? '#a7f3d0' : '#cbd5e1'}`,
+                                                                    padding: '2px 8px',
+                                                                    borderRadius: '12px'
+                                                                }}>
+                                                                    {item.puntosObtenidos !== undefined && item.puntosObtenidos !== null ? item.puntosObtenidos.toFixed(1) : (esCorrecto ? item.puntosAsignados.toFixed(1) : '0.0')} / {item.puntosAsignados.toFixed(1)} pts
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        {esEscrita ? (
+                                                            <div style={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: '6px',
+                                                                backgroundColor: '#eff6ff',
+                                                                color: '#1d4ed8',
+                                                                border: '1px solid #bfdbfe',
+                                                                padding: '4px 12px',
+                                                                borderRadius: '20px',
+                                                                fontSize: '12px',
+                                                                fontWeight: '700'
+                                                            }}>
+                                                                <Clock size={14} /> Respuesta enviada (Revisión docente)
+                                                            </div>
+                                                        ) : esCorrecto ? (
+                                                            <div style={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: '6px',
+                                                                backgroundColor: '#ecfdf5',
+                                                                color: '#15803d',
+                                                                border: '1px solid #a7f3d0',
+                                                                padding: '4px 12px',
+                                                                borderRadius: '20px',
+                                                                fontSize: '12px',
+                                                                fontWeight: '700'
+                                                            }}>
+                                                                <CheckCircle size={14} /> ¡Respuesta Correcta!
+                                                            </div>
+                                                        ) : (
+                                                            <div style={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: '6px',
+                                                                backgroundColor: '#fef2f2',
+                                                                color: '#b91c1c',
+                                                                border: '1px solid #fecaca',
+                                                                padding: '4px 12px',
+                                                                borderRadius: '20px',
+                                                                fontSize: '12px',
+                                                                fontWeight: '700'
+                                                            }}>
+                                                                <AlertCircle size={14} /> Respuesta Incorrecta
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Enunciado */}
+                                                    <h4 style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a', margin: '0 0 12px 0', lineHeight: '1.4' }}>
+                                                        {item.enunciado}
+                                                    </h4>
+
+                                                    {/* Imagen / Diagrama */}
+                                                    {item.imagenUrl && (
+                                                        <div style={{ marginBottom: '14px' }}>
+                                                            <img
+                                                                src={item.imagenUrl}
+                                                                alt="Diagrama o imagen ilustrativa"
+                                                                onError={(e) => { e.target.style.display = 'none'; }}
+                                                                style={{
+                                                                    maxHeight: '180px',
+                                                                    maxWidth: '100%',
+                                                                    borderRadius: '8px',
+                                                                    border: '1px solid #e2e8f0',
+                                                                    objectFit: 'contain'
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    )}
+
+                                                    {/* Desglose de Opciones / Respuesta */}
+                                                    {esEscrita ? (
+                                                        <div style={{ marginBottom: '14px' }}>
+                                                            <div style={{
+                                                                backgroundColor: '#f8fafc',
+                                                                border: '1px solid #cbd5e1',
+                                                                borderRadius: '8px',
+                                                                padding: '10px 14px',
+                                                                fontSize: '13px',
+                                                                color: '#0f172a'
+                                                            }}>
+                                                                <strong style={{ color: '#475569', display: 'block', marginBottom: '4px', fontSize: '11px', textTransform: 'uppercase' }}>
+                                                                    Tu respuesta enviada:
+                                                                </strong>
+                                                                {item.respuestaAlumno || '(Sin respuesta enviada)'}
+                                                            </div>
+                                                            {item.respuestaCorrecta && item.respuestaCorrecta !== 'Respuesta abierta' && (
+                                                                <div style={{
+                                                                    marginTop: '8px',
+                                                                    backgroundColor: '#f0fdf4',
+                                                                    border: '1px dashed #86efac',
+                                                                    borderRadius: '8px',
+                                                                    padding: '8px 12px',
+                                                                    fontSize: '12px',
+                                                                    color: '#166534'
+                                                                }}>
+                                                                    <strong>Pauta o Criterio Esperado:</strong> {item.respuestaCorrecta}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
+                                                            {(item.opciones || []).map((opc, opcIdx) => {
+                                                                const fueElegida = opc.fueSeleccionada;
+                                                                const esLaCorrecta = opc.esCorrecta;
+
+                                                                let bgOpc = '#f8fafc';
+                                                                let borderOpc = '1px solid #e2e8f0';
+                                                                let colorTexto = '#334155';
+
+                                                                if (fueElegida && esLaCorrecta) {
+                                                                    bgOpc = '#ecfdf5';
+                                                                    borderOpc = '2px solid #10b981';
+                                                                    colorTexto = '#065f46';
+                                                                } else if (fueElegida && !esLaCorrecta) {
+                                                                    bgOpc = '#fef2f2';
+                                                                    borderOpc = '2px solid #ef4444';
+                                                                    colorTexto = '#991b1b';
+                                                                } else if (!fueElegida && esLaCorrecta) {
+                                                                    bgOpc = '#f0fdf4';
+                                                                    borderOpc = '2px dashed #10b981';
+                                                                    colorTexto = '#166534';
+                                                                }
+
+                                                                return (
+                                                                    <div
+                                                                        key={opc.id || opcIdx}
+                                                                        style={{
+                                                                            backgroundColor: bgOpc,
+                                                                            border: borderOpc,
+                                                                            borderRadius: '8px',
+                                                                            padding: '10px 14px',
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            justifyContent: 'space-between',
+                                                                            fontSize: '13px',
+                                                                            fontWeight: fueElegida || esLaCorrecta ? '600' : 'normal',
+                                                                            color: colorTexto
+                                                                        }}
+                                                                    >
+                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                                            <span style={{
+                                                                                width: '22px',
+                                                                                height: '22px',
+                                                                                borderRadius: '50%',
+                                                                                backgroundColor: fueElegida ? (esLaCorrecta ? '#10b981' : '#ef4444') : (esLaCorrecta ? '#86efac' : '#e2e8f0'),
+                                                                                color: fueElegida ? '#ffffff' : (esLaCorrecta ? '#166534' : '#64748b'),
+                                                                                display: 'flex',
+                                                                                alignItems: 'center',
+                                                                                justifyContent: 'center',
+                                                                                fontSize: '11px',
+                                                                                fontWeight: 'bold'
+                                                                            }}>
+                                                                                {String.fromCharCode(65 + opcIdx)}
+                                                                            </span>
+                                                                            <span>{opc.texto}</span>
+                                                                        </div>
+
+                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                                            {fueElegida && (
+                                                                                <span style={{
+                                                                                    fontSize: '11px',
+                                                                                    fontWeight: '700',
+                                                                                    backgroundColor: esLaCorrecta ? '#dcfce7' : '#fee2e2',
+                                                                                    color: esLaCorrecta ? '#15803d' : '#b91c1c',
+                                                                                    padding: '2px 8px',
+                                                                                    borderRadius: '10px'
+                                                                                }}>
+                                                                                    {esLaCorrecta ? 'Tu respuesta ✓' : 'Tu respuesta ✗'}
+                                                                                </span>
+                                                                            )}
+                                                                            {!fueElegida && esLaCorrecta && (
+                                                                                <span style={{
+                                                                                    fontSize: '11px',
+                                                                                    fontWeight: '700',
+                                                                                    backgroundColor: '#dcfce7',
+                                                                                    color: '#15803d',
+                                                                                    padding: '2px 8px',
+                                                                                    borderRadius: '10px'
+                                                                                }}>
+                                                                                    Respuesta correcta ✓
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
+
+                                                    {/* TARJETA DE EXPLICACIÓN PEDAGÓGICA */}
+                                                    <div style={{
+                                                        backgroundColor: '#fffbeb',
+                                                        border: '1px solid #fde68a',
+                                                        borderLeft: '4px solid #f59e0b',
+                                                        borderRadius: '10px',
+                                                        padding: '12px 16px',
+                                                        marginTop: '8px'
+                                                    }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                                                            <Lightbulb size={16} color="#d97706" />
+                                                            <span style={{
+                                                                fontSize: '12px',
+                                                                fontWeight: '800',
+                                                                color: '#92400e',
+                                                                textTransform: 'uppercase',
+                                                                letterSpacing: '0.5px'
+                                                            }}>
+                                                                Explicación Pedagógica
+                                                            </span>
+                                                        </div>
+                                                        <p style={{
+                                                            fontSize: '13px',
+                                                            color: '#78350f',
+                                                            lineHeight: '1.5',
+                                                            margin: 0
+                                                        }}>
+                                                            {item.explicacion && item.explicacion.trim() !== ''
+                                                                ? item.explicacion
+                                                                : esCorrecto
+                                                                    ? '¡Excelente trabajo! Has demostrado una comprensión sólida de los conceptos clave abordados en esta pregunta.'
+                                                                    : 'Te recomendamos repasar los temas y fundamentos teóricos de esta materia para reforzar tu comprensión y mejorar en tus futuros intentos.'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+
+                                        {listaFiltrada.length === 0 && (
+                                            <div style={{
+                                                textAlign: 'center',
+                                                padding: '30px',
+                                                backgroundColor: '#f8fafc',
+                                                borderRadius: '12px',
+                                                border: '1px dashed #cbd5e1',
+                                                color: '#64748b',
+                                                fontSize: '13px'
+                                            }}>
+                                                No hay preguntas que coincidan con el filtro seleccionado.
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })()}
                     </div>
                 ) : (
                     <form onSubmit={handleSubmitEvaluacion} style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
@@ -917,6 +1557,19 @@ export default function ResolverCuestionario() {
                                             <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                                                 Pregunta {index + 1} • {esVerdaderoFalso ? 'Verdadero / Falso' : esEscrita ? 'Respuesta Escrita' : 'Opción Múltiple'}
                                             </span>
+                                            {pregunta.puntos !== undefined && pregunta.puntos !== null && (
+                                                <span style={{
+                                                    fontSize: '11px',
+                                                    fontWeight: '700',
+                                                    backgroundColor: '#ecfdf5',
+                                                    color: '#047857',
+                                                    border: '1px solid #a7f3d0',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '12px'
+                                                }}>
+                                                    Valor: {pregunta.puntos.toFixed(1)} pts
+                                                </span>
+                                            )}
                                         </div>
 
                                         <h4 style={{ margin: '0 0 14px 0', fontSize: '15px', color: '#1e293b', lineHeight: '1.4' }}>

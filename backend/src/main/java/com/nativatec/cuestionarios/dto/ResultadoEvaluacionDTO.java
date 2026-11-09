@@ -1,5 +1,7 @@
 package com.nativatec.cuestionarios.dto;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class ResultadoEvaluacionDTO {
@@ -10,15 +12,23 @@ public class ResultadoEvaluacionDTO {
     private Integer totalPreguntas;
     private String mensaje;
     private Boolean requiereRevision = false;
+    private Boolean mostrarRetroalimentacion = true;
+    private List<RetroalimentacionPreguntaDTO> retroalimentacion = new ArrayList<>();
 
     public ResultadoEvaluacionDTO() {
     }
 
     public ResultadoEvaluacionDTO(UUID intentoId, Double calificacion, String notaFormateada, Integer aciertos, Integer totalPreguntas, String mensaje) {
-        this(intentoId, calificacion, notaFormateada, aciertos, totalPreguntas, mensaje, false);
+        this(intentoId, calificacion, notaFormateada, aciertos, totalPreguntas, mensaje, false, true, new ArrayList<>());
     }
 
     public ResultadoEvaluacionDTO(UUID intentoId, Double calificacion, String notaFormateada, Integer aciertos, Integer totalPreguntas, String mensaje, Boolean requiereRevision) {
+        this(intentoId, calificacion, notaFormateada, aciertos, totalPreguntas, mensaje, requiereRevision, true, new ArrayList<>());
+    }
+
+    public ResultadoEvaluacionDTO(UUID intentoId, Double calificacion, String notaFormateada, Integer aciertos,
+                                  Integer totalPreguntas, String mensaje, Boolean requiereRevision,
+                                  Boolean mostrarRetroalimentacion, List<RetroalimentacionPreguntaDTO> retroalimentacion) {
         this.intentoId = intentoId;
         this.calificacion = calificacion;
         this.notaFormateada = notaFormateada;
@@ -26,6 +36,8 @@ public class ResultadoEvaluacionDTO {
         this.totalPreguntas = totalPreguntas;
         this.mensaje = mensaje;
         this.requiereRevision = requiereRevision != null ? requiereRevision : false;
+        this.mostrarRetroalimentacion = mostrarRetroalimentacion != null ? mostrarRetroalimentacion : true;
+        this.retroalimentacion = retroalimentacion != null ? retroalimentacion : new ArrayList<>();
     }
 
     public UUID getIntentoId() {
@@ -82,5 +94,21 @@ public class ResultadoEvaluacionDTO {
 
     public void setRequiereRevision(Boolean requiereRevision) {
         this.requiereRevision = requiereRevision;
+    }
+
+    public Boolean getMostrarRetroalimentacion() {
+        return mostrarRetroalimentacion;
+    }
+
+    public void setMostrarRetroalimentacion(Boolean mostrarRetroalimentacion) {
+        this.mostrarRetroalimentacion = mostrarRetroalimentacion;
+    }
+
+    public List<RetroalimentacionPreguntaDTO> getRetroalimentacion() {
+        return retroalimentacion;
+    }
+
+    public void setRetroalimentacion(List<RetroalimentacionPreguntaDTO> retroalimentacion) {
+        this.retroalimentacion = retroalimentacion;
     }
 }

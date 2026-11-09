@@ -27,6 +27,12 @@ public class DetalleIntento {
     @Column(name = "respuesta_texto", columnDefinition = "TEXT")
     private String respuestaTexto;
 
+    @Column(name = "puntos_asignados")
+    private Double puntosAsignados;
+
+    @Column(name = "puntos_obtenidos")
+    private Double puntosObtenidos;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -104,5 +110,21 @@ public class DetalleIntento {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Double getPuntosAsignados() {
+        return puntosAsignados;
+    }
+
+    public void setPuntosAsignados(Double puntosAsignados) {
+        this.puntosAsignados = puntosAsignados;
+    }
+
+    public Double getPuntosObtenidos() {
+        return puntosObtenidos;
+    }
+
+    public void setPuntosObtenidos(Double puntosObtenidos) {
+        this.puntosObtenidos = puntosObtenidos;
     }
 }

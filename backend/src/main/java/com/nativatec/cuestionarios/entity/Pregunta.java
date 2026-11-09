@@ -43,6 +43,12 @@ public class Pregunta {
     @Column(name = "imagen_url", columnDefinition = "TEXT")
     private String imagenUrl;
 
+    @Column(name = "explicacion", columnDefinition = "TEXT")
+    private String explicacion;
+
+    @Column(name = "puntos")
+    private Double puntos = 4.0;
+
     @OneToMany(mappedBy = "pregunta", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<OpcionRespuesta> opciones = new ArrayList<>();
@@ -104,6 +110,30 @@ public class Pregunta {
     @JsonAlias({"imagen_url", "imagen", "fotoUrl"})
     public void setImagenUrl(String imagenUrl) {
         this.imagenUrl = imagenUrl;
+    }
+
+    @JsonProperty("explicacion")
+    @JsonAlias({"retroalimentacion", "justificacion", "explicacionPedagogica"})
+    public String getExplicacion() {
+        return explicacion;
+    }
+
+    @JsonProperty("explicacion")
+    @JsonAlias({"retroalimentacion", "justificacion", "explicacionPedagogica"})
+    public void setExplicacion(String explicacion) {
+        this.explicacion = explicacion;
+    }
+
+    @JsonProperty("puntos")
+    @JsonAlias({"puntaje", "peso", "valor"})
+    public Double getPuntos() {
+        return puntos != null ? puntos : 4.0;
+    }
+
+    @JsonProperty("puntos")
+    @JsonAlias({"puntaje", "peso", "valor"})
+    public void setPuntos(Double puntos) {
+        this.puntos = puntos != null && puntos > 0 ? puntos : 4.0;
     }
 
     // Getters y Setters habituales

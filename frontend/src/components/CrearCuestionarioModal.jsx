@@ -1,7 +1,47 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { crearCuestionario, actualizarCuestionario } from '../services/cuestionarioService';
 import { descargarPlantillaExcel, procesarArchivoPreguntas } from '../services/excelService';
-import { X, UploadCloud, Download, Plus, Trash2, CheckCircle2, Type, CheckSquare, Shuffle, AlertCircle, Image as ImageIcon, Link2, ShieldAlert, Calendar, RotateCcw } from 'lucide-react';
+import { obtenerPreguntasBanco, crearPreguntaBanco } from '../services/bancoPreguntaService';
+import { X, UploadCloud, Download, Plus, Trash2, CheckCircle2, Type, CheckSquare, Shuffle, AlertCircle, Image as ImageIcon, Link2, ShieldAlert, Calendar, RotateCcw, Lightbulb, Users, Sliders, ChevronDown, Award, BookOpen, Sparkles, Check, Search, Layers } from 'lucide-react';
+
+const ToggleSwitch = ({ checked, onChange, activeColor = '#2563eb' }) => (
+    <div
+        role="switch"
+        aria-checked={checked}
+        onClick={(e) => {
+            e.stopPropagation();
+            onChange(!checked);
+        }}
+        style={{
+            position: 'relative',
+            width: '40px',
+            height: '22px',
+            borderRadius: '9999px',
+            backgroundColor: checked ? activeColor : '#cbd5e1',
+            cursor: 'pointer',
+            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: checked ? `0 2px 8px ${activeColor}40` : 'none',
+            flexShrink: 0,
+            userSelect: 'none',
+            display: 'inline-block'
+        }}
+    >
+        <span
+            style={{
+                display: 'block',
+                width: '16px',
+                height: '16px',
+                backgroundColor: '#ffffff',
+                borderRadius: '50%',
+                position: 'absolute',
+                top: '3px',
+                left: checked ? '21px' : '3px',
+                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.25)'
+            }}
+        />
+    </div>
+);
 
 const formatDateTimeForInput = (dateVal) => {
     if (!dateVal) return '';
@@ -41,6 +81,9 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
     const [fechaFin, setFechaFin] = useState('');
     const [limiteIntentos, setLimiteIntentos] = useState(1);
     const [tipoCalificacionIntentos, setTipoCalificacionIntentos] = useState('MEJOR_NOTA');
+    const [mostrarRetroalimentacion, setMostrarRetroalimentacion] = useState(true);
+    const [gruposPermitidos, setGruposPermitidos] = useState('');
+    const [expandirConfiguracion, setExpandirConfiguracion] = useState(false);
 
     // Estados para la importación de archivos Excel / CSV
     const [arrastrando, setArrastrando] = useState(false);
@@ -50,11 +93,25 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
     const [preguntasImportadasPendientes, setPreguntasImportadasPendientes] = useState([]);
     const fileInputRef = useRef(null);
 
+    // Modal para importar desde el Banco Centralizado
+    const [modalBancoAbierto, setModalBancoAbierto] = useState(false);
+    const [preguntasBanco, setPreguntasBanco] = useState([]);
+    const [cargandoBanco, setCargandoBanco] = useState(false);
+    const [seleccionadasBanco, setSeleccionadasBanco] = useState({});
+    const [filtroBancoMateria, setFiltroBancoMateria] = useState('');
+    const [filtroBancoDificultad, setFiltroBancoDificultad] = useState('TODAS');
+    const [busquedaBanco, setBusquedaBanco] = useState('');
+
+    // Estado para guardar pregunta en el banco
+    const [guardandoEnBancoIndex, setGuardandoEnBancoIndex] = useState(null);
+    const [mensajeBancoExito, setMensajeBancoExito] = useState('');
+
     // Lista de preguntas para la creación/edición manual
     const [preguntas, setPreguntas] = useState([
         {
             enunciado: '',
             tipo: 'Opción múltiple',
+            puntos: 4.0,
             imagenUrl: '',
             opciones: [
                 { texto: '', correcta: true },
@@ -88,6 +145,9 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
             setFechaFin(formatDateTimeForInput(cuestionarioAEditar.fechaFin));
             setLimiteIntentos(cuestionarioAEditar.limiteIntentos !== undefined && cuestionarioAEditar.limiteIntentos !== null ? cuestionarioAEditar.limiteIntentos : 1);
             setTipoCalificacionIntentos(cuestionarioAEditar.tipoCalificacionIntentos || 'MEJOR_NOTA');
+            setMostrarRetroalimentacion(cuestionarioAEditar.mostrarRetroalimentacion !== false);
+            setGruposPermitidos(cuestionarioAEditar.gruposPermitidos || '');
+            setExpandirConfiguracion(false);
 
             // Extraer materia si viene formateada como "[Materia] Descripción"
             const descOriginal = cuestionarioAEditar.descripcion || '';
@@ -144,7 +204,9 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                         id: p.id,
                         enunciado: p.enunciado || p.textoPregunta || '',
                         tipo: tipoModal,
+                        puntos: p.puntos !== undefined && p.puntos !== null ? p.puntos : 4.0,
                         imagenUrl: p.imagenUrl || p.imagen_url || '',
+                        explicacion: p.explicacion || p.retroalimentacion || p.justificacion || '',
                         opciones: opcionesModal
                     };
                 });
@@ -154,7 +216,9 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                     {
                         enunciado: '',
                         tipo: 'Opción múltiple',
+                        puntos: 4.0,
                         imagenUrl: '',
+                        explicacion: '',
                         opciones: [
                             { texto: '', correcta: true },
                             { texto: '', correcta: false },
@@ -178,6 +242,9 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
             setFechaFin('');
             setLimiteIntentos(1);
             setTipoCalificacionIntentos('MEJOR_NOTA');
+            setMostrarRetroalimentacion(true);
+            setGruposPermitidos('');
+            setExpandirConfiguracion(false);
             setResumenImportacion(null);
             setPreguntasImportadasPendientes([]);
             setErrorImportacion('');
@@ -185,7 +252,9 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                 {
                     enunciado: '',
                     tipo: 'Opción múltiple',
+                    puntos: 4.0,
                     imagenUrl: '',
+                    explicacion: '',
                     opciones: [
                         { texto: '', correcta: true },
                         { texto: '', correcta: false },
@@ -331,12 +400,177 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
         reader.readAsDataURL(file);
     };
 
+    // Manejar cambios en la explicación pedagógica de una pregunta
+    const handleExplicacionChange = (index, value) => {
+        const nuevasPreguntas = [...preguntas];
+        nuevasPreguntas[index].explicacion = value;
+        setPreguntas(nuevasPreguntas);
+    };
+
+    // Manejar cambio en el puntaje de una pregunta
+    const handlePuntosPreguntaChange = (index, valor) => {
+        const val = valor === '' ? '' : parseFloat(valor);
+        const nuevasPreguntas = [...preguntas];
+        nuevasPreguntas[index].puntos = val;
+        setPreguntas(nuevasPreguntas);
+    };
+
+    // Distribución equitativa de 20 puntos entre todas las preguntas del examen
+    const distribuirPuntosEquitativamente = () => {
+        if (!preguntas || preguntas.length === 0) return;
+        const n = preguntas.length;
+        const valorBase = Math.floor((20.0 / n) * 10) / 10;
+        let acumulado = 0;
+        const nuevas = preguntas.map((p, idx) => {
+            if (idx === n - 1) {
+                const resto = Math.round((20.0 - acumulado) * 10) / 10;
+                return { ...p, puntos: Math.max(0.5, resto) };
+            } else {
+                acumulado += valorBase;
+                return { ...p, puntos: valorBase };
+            }
+        });
+        setPreguntas(nuevas);
+    };
+
+    // Suma total de puntos configurados en el cuestionario
+    const sumaPuntos = preguntas.reduce((acc, p) => acc + (parseFloat(p.puntos) || 0), 0);
+    const sumaPuntosRedondeada = Math.round(sumaPuntos * 10) / 10;
+
+    // Funciones de integración con el Banco Centralizado de Preguntas
+    const abrirModalBanco = async () => {
+        setModalBancoAbierto(true);
+        setCargandoBanco(true);
+        setSeleccionadasBanco({});
+        try {
+            const data = await obtenerPreguntasBanco({
+                materia: materia || null,
+                dificultad: null,
+                buscar: ''
+            });
+            setPreguntasBanco(data || []);
+            setFiltroBancoMateria(materia || '');
+            setFiltroBancoDificultad('TODAS');
+            setBusquedaBanco('');
+        } catch (err) {
+            console.error("Error al cargar preguntas del banco:", err);
+        } finally {
+            setCargandoBanco(false);
+        }
+    };
+
+    const recargarBanco = async (m, d, b) => {
+        try {
+            setCargandoBanco(true);
+            const data = await obtenerPreguntasBanco({
+                materia: m || null,
+                dificultad: d === 'TODAS' ? null : d,
+                buscar: b || null
+            });
+            setPreguntasBanco(data || []);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setCargandoBanco(false);
+        }
+    };
+
+    const toggleSeleccionBanco = (id) => {
+        setSeleccionadasBanco(prev => ({
+            ...prev,
+            [id]: !prev[id]
+        }));
+    };
+
+    const aplicarPreguntasBanco = () => {
+        const seleccionadas = preguntasBanco.filter(p => seleccionadasBanco[p.id]);
+        if (seleccionadas.length === 0) return;
+
+        const mapeadas = seleccionadas.map(b => {
+            let tipoFormateado = 'Opción múltiple';
+            if (b.tipo === 'VERDADERO_FALSO') tipoFormateado = 'Verdadero/Falso';
+            else if (b.tipo === 'RESPUESTA_CORTA') tipoFormateado = 'Respuesta escrita';
+
+            return {
+                enunciado: b.enunciado || b.textoPregunta || '',
+                tipo: tipoFormateado,
+                puntos: b.puntos !== undefined && b.puntos !== null ? b.puntos : (b.puntosDefecto || 4.0),
+                imagenUrl: b.imagenUrl || '',
+                explicacion: b.explicacion || '',
+                opciones: (b.opciones || []).map(o => ({
+                    texto: o.texto || o.textoOpcion || '',
+                    correcta: Boolean(o.correcta || o.esCorrecta)
+                }))
+            };
+        });
+
+        // Si la única pregunta existente estaba vacía, reemplazarla
+        const preguntasValidas = preguntas.filter(p => p.enunciado && p.enunciado.trim() !== '');
+        setPreguntas([...preguntasValidas, ...mapeadas]);
+        setModalBancoAbierto(false);
+    };
+
+    const handleGuardarPreguntaEnBanco = async (pregunta, index) => {
+        if (!pregunta.enunciado || !pregunta.enunciado.trim()) {
+            alert('La pregunta debe tener un enunciado para guardarse en el banco.');
+            return;
+        }
+
+        let tipoEnum = 'OPCION_MULTIPLE';
+        let opcionesFormateadas = [];
+
+        if (pregunta.tipo === 'Verdadero/Falso') {
+            tipoEnum = 'VERDADERO_FALSO';
+            opcionesFormateadas = (pregunta.opciones || []).map(o => ({
+                texto: o.texto,
+                correcta: Boolean(o.correcta)
+            }));
+        } else if (pregunta.tipo === 'Respuesta escrita') {
+            tipoEnum = 'RESPUESTA_CORTA';
+            opcionesFormateadas = (pregunta.opciones || []).map(o => ({
+                texto: o.texto,
+                correcta: true
+            }));
+        } else {
+            tipoEnum = 'OPCION_MULTIPLE';
+            opcionesFormateadas = (pregunta.opciones || []).map(o => ({
+                texto: o.texto,
+                correcta: Boolean(o.correcta)
+            }));
+        }
+
+        const payload = {
+            materia: materia || 'General',
+            dificultad: 'MEDIA',
+            tipo: tipoEnum,
+            enunciado: pregunta.enunciado.trim(),
+            puntos: parseFloat(pregunta.puntos) || 4.0,
+            imagenUrl: pregunta.imagenUrl && pregunta.imagenUrl.trim() !== '' ? pregunta.imagenUrl.trim() : null,
+            explicacion: pregunta.explicacion && pregunta.explicacion.trim() !== '' ? pregunta.explicacion.trim() : null,
+            opciones: opcionesFormateadas
+        };
+
+        try {
+            setGuardandoEnBancoIndex(index);
+            await crearPreguntaBanco(payload);
+            setMensajeBancoExito(`¡Pregunta #${index + 1} guardada exitosamente en el Banco!`);
+            setTimeout(() => setMensajeBancoExito(''), 3500);
+        } catch (err) {
+            console.error('Error al guardar en el banco:', err);
+            alert('No se pudo guardar la pregunta en el banco.');
+        } finally {
+            setGuardandoEnBancoIndex(null);
+        }
+    };
+
     // Añadir nueva pregunta
     const agregarPregunta = () => {
         setPreguntas([...preguntas, {
             enunciado: '',
             tipo: 'Opción múltiple',
+            puntos: 4.0,
             imagenUrl: '',
+            explicacion: '',
             opciones: [
                 { texto: '', correcta: true },
                 { texto: '', correcta: false },
@@ -400,7 +634,9 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                     enunciado: p.enunciado,
                     tipo: tipoEnum,
                     orden: index + 1,
+                    puntos: p.puntos !== undefined && p.puntos !== null && !isNaN(p.puntos) ? parseFloat(p.puntos) : 4.0,
                     imagenUrl: p.imagenUrl && p.imagenUrl.trim() !== '' ? p.imagenUrl.trim() : null,
+                    explicacion: p.explicacion && p.explicacion.trim() !== '' ? p.explicacion.trim() : null,
                     opciones: opcionesFormateadas
                 };
             });
@@ -417,6 +653,8 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                 fechaFin: programarFechas && fechaFin ? (fechaFin.length === 16 ? fechaFin + ':00' : fechaFin) : null,
                 limiteIntentos: parseInt(limiteIntentos, 10),
                 tipoCalificacionIntentos: tipoCalificacionIntentos || 'MEJOR_NOTA',
+                mostrarRetroalimentacion: Boolean(mostrarRetroalimentacion),
+                gruposPermitidos: gruposPermitidos.trim() || null,
                 preguntas: preguntasFormateadas
             };
 
@@ -461,7 +699,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                 backgroundColor: '#ffffff',
                 borderRadius: '16px',
                 width: '100%',
-                maxWidth: '680px',
+                maxWidth: '740px',
                 maxHeight: '90vh',
                 overflowY: 'auto',
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
@@ -622,333 +860,528 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                 </div>
                             </div>
 
-                            {/* PREGUNTAS EN ORDEN ALEATORIO */}
-                            <div
-                                onClick={() => setOrdenAleatorio(!ordenAleatorio)}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    padding: '12px 16px',
-                                    backgroundColor: ordenAleatorio ? '#eff6ff' : '#f8fafc',
-                                    border: ordenAleatorio ? '1px solid #93c5fd' : '1px solid #e2e8f0',
-                                    borderRadius: '10px',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s',
-                                    boxSizing: 'border-box'
-                                }}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <div style={{
-                                        width: '36px',
-                                        height: '36px',
-                                        borderRadius: '8px',
-                                        backgroundColor: ordenAleatorio ? '#dbeafe' : '#e2e8f0',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}>
-                                        <Shuffle size={18} color={ordenAleatorio ? '#1d4ed8' : '#64748b'} />
-                                    </div>
-                                    <div>
-                                        <div style={{ fontSize: '13px', fontWeight: '700', color: ordenAleatorio ? '#1e40af' : '#1e293b' }}>
-                                            Preguntas en orden aleatorio
-                                        </div>
-                                        <div style={{ fontSize: '12px', color: '#64748b' }}>
-                                            Cada alumno recibirá las preguntas en un orden distinto al iniciar el examen
-                                        </div>
-                                    </div>
-                                </div>
-                                <input
-                                    type="checkbox"
-                                    checked={ordenAleatorio}
-                                    onChange={(e) => setOrdenAleatorio(e.target.checked)}
-                                    style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#2563eb' }}
-                                />
-                            </div>
-
-                            {/* MODO SEGURO / DETECCIÓN DE CAMBIO DE PESTAÑA */}
+                            {/* SECCIÓN DESPLEGABLE: REGLAS Y CONFIGURACIÓN DEL EXAMEN */}
                             <div style={{
-                                backgroundColor: modoSeguro ? '#fef2f2' : '#f8fafc',
-                                border: modoSeguro ? '1px solid #fca5a5' : '1px solid #e2e8f0',
-                                borderRadius: '10px',
-                                padding: '14px 16px',
-                                transition: 'all 0.2s',
-                                boxSizing: 'border-box'
+                                backgroundColor: expandirConfiguracion ? '#f8fafc' : '#ffffff',
+                                border: expandirConfiguracion ? '1px solid #cbd5e1' : '1px solid #e2e8f0',
+                                borderRadius: '12px',
+                                overflow: 'hidden',
+                                transition: 'all 0.25s ease',
+                                boxShadow: expandirConfiguracion ? '0 4px 12px rgba(0, 0, 0, 0.04)' : 'none'
                             }}>
+                                {/* CABECERA INTERACTIVA CLICABLE (DESPLEGABLE / ACCORDION) */}
                                 <div
-                                    onClick={() => setModoSeguro(!modoSeguro)}
+                                    onClick={() => setExpandirConfiguracion(!expandirConfiguracion)}
+                                    role="button"
+                                    aria-expanded={expandirConfiguracion}
                                     style={{
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'space-between',
-                                        cursor: 'pointer'
+                                        padding: '14px 18px',
+                                        cursor: 'pointer',
+                                        userSelect: 'none',
+                                        backgroundColor: expandirConfiguracion ? '#f1f5f9' : '#ffffff',
+                                        borderBottom: expandirConfiguracion ? '1px solid #e2e8f0' : 'none',
+                                        transition: 'background-color 0.2s ease'
                                     }}
                                 >
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                         <div style={{
-                                            width: '36px',
-                                            height: '36px',
+                                            width: '34px',
+                                            height: '34px',
                                             borderRadius: '8px',
-                                            backgroundColor: modoSeguro ? '#fee2e2' : '#e2e8f0',
+                                            backgroundColor: expandirConfiguracion ? '#dbeafe' : '#f1f5f9',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            transition: 'background-color 0.2s ease'
+                                        }}>
+                                            <Sliders size={17} color={expandirConfiguracion ? '#2563eb' : '#475569'} />
+                                        </div>
+                                        <div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                                    Reglas y Configuración del Examen
+                                                </span>
+                                                <span style={{
+                                                    fontSize: '11px',
+                                                    fontWeight: '600',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '12px',
+                                                    backgroundColor: (ordenAleatorio || modoSeguro || programarFechas || limiteIntentos !== 1 || (gruposPermitidos && gruposPermitidos.trim())) ? '#dcfce7' : '#f1f5f9',
+                                                    color: (ordenAleatorio || modoSeguro || programarFechas || limiteIntentos !== 1 || (gruposPermitidos && gruposPermitidos.trim())) ? '#15803d' : '#64748b',
+                                                    border: '1px solid',
+                                                    borderColor: (ordenAleatorio || modoSeguro || programarFechas || limiteIntentos !== 1 || (gruposPermitidos && gruposPermitidos.trim())) ? '#86efac' : '#e2e8f0'
+                                                }}>
+                                                    {[ordenAleatorio, modoSeguro, programarFechas, limiteIntentos !== 1, Boolean(gruposPermitidos && gruposPermitidos.trim())].filter(Boolean).length > 0
+                                                        ? `${[ordenAleatorio, modoSeguro, programarFechas, limiteIntentos !== 1, Boolean(gruposPermitidos && gruposPermitidos.trim())].filter(Boolean).length} personalizada(s)`
+                                                        : 'Predeterminadas'}
+                                                </span>
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                                                {expandirConfiguracion
+                                                    ? 'Haz clic aquí para contraer las configuraciones'
+                                                    : 'Aleatorio, Modo Seguro Anti-Copia, Intentos, Ventana de Fechas y Grupos'}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ fontSize: '12px', fontWeight: '600', color: '#2563eb' }}>
+                                            {expandirConfiguracion ? 'Contraer' : 'Desplegar opciones'}
+                                        </span>
+                                        <div style={{
+                                            transform: expandirConfiguracion ? 'rotate(180deg)' : 'rotate(0deg)',
+                                            transition: 'transform 0.25s ease',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center'
                                         }}>
-                                            <ShieldAlert size={18} color={modoSeguro ? '#dc2626' : '#64748b'} />
-                                        </div>
-                                        <div>
-                                            <div style={{ fontSize: '13px', fontWeight: '700', color: modoSeguro ? '#991b1b' : '#1e293b' }}>
-                                                Modo Seguro (Anti-Copia / Detección de cambio de pestaña)
-                                            </div>
-                                            <div style={{ fontSize: '12px', color: '#64748b' }}>
-                                                Registra advertencias si el alumno abandona la pestaña del examen y auto-envía al llegar al límite
-                                            </div>
+                                            <ChevronDown size={18} color="#2563eb" />
                                         </div>
                                     </div>
-                                    <input
-                                        type="checkbox"
-                                        checked={modoSeguro}
-                                        onChange={(e) => setModoSeguro(e.target.checked)}
-                                        style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#dc2626' }}
-                                    />
                                 </div>
 
-                                {modoSeguro && (
-                                    <div style={{
-                                        marginTop: '12px',
-                                        paddingTop: '12px',
-                                        borderTop: '1px dashed #fca5a5',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        flexWrap: 'wrap',
-                                        gap: '10px'
-                                    }}>
-                                        <label style={{ fontSize: '12px', fontWeight: '600', color: '#7f1d1d' }}>
-                                            ⚠️ Máximo de advertencias permitidas antes del auto-envío:
-                                        </label>
-                                        <select
-                                            value={limiteAdvertencias}
-                                            onChange={(e) => setLimiteAdvertencias(Number(e.target.value))}
-                                            style={{
-                                                padding: '6px 12px',
-                                                borderRadius: '6px',
-                                                border: '1px solid #f87171',
-                                                fontSize: '12px',
-                                                fontWeight: '600',
-                                                backgroundColor: '#fff',
-                                                color: '#991b1b',
-                                                outline: 'none',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            <option value={1}>1 advertencia (Tolerancia estricta)</option>
-                                            <option value={2}>2 advertencias</option>
-                                            <option value={3}>3 advertencias (Recomendado)</option>
-                                            <option value={5}>5 advertencias (Flexible)</option>
-                                        </select>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* LÍMITE DE INTENTOS Y CRITERIO DE CALIFICACIÓN */}
-                            <div style={{
-                                backgroundColor: '#f8fafc',
-                                border: '1px solid #e2e8f0',
-                                borderRadius: '10px',
-                                padding: '14px 16px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '12px',
-                                boxSizing: 'border-box'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                {/* CONTENIDO DEL DESPLEGABLE */}
+                                {expandirConfiguracion && (
+                                    <div style={{ padding: '16px' }}>
                                         <div style={{
-                                            width: '36px',
-                                            height: '36px',
-                                            borderRadius: '8px',
-                                            backgroundColor: '#ede9fe',
+                                            display: 'grid',
+                                            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                                            gap: '10px'
+                                        }}>
+                                    {/* 1. PREGUNTAS EN ORDEN ALEATORIO */}
+                                    <div
+                                        onClick={() => setOrdenAleatorio(!ordenAleatorio)}
+                                        style={{
                                             display: 'flex',
                                             alignItems: 'center',
-                                            justifyContent: 'center'
-                                        }}>
-                                            <RotateCcw size={18} color="#6d28d9" />
-                                        </div>
-                                        <div>
-                                            <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
-                                                Límite de Intentos por Alumno
-                                            </div>
-                                            <div style={{ fontSize: '12px', color: '#64748b' }}>
-                                                Controla si es una prueba sumativa única o una actividad de práctica
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <select
-                                        value={limiteIntentos}
-                                        onChange={(e) => setLimiteIntentos(Number(e.target.value))}
-                                        style={{
-                                            padding: '8px 12px',
-                                            borderRadius: '8px',
-                                            border: '1px solid #cbd5e1',
-                                            fontSize: '13px',
-                                            fontWeight: '600',
-                                            backgroundColor: '#fff',
-                                            color: '#1e293b',
-                                            outline: 'none',
-                                            cursor: 'pointer'
+                                            justifyContent: 'space-between',
+                                            padding: '12px 14px',
+                                            backgroundColor: ordenAleatorio ? '#eff6ff' : '#ffffff',
+                                            border: ordenAleatorio ? '1px solid #93c5fd' : '1px solid #e2e8f0',
+                                            borderRadius: '10px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s',
+                                            boxSizing: 'border-box'
                                         }}
                                     >
-                                        <option value={1}>1 intento (Examen formal / Evaluativo)</option>
-                                        <option value={2}>2 intentos (Con recuperación)</option>
-                                        <option value={3}>3 intentos</option>
-                                        <option value={5}>5 intentos</option>
-                                        <option value={0}>Intentos Ilimitados (Práctica formativa)</option>
-                                    </select>
-                                </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1, paddingRight: '8px' }}>
+                                            <div style={{
+                                                width: '34px',
+                                                height: '34px',
+                                                borderRadius: '8px',
+                                                backgroundColor: ordenAleatorio ? '#dbeafe' : '#f1f5f9',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                flexShrink: 0
+                                            }}>
+                                                <Shuffle size={17} color={ordenAleatorio ? '#1d4ed8' : '#64748b'} />
+                                            </div>
+                                            <div style={{ minWidth: 0 }}>
+                                                <div style={{ fontSize: '13px', fontWeight: '700', color: ordenAleatorio ? '#1e40af' : '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                    Preguntas aleatorias
+                                                </div>
+                                                <div style={{ fontSize: '11px', color: '#64748b', lineHeight: '1.2' }}>
+                                                    Orden distinto por alumno
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <ToggleSwitch
+                                            checked={ordenAleatorio}
+                                            onChange={setOrdenAleatorio}
+                                            activeColor="#2563eb"
+                                        />
+                                    </div>
 
-                                {limiteIntentos !== 1 && (
+                                    {/* 2. RETROALIMENTACIÓN PEDAGÓGICA INMEDIATA */}
+                                    <div
+                                        onClick={() => setMostrarRetroalimentacion(!mostrarRetroalimentacion)}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            padding: '12px 14px',
+                                            backgroundColor: mostrarRetroalimentacion ? '#f0fdf4' : '#ffffff',
+                                            border: mostrarRetroalimentacion ? '1px solid #86efac' : '1px solid #e2e8f0',
+                                            borderRadius: '10px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s',
+                                            boxSizing: 'border-box'
+                                        }}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1, paddingRight: '8px' }}>
+                                            <div style={{
+                                                width: '34px',
+                                                height: '34px',
+                                                borderRadius: '8px',
+                                                backgroundColor: mostrarRetroalimentacion ? '#dcfce7' : '#f1f5f9',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                flexShrink: 0
+                                            }}>
+                                                <Lightbulb size={17} color={mostrarRetroalimentacion ? '#15803d' : '#64748b'} />
+                                            </div>
+                                            <div style={{ minWidth: 0 }}>
+                                                <div style={{ fontSize: '13px', fontWeight: '700', color: mostrarRetroalimentacion ? '#166534' : '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                    Retroalimentación
+                                                </div>
+                                                <div style={{ fontSize: '11px', color: '#64748b', lineHeight: '1.2' }}>
+                                                    Ver explicaciones al final
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <ToggleSwitch
+                                            checked={mostrarRetroalimentacion}
+                                            onChange={setMostrarRetroalimentacion}
+                                            activeColor="#16a34a"
+                                        />
+                                    </div>
+
+                                    {/* 3. MODO SEGURO / DETECCIÓN DE CAMBIO DE PESTAÑA */}
+                                    <div
+                                        onClick={() => setModoSeguro(!modoSeguro)}
+                                        style={{
+                                            backgroundColor: modoSeguro ? '#fef2f2' : '#ffffff',
+                                            border: modoSeguro ? '1px solid #fca5a5' : '1px solid #e2e8f0',
+                                            borderRadius: '10px',
+                                            padding: '12px 14px',
+                                            transition: 'all 0.2s',
+                                            boxSizing: 'border-box',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'center'
+                                        }}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1, paddingRight: '8px' }}>
+                                                <div style={{
+                                                    width: '34px',
+                                                    height: '34px',
+                                                    borderRadius: '8px',
+                                                    backgroundColor: modoSeguro ? '#fee2e2' : '#f1f5f9',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    flexShrink: 0
+                                                }}>
+                                                    <ShieldAlert size={17} color={modoSeguro ? '#dc2626' : '#64748b'} />
+                                                </div>
+                                                <div style={{ minWidth: 0 }}>
+                                                    <div style={{ fontSize: '13px', fontWeight: '700', color: modoSeguro ? '#991b1b' : '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                        Modo seguro (Anti-copia)
+                                                    </div>
+                                                    <div style={{ fontSize: '11px', color: '#64748b', lineHeight: '1.2' }}>
+                                                        Detecta cambio de pestaña
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <ToggleSwitch
+                                                checked={modoSeguro}
+                                                onChange={setModoSeguro}
+                                                activeColor="#dc2626"
+                                            />
+                                        </div>
+
+                                        {modoSeguro && (
+                                            <div
+                                                onClick={(e) => e.stopPropagation()}
+                                                style={{
+                                                    marginTop: '10px',
+                                                    paddingTop: '8px',
+                                                    borderTop: '1px dashed #fca5a5',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'space-between',
+                                                    gap: '8px'
+                                                }}
+                                            >
+                                                <span style={{ fontSize: '11px', fontWeight: '600', color: '#7f1d1d' }}>
+                                                    ⚠️ Tolerancia:
+                                                </span>
+                                                <select
+                                                    value={limiteAdvertencias}
+                                                    onChange={(e) => setLimiteAdvertencias(Number(e.target.value))}
+                                                    style={{
+                                                        padding: '4px 8px',
+                                                        borderRadius: '6px',
+                                                        border: '1px solid #f87171',
+                                                        fontSize: '11px',
+                                                        fontWeight: '600',
+                                                        backgroundColor: '#fff',
+                                                        color: '#991b1b',
+                                                        outline: 'none',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    <option value={1}>1 advertencia (Estricto)</option>
+                                                    <option value={2}>2 advertencias</option>
+                                                    <option value={3}>3 advertencias (Recomendado)</option>
+                                                    <option value={5}>5 advertencias (Flexible)</option>
+                                                </select>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 4. LÍMITE DE INTENTOS */}
                                     <div style={{
-                                        marginTop: '4px',
-                                        paddingTop: '10px',
-                                        borderTop: '1px dashed #cbd5e1',
+                                        backgroundColor: '#ffffff',
+                                        border: '1px solid #e2e8f0',
+                                        borderRadius: '10px',
+                                        padding: '12px 14px',
                                         display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        flexWrap: 'wrap',
-                                        gap: '10px'
+                                        flexDirection: 'column',
+                                        justifyContent: 'center',
+                                        gap: '8px',
+                                        boxSizing: 'border-box'
                                     }}>
-                                        <label style={{ fontSize: '12px', fontWeight: '600', color: '#475569' }}>
-                                            ⭐ Criterio de calificación en el registro de notas:
-                                        </label>
-                                        <select
-                                            value={tipoCalificacionIntentos}
-                                            onChange={(e) => setTipoCalificacionIntentos(e.target.value)}
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                                                <div style={{
+                                                    width: '34px',
+                                                    height: '34px',
+                                                    borderRadius: '8px',
+                                                    backgroundColor: '#ede9fe',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    flexShrink: 0
+                                                }}>
+                                                    <RotateCcw size={17} color="#6d28d9" />
+                                                </div>
+                                                <div style={{ minWidth: 0 }}>
+                                                    <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                        Límite de intentos
+                                                    </div>
+                                                    <div style={{ fontSize: '11px', color: '#64748b', lineHeight: '1.2' }}>
+                                                        Evaluación o práctica
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <select
+                                                value={limiteIntentos}
+                                                onChange={(e) => setLimiteIntentos(Number(e.target.value))}
+                                                style={{
+                                                    padding: '5px 8px',
+                                                    borderRadius: '6px',
+                                                    border: '1px solid #cbd5e1',
+                                                    fontSize: '12px',
+                                                    fontWeight: '600',
+                                                    backgroundColor: '#f8fafc',
+                                                    color: '#1e293b',
+                                                    outline: 'none',
+                                                    cursor: 'pointer',
+                                                    maxWidth: '120px'
+                                                }}
+                                            >
+                                                <option value={1}>1 intento</option>
+                                                <option value={2}>2 intentos</option>
+                                                <option value={3}>3 intentos</option>
+                                                <option value={5}>5 intentos</option>
+                                                <option value={0}>Ilimitados</option>
+                                            </select>
+                                        </div>
+
+                                        {limiteIntentos !== 1 && (
+                                            <div style={{
+                                                paddingTop: '6px',
+                                                borderTop: '1px dashed #cbd5e1',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                gap: '8px'
+                                            }}>
+                                                <span style={{ fontSize: '11px', fontWeight: '600', color: '#475569' }}>
+                                                    ⭐ Calificación:
+                                                </span>
+                                                <select
+                                                    value={tipoCalificacionIntentos}
+                                                    onChange={(e) => setTipoCalificacionIntentos(e.target.value)}
+                                                    style={{
+                                                        padding: '4px 8px',
+                                                        borderRadius: '6px',
+                                                        border: '1px solid #cbd5e1',
+                                                        fontSize: '11px',
+                                                        fontWeight: '600',
+                                                        backgroundColor: '#fff',
+                                                        color: '#0f172a',
+                                                        outline: 'none',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    <option value="MEJOR_NOTA">Nota más alta</option>
+                                                    <option value="ULTIMO_INTENTO">Último intento</option>
+                                                </select>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 5. PROGRAMAR FECHA Y HORA (VENTANA DE DISPONIBILIDAD) - OCUPA TODA LA FILA */}
+                                    <div style={{
+                                        gridColumn: '1 / -1',
+                                        backgroundColor: programarFechas ? '#f0fdf4' : '#ffffff',
+                                        border: programarFechas ? '1px solid #86efac' : '1px solid #e2e8f0',
+                                        borderRadius: '10px',
+                                        padding: '12px 14px',
+                                        transition: 'all 0.2s',
+                                        boxSizing: 'border-box'
+                                    }}>
+                                        <div
+                                            onClick={() => setProgramarFechas(!programarFechas)}
                                             style={{
-                                                padding: '6px 12px',
-                                                borderRadius: '6px',
-                                                border: '1px solid #cbd5e1',
-                                                fontSize: '12px',
-                                                fontWeight: '600',
-                                                backgroundColor: '#fff',
-                                                color: '#0f172a',
-                                                outline: 'none',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
                                                 cursor: 'pointer'
                                             }}
                                         >
-                                            <option value="MEJOR_NOTA">Guardar la nota más alta (Recomendado)</option>
-                                            <option value="ULTIMO_INTENTO">Guardar la nota del último intento</option>
-                                        </select>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* PROGRAMACIÓN POR FECHA Y HORA (VENTANA DE DISPONIBILIDAD) */}
-                            <div style={{
-                                backgroundColor: programarFechas ? '#f0fdf4' : '#f8fafc',
-                                border: programarFechas ? '1px solid #86efac' : '1px solid #e2e8f0',
-                                borderRadius: '10px',
-                                padding: '14px 16px',
-                                transition: 'all 0.2s',
-                                boxSizing: 'border-box'
-                            }}>
-                                <div
-                                    onClick={() => setProgramarFechas(!programarFechas)}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                        <div style={{
-                                            width: '36px',
-                                            height: '36px',
-                                            borderRadius: '8px',
-                                            backgroundColor: programarFechas ? '#dcfce7' : '#e2e8f0',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center'
-                                        }}>
-                                            <Calendar size={18} color={programarFechas ? '#15803d' : '#64748b'} />
-                                        </div>
-                                        <div>
-                                            <div style={{ fontSize: '13px', fontWeight: '700', color: programarFechas ? '#166534' : '#1e293b' }}>
-                                                Programar Fecha y Hora de Disponibilidad
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                <div style={{
+                                                    width: '34px',
+                                                    height: '34px',
+                                                    borderRadius: '8px',
+                                                    backgroundColor: programarFechas ? '#dcfce7' : '#f1f5f9',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    flexShrink: 0
+                                                }}>
+                                                    <Calendar size={17} color={programarFechas ? '#15803d' : '#64748b'} />
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontSize: '13px', fontWeight: '700', color: programarFechas ? '#166534' : '#1e293b' }}>
+                                                        Programar fecha y hora de disponibilidad
+                                                    </div>
+                                                    <div style={{ fontSize: '11px', color: '#64748b' }}>
+                                                        Ventana de tiempo para habilitar y cerrar el cuestionario automáticamente
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div style={{ fontSize: '12px', color: '#64748b' }}>
-                                                Define la ventana exacta en que el cuestionario se abre y se cierra
-                                            </div>
+                                            <ToggleSwitch
+                                                checked={programarFechas}
+                                                onChange={setProgramarFechas}
+                                                activeColor="#16a34a"
+                                            />
                                         </div>
-                                    </div>
-                                    <input
-                                        type="checkbox"
-                                        checked={programarFechas}
-                                        onChange={(e) => setProgramarFechas(e.target.checked)}
-                                        style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#16a34a' }}
-                                    />
-                                </div>
 
-                                {programarFechas && (
+                                        {programarFechas && (
+                                            <div style={{
+                                                marginTop: '12px',
+                                                paddingTop: '10px',
+                                                borderTop: '1px dashed #86efac',
+                                                display: 'grid',
+                                                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                                                gap: '12px'
+                                            }}>
+                                                <div>
+                                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', color: '#166534', marginBottom: '4px' }}>
+                                                        🟢 FECHA Y HORA DE APERTURA:
+                                                    </label>
+                                                    <input
+                                                        type="datetime-local"
+                                                        value={fechaInicio}
+                                                        onChange={(e) => setFechaInicio(e.target.value)}
+                                                        style={{
+                                                            width: '100%',
+                                                            padding: '8px 10px',
+                                                            borderRadius: '6px',
+                                                            border: '1px solid #86efac',
+                                                            backgroundColor: '#fff',
+                                                            fontSize: '12px',
+                                                            outline: 'none',
+                                                            boxSizing: 'border-box'
+                                                        }}
+                                                    />
+                                                    <span style={{ fontSize: '10px', color: '#15803d', marginTop: '2px', display: 'block' }}>
+                                                        Bloqueado antes de esta hora.
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', color: '#991b1b', marginBottom: '4px' }}>
+                                                        🔴 FECHA Y HORA DE CIERRE:
+                                                    </label>
+                                                    <input
+                                                        type="datetime-local"
+                                                        value={fechaFin}
+                                                        onChange={(e) => setFechaFin(e.target.value)}
+                                                        style={{
+                                                            width: '100%',
+                                                            padding: '8px 10px',
+                                                            borderRadius: '6px',
+                                                            border: '1px solid #fca5a5',
+                                                            backgroundColor: '#fff',
+                                                            fontSize: '12px',
+                                                            outline: 'none',
+                                                            boxSizing: 'border-box'
+                                                        }}
+                                                    />
+                                                    <span style={{ fontSize: '10px', color: '#b91c1c', marginTop: '2px', display: 'block' }}>
+                                                        Cierre automático estricto.
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 6. GRUPOS / SECCIONES ACADÉMICAS - OCUPA TODA LA FILA */}
                                     <div style={{
-                                        marginTop: '14px',
-                                        paddingTop: '12px',
-                                        borderTop: '1px dashed #86efac',
-                                        display: 'grid',
-                                        gridTemplateColumns: '1fr 1fr',
-                                        gap: '14px'
+                                        gridColumn: '1 / -1',
+                                        backgroundColor: '#ffffff',
+                                        border: '1px solid #e2e8f0',
+                                        borderRadius: '10px',
+                                        padding: '12px 14px',
+                                        boxSizing: 'border-box'
                                     }}>
-                                        <div>
-                                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#166534', marginBottom: '6px' }}>
-                                                🟢 FECHA Y HORA DE APERTURA:
-                                            </label>
-                                            <input
-                                                type="datetime-local"
-                                                value={fechaInicio}
-                                                onChange={(e) => setFechaInicio(e.target.value)}
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '10px 12px',
-                                                    borderRadius: '8px',
-                                                    border: '1px solid #86efac',
-                                                    backgroundColor: '#fff',
-                                                    fontSize: '13px',
-                                                    outline: 'none',
-                                                    boxSizing: 'border-box'
-                                                }}
-                                            />
-                                            <span style={{ fontSize: '11px', color: '#15803d', marginTop: '4px', display: 'block' }}>
-                                                Antes de esta fecha/hora estará bloqueado.
-                                            </span>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                                            <div style={{
+                                                width: '34px',
+                                                height: '34px',
+                                                borderRadius: '8px',
+                                                backgroundColor: '#e0e7ff',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                flexShrink: 0
+                                            }}>
+                                                <Users size={17} color="#4338ca" />
+                                            </div>
+                                            <div>
+                                                <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
+                                                    Grupos / Secciones Académicas (Opcional)
+                                                </div>
+                                                <div style={{ fontSize: '11px', color: '#64748b' }}>
+                                                    Separa por comas las aulas o secciones para filtrar y segmentar el registro de notas
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#991b1b', marginBottom: '6px' }}>
-                                                🔴 FECHA Y HORA DE CIERRE:
-                                            </label>
-                                            <input
-                                                type="datetime-local"
-                                                value={fechaFin}
-                                                onChange={(e) => setFechaFin(e.target.value)}
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '10px 12px',
-                                                    borderRadius: '8px',
-                                                    border: '1px solid #fca5a5',
-                                                    backgroundColor: '#fff',
-                                                    fontSize: '13px',
-                                                    outline: 'none',
-                                                    boxSizing: 'border-box'
-                                                }}
-                                            />
-                                            <span style={{ fontSize: '11px', color: '#b91c1c', marginTop: '4px', display: 'block' }}>
-                                                Llegada esta fecha/hora no se aceptarán más intentos.
-                                            </span>
-                                        </div>
+                                        <input
+                                            type="text"
+                                            value={gruposPermitidos}
+                                            onChange={(e) => setGruposPermitidos(e.target.value)}
+                                            placeholder="Ej. 5to A, 5to B, 5to C, Sección 1"
+                                            style={{
+                                                width: '100%',
+                                                padding: '8px 12px',
+                                                borderRadius: '6px',
+                                                border: '1px solid #cbd5e1',
+                                                backgroundColor: '#fff',
+                                                fontSize: '13px',
+                                                outline: 'none',
+                                                boxSizing: 'border-box'
+                                            }}
+                                        />
+                                        <span style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                                            💡 Los alumnos verán un selector para elegir su grupo/sección al iniciar el examen.
+                                        </span>
                                     </div>
-                                )}
+                                </div>
                             </div>
+                        )}
+                    </div>
 
                             {/* DESCRIPCIÓN */}
                             <div>
@@ -974,6 +1407,25 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
 
                             {/* PREGUNTAS */}
                             <div>
+                                {/* NOTIFICACIÓN DE ÉXITO AL GUARDAR EN EL BANCO */}
+                                {mensajeBancoExito && (
+                                    <div style={{
+                                        backgroundColor: '#dcfce7',
+                                        border: '1px solid #86efac',
+                                        color: '#15803d',
+                                        padding: '10px 16px',
+                                        borderRadius: '8px',
+                                        fontSize: '13px',
+                                        fontWeight: '600',
+                                        marginBottom: '14px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px'
+                                    }}>
+                                        <Check size={16} /> {mensajeBancoExito}
+                                    </div>
+                                )}
+
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                                     <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#0f172a' }}>
                                         Preguntas del examen ({preguntas.length})
@@ -981,6 +1433,99 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                     <span style={{ fontSize: '12px', color: '#64748b' }}>
                                         Formatos: Opción Múltiple, V/F o Respuesta Escrita
                                     </span>
+                                </div>
+
+                                {/* BARRA DE PUNTOS PONDERADOS Y ACCESO AL BANCO CENTRALIZADO */}
+                                <div style={{
+                                    backgroundColor: '#ffffff',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '12px',
+                                    padding: '12px 16px',
+                                    marginBottom: '16px',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    flexWrap: 'wrap',
+                                    gap: '12px',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <div style={{ backgroundColor: sumaPuntosRedondeada === 20.0 ? '#dcfce7' : '#fef3c7', color: sumaPuntosRedondeada === 20.0 ? '#15803d' : '#b45309', padding: '7px', borderRadius: '8px' }}>
+                                            <Award size={18} />
+                                        </div>
+                                        <div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                                <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a' }}>
+                                                    Puntaje Total Ponderado:
+                                                </span>
+                                                <span style={{
+                                                    fontSize: '13px',
+                                                    fontWeight: '800',
+                                                    color: sumaPuntosRedondeada === 20.0 ? '#15803d' : '#d97706',
+                                                    backgroundColor: sumaPuntosRedondeada === 20.0 ? '#f0fdf4' : '#fffbeb',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '6px',
+                                                    border: `1px solid ${sumaPuntosRedondeada === 20.0 ? '#86efac' : '#fde68a'}`
+                                                }}>
+                                                    {sumaPuntosRedondeada.toFixed(1)} / 20.0 pts
+                                                </span>
+                                                {sumaPuntosRedondeada === 20.0 ? (
+                                                    <span style={{ fontSize: '11px', color: '#16a34a', fontWeight: '600' }}>✓ Balanceado exacto</span>
+                                                ) : (
+                                                    <span style={{ fontSize: '11px', color: '#d97706', fontWeight: '500' }}>
+                                                        (Cálculo normalizado automático sobre 20 pts)
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                                                Personaliza el peso de cada pregunta o distribuye los 20 puntos equitativamente.
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                        <button
+                                            type="button"
+                                            onClick={distribuirPuntosEquitativamente}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                backgroundColor: '#f8fafc',
+                                                border: '1px solid #cbd5e1',
+                                                borderRadius: '8px',
+                                                padding: '7px 12px',
+                                                fontSize: '12px',
+                                                fontWeight: '600',
+                                                color: '#334155',
+                                                cursor: 'pointer'
+                                            }}
+                                            title="Dividir 20 puntos de manera equilibrada entre todas las preguntas"
+                                        >
+                                            <Sparkles size={14} color="#f59e0b" /> Distribuir 20 pts equitativamente
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={abrirModalBanco}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                backgroundColor: '#eff6ff',
+                                                border: '1px solid #bfdbfe',
+                                                borderRadius: '8px',
+                                                padding: '7px 12px',
+                                                fontSize: '12px',
+                                                fontWeight: '600',
+                                                color: '#1d4ed8',
+                                                cursor: 'pointer'
+                                            }}
+                                            title="Importar preguntas ya guardadas en el Banco Centralizado"
+                                        >
+                                            <BookOpen size={14} /> Importar del Banco de Preguntas
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {preguntas.map((pregunta, pIndex) => (
@@ -993,8 +1538,8 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                         position: 'relative'
                                     }}>
                                         {/* Barra superior de la pregunta */}
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+                                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                                                 <div style={{ backgroundColor: '#0f172a', color: '#fff', width: '28px', height: '28px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold' }}>
                                                     {pIndex + 1}
                                                 </div>
@@ -1016,27 +1561,86 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                                     <option value="Verdadero/Falso">Verdadero / Falso</option>
                                                     <option value="Respuesta escrita">Respuesta escrita</option>
                                                 </select>
+
+                                                {/* ASIGNACIÓN DE PUNTOS POR PREGUNTA */}
+                                                <div style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px',
+                                                    backgroundColor: '#ffffff',
+                                                    border: '1px solid #cbd5e1',
+                                                    borderRadius: '8px',
+                                                    padding: '4px 10px'
+                                                }}>
+                                                    <Award size={14} color="#047857" />
+                                                    <span style={{ fontSize: '12px', fontWeight: '600', color: '#475569' }}>Valor:</span>
+                                                    <input
+                                                        type="number"
+                                                        min="0.5"
+                                                        max="20"
+                                                        step="0.5"
+                                                        value={pregunta.puntos !== undefined && pregunta.puntos !== null ? pregunta.puntos : 4.0}
+                                                        onChange={(e) => handlePuntosPreguntaChange(pIndex, e.target.value)}
+                                                        style={{
+                                                            width: '48px',
+                                                            border: 'none',
+                                                            outline: 'none',
+                                                            fontSize: '13px',
+                                                            fontWeight: '700',
+                                                            color: '#047857',
+                                                            textAlign: 'center',
+                                                            background: 'transparent'
+                                                        }}
+                                                    />
+                                                    <span style={{ fontSize: '12px', fontWeight: '700', color: '#047857' }}>pts</span>
+                                                </div>
                                             </div>
 
-                                            {preguntas.length > 1 && (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                {/* BOTÓN PARA GUARDAR EN EL BANCO */}
                                                 <button
                                                     type="button"
-                                                    onClick={() => eliminarPregunta(pIndex)}
-                                                    title="Eliminar pregunta"
+                                                    onClick={() => handleGuardarPreguntaEnBanco(pregunta, pIndex)}
+                                                    disabled={guardandoEnBancoIndex === pIndex}
                                                     style={{
-                                                        background: 'transparent',
-                                                        border: 'none',
-                                                        color: '#ef4444',
-                                                        cursor: 'pointer',
-                                                        padding: '4px',
                                                         display: 'flex',
                                                         alignItems: 'center',
-                                                        borderRadius: '6px'
+                                                        gap: '5px',
+                                                        backgroundColor: '#ffffff',
+                                                        border: '1px solid #cbd5e1',
+                                                        borderRadius: '6px',
+                                                        padding: '5px 10px',
+                                                        fontSize: '11px',
+                                                        fontWeight: '600',
+                                                        color: '#334155',
+                                                        cursor: 'pointer'
                                                     }}
+                                                    title="Guardar una copia de esta pregunta en tu Banco Centralizado"
                                                 >
-                                                    <Trash2 size={16} />
+                                                    <BookOpen size={13} color="#2563eb" />
+                                                    {guardandoEnBancoIndex === pIndex ? 'Guardando...' : 'Guardar en Banco'}
                                                 </button>
-                                            )}
+
+                                                {preguntas.length > 1 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => eliminarPregunta(pIndex)}
+                                                        title="Eliminar pregunta"
+                                                        style={{
+                                                            background: 'transparent',
+                                                            border: 'none',
+                                                            color: '#ef4444',
+                                                            cursor: 'pointer',
+                                                            padding: '4px',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            borderRadius: '6px'
+                                                        }}
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
 
                                         {/* ENUNCIADO DE LA PREGUNTA */}
@@ -1327,6 +1931,44 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                                 </div>
                                             </div>
                                         )}
+
+                                        {/* EXPLICACIÓN PEDAGÓGICA DE LA PREGUNTA */}
+                                        <div style={{
+                                            marginTop: '16px',
+                                            padding: '12px 14px',
+                                            backgroundColor: '#fffbeb',
+                                            border: '1px solid #fef3c7',
+                                            borderRadius: '10px'
+                                        }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                                                <Lightbulb size={16} color="#d97706" />
+                                                <label style={{ fontSize: '12px', fontWeight: '700', color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                                                    Explicación pedagógica / Justificación de la respuesta (Opcional)
+                                                </label>
+                                            </div>
+                                            <textarea
+                                                value={pregunta.explicacion || ''}
+                                                onChange={(e) => handleExplicacionChange(pIndex, e.target.value)}
+                                                rows={2}
+                                                placeholder="Explica el razonamiento pedagógico, pasos de solución o conceptos clave para que el alumno aprenda al terminar..."
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '8px 12px',
+                                                    borderRadius: '6px',
+                                                    border: '1px solid #fde68a',
+                                                    fontSize: '13px',
+                                                    color: '#1e293b',
+                                                    backgroundColor: '#ffffff',
+                                                    boxSizing: 'border-box',
+                                                    resize: 'vertical',
+                                                    outline: 'none',
+                                                    fontFamily: 'inherit'
+                                                }}
+                                            />
+                                            <div style={{ fontSize: '11px', color: '#b45309', marginTop: '4px' }}>
+                                                💡 Esta explicación se mostrará inmediatamente al alumno al enviar su evaluación para enriquecer su proceso formativo.
+                                            </div>
+                                        </div>
                                     </div>
                                 ))}
 
@@ -1582,6 +2224,251 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                     </div>
                 </form>
             </div>
+
+            {/* MODAL PARA IMPORTAR PREGUNTAS DESDE EL BANCO CENTRALIZADO */}
+            {modalBancoAbierto && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 10001,
+                    backdropFilter: 'blur(3px)',
+                    padding: '20px'
+                }}>
+                    <div style={{
+                        backgroundColor: '#ffffff',
+                        borderRadius: '16px',
+                        width: '100%',
+                        maxWidth: '820px',
+                        maxHeight: '85vh',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.3)',
+                        overflow: 'hidden'
+                    }}>
+                        {/* HEADER MODAL BANCO */}
+                        <div style={{ padding: '20px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <div style={{ background: '#eff6ff', color: '#2563eb', padding: '8px', borderRadius: '8px' }}>
+                                    <BookOpen size={20} />
+                                </div>
+                                <div>
+                                    <h3 style={{ fontSize: '17px', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+                                        Importar Preguntas desde el Banco Centralizado
+                                    </h3>
+                                    <p style={{ fontSize: '13px', color: '#64748b', margin: '2px 0 0 0' }}>
+                                        Selecciona las preguntas que deseas agregar a este examen.
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setModalBancoAbierto(false)}
+                                style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', padding: '6px' }}
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {/* FILTROS DE BÚSQUEDA DEL BANCO */}
+                        <div style={{ padding: '14px 24px', borderBottom: '1px solid #e2e8f0', background: '#ffffff', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+                            <div style={{ flex: '1 1 200px', position: 'relative' }}>
+                                <Search size={15} color="#94a3b8" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+                                <input
+                                    type="text"
+                                    placeholder="Buscar en el banco..."
+                                    value={busquedaBanco}
+                                    onChange={(e) => setBusquedaBanco(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            recargarBanco(filtroBancoMateria, filtroBancoDificultad, busquedaBanco);
+                                        }
+                                    }}
+                                    style={{ width: '100%', padding: '7px 10px 7px 32px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                />
+                            </div>
+
+                            <select
+                                value={filtroBancoMateria}
+                                onChange={(e) => {
+                                    setFiltroBancoMateria(e.target.value);
+                                    recargarBanco(e.target.value, filtroBancoDificultad, busquedaBanco);
+                                }}
+                                style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
+                            >
+                                <option value="">Todas las materias</option>
+                                <option value="Matemáticas">Matemáticas</option>
+                                <option value="Informática">Informática</option>
+                                <option value="Historia">Historia</option>
+                                <option value="Ciencias">Ciencias</option>
+                                <option value="Literatura">Literatura</option>
+                                <option value="General">General</option>
+                            </select>
+
+                            <select
+                                value={filtroBancoDificultad}
+                                onChange={(e) => {
+                                    setFiltroBancoDificultad(e.target.value);
+                                    recargarBanco(filtroBancoMateria, e.target.value, busquedaBanco);
+                                }}
+                                style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', background: '#fff' }}
+                            >
+                                <option value="TODAS">Todas las dificultades</option>
+                                <option value="FACIL">🟢 Fácil</option>
+                                <option value="MEDIA">🟡 Media</option>
+                                <option value="DIFICIL">🔴 Difícil</option>
+                            </select>
+
+                            <button
+                                type="button"
+                                onClick={() => recargarBanco(filtroBancoMateria, filtroBancoDificultad, busquedaBanco)}
+                                style={{ padding: '7px 14px', borderRadius: '6px', background: '#0f172a', color: '#fff', border: 'none', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
+                            >
+                                Filtrar
+                            </button>
+                        </div>
+
+                        {/* LISTA DE PREGUNTAS DEL BANCO */}
+                        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {cargandoBanco ? (
+                                <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b', fontSize: '14px' }}>
+                                    Cargando preguntas disponibles en el banco...
+                                </div>
+                            ) : preguntasBanco.length === 0 ? (
+                                <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b' }}>
+                                    <BookOpen size={36} color="#94a3b8" style={{ marginBottom: '8px' }} />
+                                    <div style={{ fontSize: '14px', fontWeight: '600', color: '#334155' }}>
+                                        No hay preguntas que coincidan con los filtros seleccionados
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
+                                        Intenta cambiando la materia o el nivel de dificultad.
+                                    </div>
+                                </div>
+                            ) : (
+                                preguntasBanco.map((b) => {
+                                    const seleccionada = Boolean(seleccionadasBanco[b.id]);
+                                    const puntosVal = b.puntos !== undefined && b.puntos !== null ? b.puntos : (b.puntosDefecto || 4.0);
+
+                                    return (
+                                        <div
+                                            key={b.id}
+                                            onClick={() => toggleSeleccionBanco(b.id)}
+                                            style={{
+                                                backgroundColor: seleccionada ? '#f0fdf4' : '#ffffff',
+                                                border: `2px solid ${seleccionada ? '#10b981' : '#e2e8f0'}`,
+                                                borderRadius: '10px',
+                                                padding: '14px 16px',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                gap: '12px',
+                                                alignItems: 'flex-start',
+                                                transition: 'all 0.15s'
+                                            }}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={seleccionada}
+                                                onChange={() => {}} // handled by div onClick
+                                                style={{ marginTop: '3px', width: '18px', height: '18px', cursor: 'pointer', accentColor: '#10b981' }}
+                                            />
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap' }}>
+                                                    <span style={{ fontSize: '11px', fontWeight: '700', color: '#1d4ed8', background: '#eff6ff', padding: '2px 8px', borderRadius: '10px' }}>
+                                                        {b.materia || 'General'}
+                                                    </span>
+                                                    {b.dificultad === 'FACIL' && (
+                                                        <span style={{ fontSize: '11px', fontWeight: '700', color: '#16a34a', background: '#dcfce7', padding: '2px 8px', borderRadius: '10px' }}>
+                                                            🟢 Fácil
+                                                        </span>
+                                                    )}
+                                                    {b.dificultad === 'MEDIA' && (
+                                                        <span style={{ fontSize: '11px', fontWeight: '700', color: '#d97706', background: '#fef3c7', padding: '2px 8px', borderRadius: '10px' }}>
+                                                            🟡 Media
+                                                        </span>
+                                                    )}
+                                                    {b.dificultad === 'DIFICIL' && (
+                                                        <span style={{ fontSize: '11px', fontWeight: '700', color: '#dc2626', background: '#fee2e2', padding: '2px 8px', borderRadius: '10px' }}>
+                                                            🔴 Difícil
+                                                        </span>
+                                                    )}
+                                                    <span style={{ fontSize: '11px', fontWeight: '600', color: '#047857', background: '#ecfdf5', padding: '2px 8px', borderRadius: '6px' }}>
+                                                        {puntosVal.toFixed(1)} pts
+                                                    </span>
+                                                </div>
+                                                <div style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a', lineHeight: '1.4' }}>
+                                                    {b.enunciado || b.textoPregunta}
+                                                </div>
+                                                {b.opciones && b.opciones.length > 0 && (
+                                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
+                                                        {b.opciones.map((op, oIdx) => {
+                                                            const esCorr = Boolean(op.correcta || op.esCorrecta);
+                                                            return (
+                                                                <span
+                                                                    key={oIdx}
+                                                                    style={{
+                                                                        fontSize: '11px',
+                                                                        padding: '3px 8px',
+                                                                        borderRadius: '4px',
+                                                                        background: esCorr ? '#dcfce7' : '#f1f5f9',
+                                                                        color: esCorr ? '#15803d' : '#475569',
+                                                                        fontWeight: esCorr ? '700' : '500'
+                                                                    }}
+                                                                >
+                                                                    {esCorr ? '✓ ' : ''}{op.texto || op.textoOpcion}
+                                                                </span>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+
+                        {/* FOOTER MODAL BANCO */}
+                        <div style={{ padding: '16px 24px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
+                            <div style={{ fontSize: '13px', color: '#64748b' }}>
+                                {Object.values(seleccionadasBanco).filter(Boolean).length} preguntas seleccionadas
+                            </div>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setModalBancoAbierto(false)}
+                                    style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff', color: '#475569', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}
+                                >
+                                    Cerrar
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={aplicarPreguntasBanco}
+                                    disabled={Object.values(seleccionadasBanco).filter(Boolean).length === 0}
+                                    style={{
+                                        padding: '8px 20px',
+                                        borderRadius: '6px',
+                                        border: 'none',
+                                        background: Object.values(seleccionadasBanco).filter(Boolean).length > 0 ? '#10b981' : '#94a3b8',
+                                        color: '#ffffff',
+                                        fontSize: '13px',
+                                        fontWeight: '600',
+                                        cursor: Object.values(seleccionadasBanco).filter(Boolean).length > 0 ? 'pointer' : 'not-allowed'
+                                    }}
+                                >
+                                    Importar seleccionadas ({Object.values(seleccionadasBanco).filter(Boolean).length})
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

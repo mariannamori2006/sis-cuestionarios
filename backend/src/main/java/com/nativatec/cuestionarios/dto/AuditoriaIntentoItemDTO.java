@@ -15,6 +15,7 @@ public class AuditoriaIntentoItemDTO {
     private Boolean tienePreguntasEscritas;
     private Integer advertencias = 0;
     private Boolean finalizadoPorInfraccion = false;
+    private String grupo;
     private List<AuditoriaDetalleItemDTO> detalles = new ArrayList<>();
 
     public AuditoriaIntentoItemDTO() {
@@ -30,6 +31,13 @@ public class AuditoriaIntentoItemDTO {
                                   String notaTexto, String fecha, String hora, Boolean tienePreguntasEscritas,
                                   Integer advertencias, Boolean finalizadoPorInfraccion,
                                   List<AuditoriaDetalleItemDTO> detalles) {
+        this(intentoId, nombreAlumno, iniciales, calificacion, notaTexto, fecha, hora, tienePreguntasEscritas, advertencias, finalizadoPorInfraccion, null, detalles);
+    }
+
+    public AuditoriaIntentoItemDTO(UUID intentoId, String nombreAlumno, String iniciales, Double calificacion,
+                                  String notaTexto, String fecha, String hora, Boolean tienePreguntasEscritas,
+                                  Integer advertencias, Boolean finalizadoPorInfraccion, String grupo,
+                                  List<AuditoriaDetalleItemDTO> detalles) {
         this.intentoId = intentoId;
         this.nombreAlumno = nombreAlumno;
         this.iniciales = iniciales;
@@ -40,6 +48,7 @@ public class AuditoriaIntentoItemDTO {
         this.tienePreguntasEscritas = tienePreguntasEscritas;
         this.advertencias = advertencias != null ? advertencias : 0;
         this.finalizadoPorInfraccion = Boolean.TRUE.equals(finalizadoPorInfraccion);
+        this.grupo = grupo;
         this.detalles = detalles != null ? detalles : new ArrayList<>();
     }
 
@@ -129,5 +138,13 @@ public class AuditoriaIntentoItemDTO {
 
     public void setFinalizadoPorInfraccion(Boolean finalizadoPorInfraccion) {
         this.finalizadoPorInfraccion = finalizadoPorInfraccion;
+    }
+
+    public String getGrupo() {
+        return grupo;
+    }
+
+    public void setGrupo(String grupo) {
+        this.grupo = grupo;
     }
 }

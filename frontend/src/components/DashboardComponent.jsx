@@ -5,6 +5,7 @@ import { obtenerCuestionarios, obtenerEstadisticas, obtenerActividadReciente } f
 import CuestionariosView from './CuestionariosView';
 import EstadisticasView from './EstadisticasView';
 import ConfiguracionView from './ConfiguracionView';
+import BancoPreguntasView from './BancoPreguntasView';
 import logoNativa from '../images/logoNativa.jpeg';
 import { 
     LayoutDashboard, 
@@ -18,7 +19,8 @@ import {
     Award,
     Edit3,
     Star,
-    ClipboardList
+    ClipboardList,
+    BookOpen
 } from 'lucide-react';
 
 export default function DashboardComponent() {
@@ -99,6 +101,9 @@ export default function DashboardComponent() {
                         </button>
                         <button onClick={() => setVistaActiva('cuestionarios')} style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 14px', background: vistaActiva === 'cuestionarios' ? '#1e293b' : 'transparent', color: vistaActiva === 'cuestionarios' ? '#ffffff' : '#94a3b8', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', textAlign: 'left', transition: 'all 0.2s' }}>
                             <FileText size={18} /> Cuestionarios
+                        </button>
+                        <button onClick={() => setVistaActiva('banco')} style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 14px', background: vistaActiva === 'banco' ? '#1e293b' : 'transparent', color: vistaActiva === 'banco' ? '#ffffff' : '#94a3b8', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', textAlign: 'left', transition: 'all 0.2s' }}>
+                            <BookOpen size={18} /> Banco de Preguntas
                         </button>
                         <button onClick={() => setVistaActiva('estadisticas')} style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 14px', background: vistaActiva === 'estadisticas' ? '#1e293b' : 'transparent', color: vistaActiva === 'estadisticas' ? '#ffffff' : '#94a3b8', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', textAlign: 'left', transition: 'all 0.2s' }}>
                             <BarChart3 size={18} /> Estadísticas
@@ -392,6 +397,10 @@ export default function DashboardComponent() {
                         estadisticas={estadisticas}
                         onRecargarCuestionarios={cargarDatos}
                     />
+                )}
+
+                {vistaActiva === 'banco' && (
+                    <BancoPreguntasView />
                 )}
 
                 {vistaActiva === 'estadisticas' && (

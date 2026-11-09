@@ -90,6 +90,9 @@ public class IntentoCuestionarioService {
         IntentoCuestionario intento = new IntentoCuestionario();
         intento.setCuestionario(cuestionario);
         intento.setNombreInvitado(dto.getNombreParticipante() != null ? dto.getNombreParticipante().trim() : "Anónimo");
+        if (dto.getGrupo() != null && !dto.getGrupo().trim().isEmpty()) {
+            intento.setGrupo(dto.getGrupo().trim());
+        }
 
         if (dto.getUsuarioId() != null) {
             usuarioRepository.findById(dto.getUsuarioId()).ifPresent(intento::setUsuario);
@@ -101,9 +104,18 @@ public class IntentoCuestionarioService {
         intento.setFechaInicio(LocalDateTime.now());
         intento.setFechaFin(LocalDateTime.now());
 
-        // Calificar respuestas
+        // Calificar respuestas con cálculo de puntajes ponderados
         int totalPreguntas = cuestionario.getPreguntas() != null ? cuestionario.getPreguntas().size() : 0;
         int aciertos = 0;
+        double puntosTotalesExamen = 0.0;
+        double puntosObtenidosTotales = 0.0;
+
+        if (cuestionario.getPreguntas() != null && !cuestionario.getPreguntas().isEmpty()) {
+            for (Pregunta p : cuestionario.getPreguntas()) {
+                double pVal = p.getPuntos() != null && p.getPuntos() > 0 ? p.getPuntos() : (totalPreguntas > 0 ? (20.0 / totalPreguntas) : 4.0);
+                puntosTotalesExamen += pVal;
+            }
+        }
 
         // Guardamos el intento primero para obtener su ID generado
         intento = intentoRepository.save(intento);
@@ -121,12 +133,19 @@ public class IntentoCuestionarioService {
                     }
                 }
 
+                double pAsignados = preguntaItem != null && preguntaItem.getPuntos() != null && preguntaItem.getPuntos() > 0
+                        ? preguntaItem.getPuntos()
+                        : (totalPreguntas > 0 ? (20.0 / totalPreguntas) : 4.0);
+                double pGanados = 0.0;
+                boolean acertada = false;
+
                 if (item.getOpcionSeleccionadaId() != null) {
                     OpcionRespuesta opcion = opcionRespuestaRepository.findById(item.getOpcionSeleccionadaId()).orElse(null);
                     if (opcion != null) {
                         detalle.setOpcionSeleccionada(opcion);
                         if (Boolean.TRUE.equals(opcion.getEsCorrecta())) {
                             aciertos++;
+                            acertada = true;
                         }
                     }
                 } else if (item.getRespuestaTexto() != null && !item.getRespuestaTexto().trim().isEmpty()) {
@@ -138,6 +157,7 @@ public class IntentoCuestionarioService {
                             if (Boolean.TRUE.equals(opc.getEsCorrecta()) && opc.getTextoOpcion() != null) {
                                 if (opc.getTextoOpcion().trim().equalsIgnoreCase(textoAlumno)) {
                                     aciertos++;
+                                    acertada = true;
                                     break;
                                 }
                             }
@@ -148,6 +168,14 @@ public class IntentoCuestionarioService {
                 if (item.getRespuestaTexto() != null && detalle.getRespuestaTexto() == null) {
                     detalle.setRespuestaTexto(item.getRespuestaTexto().trim());
                 }
+
+                if (acertada) {
+                    pGanados = pAsignados;
+                    puntosObtenidosTotales += pGanados;
+                }
+
+                detalle.setPuntosAsignados(pAsignados);
+                detalle.setPuntosObtenidos(pGanados);
 
                 detalleRepository.save(detalle);
             }
@@ -164,6 +192,90 @@ public class IntentoCuestionarioService {
             }
         }
 
+        // Construir retroalimentación pedagógica detallada por cada pregunta
+        List<RetroalimentacionPreguntaDTO> listaRetroalimentacion = new java.util.ArrayList<>();
+        boolean mostrarRetro = cuestionario.getMostrarRetroalimentacion() == null || Boolean.TRUE.equals(cuestionario.getMostrarRetroalimentacion());
+
+        // Mapear respuestas del participante por preguntaId para cruzarlas con la pauta
+        java.util.Map<UUID, ResponderCuestionarioDTO.RespuestaItemDTO> mapaRespuestas = new java.util.HashMap<>();
+        if (dto.getRespuestas() != null) {
+            for (ResponderCuestionarioDTO.RespuestaItemDTO r : dto.getRespuestas()) {
+                if (r.getPreguntaId() != null) {
+                    mapaRespuestas.put(r.getPreguntaId(), r);
+                }
+            }
+        }
+
+        if (cuestionario.getPreguntas() != null) {
+            for (Pregunta preg : cuestionario.getPreguntas()) {
+                ResponderCuestionarioDTO.RespuestaItemDTO rItem = mapaRespuestas.get(preg.getId());
+                boolean esEscrita = preg.getTipo() == Pregunta.TipoPregunta.RESPUESTA_CORTA;
+
+                String respuestaAlumno = "Sin responder";
+                String respuestaCorrecta = "";
+                Boolean esCorrecta = false;
+                List<RetroalimentacionOpcionDTO> opcionesDTO = new java.util.ArrayList<>();
+
+                if (preg.getOpciones() != null) {
+                    for (OpcionRespuesta opc : preg.getOpciones()) {
+                        boolean esOpcCorrecta = Boolean.TRUE.equals(opc.getEsCorrecta());
+                        boolean fueElegida = false;
+
+                        if (rItem != null && rItem.getOpcionSeleccionadaId() != null && opc.getId() != null) {
+                            if (opc.getId().equals(rItem.getOpcionSeleccionadaId())) {
+                                fueElegida = true;
+                                respuestaAlumno = opc.getTextoOpcion() != null ? opc.getTextoOpcion() : "";
+                                if (esOpcCorrecta) {
+                                    esCorrecta = true;
+                                }
+                            }
+                        }
+
+                        if (esOpcCorrecta) {
+                            respuestaCorrecta = opc.getTextoOpcion() != null ? opc.getTextoOpcion() : "";
+                        }
+
+                        opcionesDTO.add(new RetroalimentacionOpcionDTO(
+                                opc.getId(),
+                                opc.getTextoOpcion(),
+                                esOpcCorrecta,
+                                fueElegida
+                        ));
+                    }
+                }
+
+                if (esEscrita) {
+                    if (rItem != null && rItem.getRespuestaTexto() != null && !rItem.getRespuestaTexto().trim().isEmpty()) {
+                        respuestaAlumno = rItem.getRespuestaTexto().trim();
+                    }
+                    esCorrecta = null; // Pendiente de revisión por docente
+                }
+
+                String tipoPregStr = preg.getTipo() != null ? preg.getTipo().name() : "OPCION_MULTIPLE";
+
+                double pregPuntosAsignados = preg.getPuntos() != null && preg.getPuntos() > 0
+                        ? preg.getPuntos()
+                        : (totalPreguntas > 0 ? (20.0 / totalPreguntas) : 4.0);
+                double pregPuntosObtenidos = Boolean.TRUE.equals(esCorrecta) ? pregPuntosAsignados : 0.0;
+
+                listaRetroalimentacion.add(new RetroalimentacionPreguntaDTO(
+                        preg.getId(),
+                        preg.getTextoPregunta(),
+                        tipoPregStr,
+                        preg.getOrden(),
+                        preg.getImagenUrl(),
+                        respuestaAlumno,
+                        respuestaCorrecta,
+                        esCorrecta,
+                        esEscrita,
+                        preg.getExplicacion(),
+                        pregPuntosAsignados,
+                        pregPuntosObtenidos,
+                        opcionesDTO
+                ));
+            }
+        }
+
         // Si contiene preguntas de respuesta escrita, la nota queda pendiente para revisión del profesor
         if (tienePreguntasEscritas) {
             intento.setCalificacion(null);
@@ -176,13 +288,17 @@ public class IntentoCuestionarioService {
                     aciertos,
                     totalPreguntas,
                     "¡Tus respuestas han sido enviadas con éxito! Al incluir preguntas escritas, tu profesor revisará y calificará tu examen.",
-                    true
+                    true,
+                    mostrarRetro,
+                    listaRetroalimentacion
             );
         }
 
-        // Calificación automática cuando son únicamente preguntas cerradas (Opción múltiple / Verdadero-Falso)
+        // Calificación automática cuando son únicamente preguntas cerradas con puntaje ponderado sobre 20
         double calificacionFinal = 0.0;
-        if (totalPreguntas > 0) {
+        if (puntosTotalesExamen > 0) {
+            calificacionFinal = Math.round((puntosObtenidosTotales / puntosTotalesExamen * 20.0) * 10.0) / 10.0;
+        } else if (totalPreguntas > 0) {
             calificacionFinal = Math.round(((double) aciertos / totalPreguntas * 20.0) * 10.0) / 10.0;
         } else if (aciertos > 0) {
             calificacionFinal = 20.0;
@@ -209,7 +325,9 @@ public class IntentoCuestionarioService {
                 aciertos,
                 totalPreguntas,
                 mensaje,
-                false
+                false,
+                mostrarRetro,
+                listaRetroalimentacion
         );
     }
 
@@ -813,9 +931,23 @@ public class IntentoCuestionarioService {
                     esCorrecta = respuestaCorrecta.equalsIgnoreCase(respuestaAlumno.trim());
                 }
 
+                Double pAsignados = det.getPuntosAsignados();
+                if (pAsignados == null && p != null) {
+                    pAsignados = p.getPuntos();
+                }
+                Double pObtenidos = det.getPuntosObtenidos();
+                if (pObtenidos == null && Boolean.TRUE.equals(esCorrecta) && pAsignados != null) {
+                    pObtenidos = pAsignados;
+                } else if (pObtenidos == null && Boolean.FALSE.equals(esCorrecta)) {
+                    pObtenidos = 0.0;
+                }
+
                 detallesDTO.add(new AuditoriaDetalleItemDTO(
                         pId, enunciado, tipoPregunta, orden, respuestaAlumno, respuestaCorrecta, esCorrecta, esEscrita,
-                        p != null ? p.getImagenUrl() : null
+                        p != null ? p.getImagenUrl() : null,
+                        p != null ? p.getExplicacion() : null,
+                        pAsignados,
+                        pObtenidos
                 ));
             }
 
@@ -830,13 +962,22 @@ public class IntentoCuestionarioService {
                     tieneEscritas,
                     intento.getAdvertencias(),
                     intento.getFinalizadoPorInfraccion(),
+                    intento.getGrupo(),
                     detallesDTO
             ));
         }
 
         double promedio = notasValidas > 0 ? Math.round((sumaNotas / notasValidas) * 10.0) / 10.0 : 0.0;
 
-        return new AuditoriaCuestionarioDTO(
+        // Recolectar lista de grupos únicos para el filtro del módulo de calificaciones
+        java.util.Set<String> gruposUnicos = new java.util.TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        for (AuditoriaIntentoItemDTO it : items) {
+            if (it.getGrupo() != null && !it.getGrupo().trim().isEmpty()) {
+                gruposUnicos.add(it.getGrupo().trim());
+            }
+        }
+
+        AuditoriaCuestionarioDTO auditoriaDTO = new AuditoriaCuestionarioDTO(
                 cuestionario.getId(),
                 titulo,
                 materia,
@@ -844,6 +985,8 @@ public class IntentoCuestionarioService {
                 promedio,
                 items
         );
+        auditoriaDTO.setGrupos(new java.util.ArrayList<>(gruposUnicos));
+        return auditoriaDTO;
     }
 
     // Calificar manualmente un intento (asignar nota desde la auditoría)

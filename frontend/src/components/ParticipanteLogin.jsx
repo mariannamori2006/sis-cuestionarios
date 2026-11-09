@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import logoNativa from '../images/logoNativa.jpeg';
-import { User, KeyRound, ArrowRight, CheckCircle2, AlertCircle, HelpCircle, ArrowLeft, BookOpen, Clock, RotateCcw } from 'lucide-react';
+import { User, KeyRound, ArrowRight, CheckCircle2, AlertCircle, HelpCircle, ArrowLeft, BookOpen, Clock, RotateCcw, Users } from 'lucide-react';
 import { verificarDisponibilidadCuestionario } from '../services/cuestionarioService';
 
 export default function ParticipanteLogin() {
@@ -14,6 +14,7 @@ export default function ParticipanteLogin() {
     const [paso, setPaso] = useState(1);
     const [codigoAcceso, setCodigoAcceso] = useState('');
     const [nombreParticipante, setNombreParticipante] = useState(sessionStorage.getItem('nombreParticipante') || '');
+    const [grupoParticipante, setGrupoParticipante] = useState(sessionStorage.getItem('grupoParticipante') || '');
 
     const [cuestionario, setCuestionario] = useState(null);
     const [disponibilidad, setDisponibilidad] = useState(null);
@@ -92,8 +93,9 @@ export default function ParticipanteLogin() {
             setValidando(false);
         }
 
-        // Guardamos el nombre del alumno en sessionStorage
+        // Guardamos el nombre y grupo del alumno en sessionStorage
         sessionStorage.setItem('nombreParticipante', nombreParticipante.trim());
+        sessionStorage.setItem('grupoParticipante', (grupoParticipante || '').trim());
 
         // Redirigimos a resolver el cuestionario
         const rutaDestino = cuestionario.codigoAcceso || cuestionario.id;
@@ -386,6 +388,57 @@ export default function ParticipanteLogin() {
                             </div>
                             <span style={{ fontSize: '12px', color: '#64748b', marginTop: '6px', display: 'block' }}>
                                 Tu nombre se registrará junto con tus respuestas para calificar la evaluación.
+                            </span>
+                        </div>
+
+                        {/* GRUPO / SECCIÓN */}
+                        <div>
+                            <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>
+                                GRUPO O SECCIÓN (OPCIONAL)
+                            </label>
+                            <div style={{ position: 'relative' }}>
+                                <Users size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', zIndex: 1 }} />
+                                {cuestionario?.gruposPermitidos ? (
+                                    <select
+                                        value={grupoParticipante}
+                                        onChange={(e) => setGrupoParticipante(e.target.value)}
+                                        style={{
+                                            width: '100%',
+                                            padding: '12px 14px 12px 40px',
+                                            borderRadius: '10px',
+                                            border: '1px solid #cbd5e1',
+                                            outline: 'none',
+                                            fontSize: '14px',
+                                            backgroundColor: '#ffffff',
+                                            boxSizing: 'border-box',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <option value="">-- Selecciona tu grupo / sección --</option>
+                                        {cuestionario.gruposPermitidos.split(',').map(g => g.trim()).filter(Boolean).map(grp => (
+                                            <option key={grp} value={grp}>{grp}</option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <input
+                                        type="text"
+                                        value={grupoParticipante}
+                                        onChange={(e) => setGrupoParticipante(e.target.value)}
+                                        placeholder="Ej: 5to A, Grupo 1, Sección B"
+                                        style={{
+                                            width: '100%',
+                                            padding: '12px 14px 12px 40px',
+                                            borderRadius: '10px',
+                                            border: '1px solid #cbd5e1',
+                                            outline: 'none',
+                                            fontSize: '14px',
+                                            boxSizing: 'border-box'
+                                        }}
+                                    />
+                                )}
+                            </div>
+                            <span style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                                Permite a tu docente filtrar y organizar las calificaciones por aula.
                             </span>
                         </div>
 

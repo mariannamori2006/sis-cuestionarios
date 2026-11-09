@@ -15,7 +15,8 @@ export const descargarPlantillaExcel = () => {
         "Opción C",
         "Opción D",
         "Respuesta Correcta",
-        "URL Imagen (Opcional)"
+        "URL Imagen (Opcional)",
+        "Explicación Pedagógica (Opcional)"
     ];
 
     const ejemplos = [
@@ -27,7 +28,8 @@ export const descargarPlantillaExcel = () => {
             "Arequipa",
             "Trujillo",
             "B",
-            ""
+            "",
+            "Lima es la capital y el centro administrativo y cultural de la República del Perú."
         ],
         [
             "multiple",
@@ -37,7 +39,8 @@ export const descargarPlantillaExcel = () => {
             "Bacteria procariota",
             "Virus",
             "B",
-            "https://images.unsplash.com/photo-1530497610245-94d3c16cda28?w=800"
+            "https://images.unsplash.com/photo-1530497610245-94d3c16cda28?w=800",
+            "La ausencia de pared celular y cloroplastos confirma que se trata de una célula animal eucariota."
         ],
         [
             "truefalse",
@@ -47,7 +50,8 @@ export const descargarPlantillaExcel = () => {
             "",
             "",
             "Verdadero",
-            ""
+            "",
+            "A 1 atmósfera estándar de presión (101.3 kPa a nivel del mar), el punto de ebullición del agua pura es 100 °C."
         ],
         [
             "multiple",
@@ -57,7 +61,8 @@ export const descargarPlantillaExcel = () => {
             "90",
             "95",
             "C",
-            ""
+            "",
+            "Multiplicamos por descomposición: (10 x 6) + (5 x 6) = 60 + 30 = 90."
         ],
         [
             "short",
@@ -67,7 +72,8 @@ export const descargarPlantillaExcel = () => {
             "",
             "",
             "Júpiter",
-            ""
+            "",
+            "Júpiter es un gigante gaseoso con una masa más de dos veces superior a la de todos los demás planetas combinados."
         ],
         [
             "truefalse",
@@ -77,7 +83,8 @@ export const descargarPlantillaExcel = () => {
             "",
             "",
             "Falso",
-            ""
+            "",
+            "La fotosíntesis es realizada por plantas, algas y ciertas bacterias que poseen cloroplastos o clorofila."
         ]
     ];
 
@@ -93,7 +100,8 @@ export const descargarPlantillaExcel = () => {
         { wch: 20 }, // Opción C
         { wch: 20 }, // Opción D
         { wch: 22 }, // Respuesta Correcta
-        { wch: 35 }  // URL Imagen (Opcional)
+        { wch: 35 }, // URL Imagen (Opcional)
+        { wch: 55 }  // Explicación Pedagógica (Opcional)
     ];
 
     // Añadir hoja al libro
@@ -123,7 +131,11 @@ export const descargarPlantillaExcel = () => {
         ["5. Columna 'URL Imagen (Opcional)':"],
         ["   - Enlace directo (https://...) a una imagen, gráfico o diagrama ilustrativo."],
         ["   - Si la pregunta no lleva imagen, déjala en blanco."],
-        ["   - También puedes adjuntar imágenes desde tu PC en la pantalla de previsualización."]
+        ["   - También puedes adjuntar imágenes desde tu PC en la pantalla de previsualización."],
+        [""],
+        ["6. Columna 'Explicación Pedagógica (Opcional)':"],
+        ["   - Justificación o razonamiento de por qué esa es la respuesta correcta."],
+        ["   - Esta explicación se muestra al alumno inmediatamente al terminar para reforzar su aprendizaje."]
     ];
     const wsInstrucciones = XLSX.utils.aoa_to_sheet(instrucciones);
     wsInstrucciones['!cols'] = [{ wch: 80 }];
@@ -179,15 +191,24 @@ export const procesarArchivoPreguntas = (file) => {
                 // Detectar si la primera fila es encabezado
                 let startIndex = 0;
                 let colImagenIndex = 7;
+                let colExplicacionIndex = -1;
                 const primeraFila = rows[0].map(c => String(c).toLowerCase().trim());
                 if (
-                    primeraFila.some(c => c.includes('tipo') || c.includes('pregunta') || c.includes('enunciado') || c.includes('opci') || c.includes('imagen'))
+                    primeraFila.some(c => c.includes('tipo') || c.includes('pregunta') || c.includes('enunciado') || c.includes('opci') || c.includes('imagen') || c.includes('explic'))
                 ) {
                     startIndex = 1;
                     const idxImg = primeraFila.findIndex(c => c.includes('imagen') || c.includes('foto') || c.includes('grafico') || c.includes('diagrama') || c.includes('url'));
                     if (idxImg !== -1) {
                         colImagenIndex = idxImg;
                     }
+                    const idxExp = primeraFila.findIndex(c => c.includes('explic') || c.includes('retroal') || c.includes('justif') || c.includes('pauta'));
+                    if (idxExp !== -1) {
+                        colExplicacionIndex = idxExp;
+                    } else if (rows[0].length >= 9) {
+                        colExplicacionIndex = 8;
+                    }
+                } else if (rows[0].length >= 9) {
+                    colExplicacionIndex = 8;
                 }
 
                 const preguntasProcesadas = [];
@@ -205,7 +226,8 @@ export const procesarArchivoPreguntas = (file) => {
                     const opcC = String(row[4] || '').trim();
                     const opcD = String(row[5] || '').trim();
                     const rawCorrecta = String(row[6] || '').trim();
-                    const rawImagen = String(row[colImagenIndex] || '').trim();
+                    const rawImagen = colImagenIndex !== -1 ? String(row[colImagenIndex] || '').trim() : '';
+                    const rawExplicacion = colExplicacionIndex !== -1 ? String(row[colExplicacionIndex] || '').trim() : '';
 
                     // Determinar tipo de pregunta
                     let tipo = 'Opción múltiple';
@@ -278,6 +300,7 @@ export const procesarArchivoPreguntas = (file) => {
                         enunciado,
                         tipo,
                         imagenUrl: rawImagen,
+                        explicacion: rawExplicacion,
                         opciones
                     });
                 }
@@ -318,7 +341,7 @@ export const procesarArchivoPreguntas = (file) => {
  * @param {Object} cuestionario Objeto con datos del cuestionario.
  * @param {Object} auditoriaData Datos de auditoría con la lista de intentos y notas.
  */
-export const exportarNotasExcel = (cuestionario, auditoriaData) => {
+export const exportarNotasExcel = (cuestionario, auditoriaData, filtroGrupo = 'TODOS') => {
     try {
         const titulo = auditoriaData?.titulo || cuestionario?.titulo || 'Cuestionario';
         const materia = auditoriaData?.materia || 'General';
@@ -336,6 +359,7 @@ export const exportarNotasExcel = (cuestionario, auditoriaData) => {
             ["Cuestionario:", titulo],
             ["Materia:", materia],
             ["Código de acceso:", cuestionario?.codigoAcceso || '—'],
+            ["Grupo / Sección:", filtroGrupo === 'TODOS' ? 'Todos los grupos y secciones' : filtroGrupo],
             ["Fecha de reporte:", new Date().toLocaleDateString('es-PE', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })],
             ["Total alumnos evaluados:", totalAlumnos],
             ["Promedio general del grupo:", `${Number(promedio).toFixed(2)} / 20`],
@@ -346,6 +370,7 @@ export const exportarNotasExcel = (cuestionario, auditoriaData) => {
         const columnasTabla = [
             "N°",
             "Estudiante / Participante",
+            "Grupo / Sección",
             "Nota (/20)",
             "Nota (/100)",
             "Estado",
@@ -377,6 +402,7 @@ export const exportarNotasExcel = (cuestionario, auditoriaData) => {
             return [
                 index + 1,
                 intento.nombreAlumno || "Anónimo",
+                intento.grupo || "Sin asignar",
                 nota20.toFixed(1),
                 nota100,
                 estado,
@@ -400,6 +426,7 @@ export const exportarNotasExcel = (cuestionario, auditoriaData) => {
         ws['!cols'] = [
             { wch: 6 },  // N°
             { wch: 32 }, // Nombre
+            { wch: 18 }, // Grupo / Sección
             { wch: 14 }, // Nota /20
             { wch: 14 }, // Nota /100
             { wch: 16 }, // Estado
@@ -418,7 +445,11 @@ export const exportarNotasExcel = (cuestionario, auditoriaData) => {
             .trim()
             .replace(/\s+/g, "_");
 
-        XLSX.writeFile(wb, `Notas_${nombreArchivoLimpio || 'Cuestionario'}.xlsx`);
+        const sufijoGrupo = filtroGrupo && filtroGrupo !== 'TODOS'
+            ? `_${filtroGrupo.replace(/[^a-zA-Z0-9_\-]/g, '')}`
+            : '';
+
+        XLSX.writeFile(wb, `Notas_${nombreArchivoLimpio || 'Cuestionario'}${sufijoGrupo}.xlsx`);
         return true;
     } catch (err) {
         console.error("Error al exportar notas a Excel:", err);

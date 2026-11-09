@@ -10,6 +10,7 @@ public class ResponderCuestionarioDTO {
     private List<RespuestaItemDTO> respuestas;
     private Integer advertencias = 0;
     private Boolean finalizadoPorInfraccion = false;
+    private String grupo;
 
     public ResponderCuestionarioDTO() {
     }
@@ -60,6 +61,14 @@ public class ResponderCuestionarioDTO {
 
     public void setFinalizadoPorInfraccion(Boolean finalizadoPorInfraccion) {
         this.finalizadoPorInfraccion = finalizadoPorInfraccion;
+    }
+
+    public String getGrupo() {
+        return grupo;
+    }
+
+    public void setGrupo(String grupo) {
+        this.grupo = grupo;
     }
 
     public static class RespuestaItemDTO {

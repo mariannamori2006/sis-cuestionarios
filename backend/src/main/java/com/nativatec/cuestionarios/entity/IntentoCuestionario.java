@@ -23,6 +23,10 @@ public class IntentoCuestionario {
     @Column(name = "nombre_invitado", length = 100)
     private String nombreInvitado;
 
+    // Grupo o sección académica del estudiante (ej: "5to A", "Grupo 1", "Sección B")
+    @Column(name = "grupo", length = 100)
+    private String grupo;
+
     @Column(name = "fecha_inicio", nullable = false)
     private LocalDateTime fechaInicio;
 
@@ -158,5 +162,13 @@ public class IntentoCuestionario {
 
     public void setFinalizadoPorInfraccion(Boolean finalizadoPorInfraccion) {
         this.finalizadoPorInfraccion = finalizadoPorInfraccion;
+    }
+
+    public String getGrupo() {
+        return grupo;
+    }
+
+    public void setGrupo(String grupo) {
+        this.grupo = grupo;
     }
 }

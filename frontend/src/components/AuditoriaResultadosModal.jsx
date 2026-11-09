@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { obtenerAuditoriaCuestionario, calificarIntento } from '../services/cuestionarioService';
 import { exportarNotasExcel } from '../services/excelService';
 import GraficasRendimientoAvanzadas from './GraficasRendimientoAvanzadas';
-import { X, ChevronDown, ChevronUp, CheckCircle, XCircle, Edit2, Save, Users, Award, Clock, Download, FileSpreadsheet, ShieldAlert, ShieldCheck, AlertTriangle, BarChart3 } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, CheckCircle, XCircle, Edit2, Save, Users, Award, Clock, Download, FileSpreadsheet, ShieldAlert, ShieldCheck, AlertTriangle, BarChart3, Search, Filter, ArrowUpDown, RotateCcw } from 'lucide-react';
 
 export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario, onActualizado }) {
     const [loading, setLoading] = useState(true);
@@ -10,11 +10,16 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
     const [auditoriaData, setAuditoriaData] = useState(null);
     const [expandedIntentoId, setExpandedIntentoId] = useState(null);
 
-    // Estado para calificación manual de un intento
     const [editandoNotaId, setEditandoNotaId] = useState(null);
     const [notaInput, setNotaInput] = useState('');
     const [guardandoNota, setGuardandoNota] = useState(false);
     const [subVista, setSubVista] = useState('alumnos'); // 'alumnos' o 'graficas'
+
+    // Filtros avanzados del módulo de calificaciones
+    const [filtroGrupo, setFiltroGrupo] = useState('TODOS');
+    const [filtroEstado, setFiltroEstado] = useState('TODOS'); // 'TODOS', 'APROBADOS', 'DESAPROBADOS', 'SOBRESALIENTES', 'CON_INCIDENTES'
+    const [busqueda, setBusqueda] = useState('');
+    const [ordenarPor, setOrdenarPor] = useState('calificacion-desc'); // 'calificacion-desc', 'calificacion-asc', 'nombre-asc', 'fecha-desc'
 
     useEffect(() => {
         if (!isOpen || !cuestionario?.id) return;
@@ -23,6 +28,10 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
             try {
                 setLoading(true);
                 setError('');
+                setFiltroGrupo('TODOS');
+                setFiltroEstado('TODOS');
+                setBusqueda('');
+                setOrdenarPor('calificacion-desc');
                 const data = await obtenerAuditoriaCuestionario(cuestionario.id);
                 setAuditoriaData(data);
             } catch (err) {
@@ -35,8 +44,6 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
 
         cargarAuditoria();
     }, [isOpen, cuestionario]);
-
-    if (!isOpen) return null;
 
     const toggleExpand = (id) => {
         setExpandedIntentoId(prev => prev === id ? null : id);
@@ -75,19 +82,128 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
         }
     };
 
+    const titulo = auditoriaData?.titulo || cuestionario?.titulo || 'Cuestionario';
+    const totalParticipantes = auditoriaData?.totalParticipantes ?? 0;
+    const promedio = auditoriaData?.promedio ?? (cuestionario?.promedioCalificacion || 0.0);
+    const intentos = auditoriaData?.intentos || [];
+
+    // Detección de grupos/secciones disponibles y conteo de alumnos por grupo
+    const { gruposDisponibles, conteoPorGrupo } = useMemo(() => {
+        const set = new Set();
+        const counts = {};
+        let sinGrupo = 0;
+
+        (auditoriaData?.intentos || []).forEach(it => {
+            const grp = it.grupo && it.grupo.trim() ? it.grupo.trim() : null;
+            if (grp) {
+                set.add(grp);
+                counts[grp] = (counts[grp] || 0) + 1;
+            } else {
+                sinGrupo++;
+            }
+        });
+
+        if (cuestionario?.gruposPermitidos) {
+            cuestionario.gruposPermitidos.split(',').map(g => g.trim()).filter(Boolean).forEach(g => {
+                set.add(g);
+                if (!counts[g]) counts[g] = 0;
+            });
+        }
+
+        const sorted = Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+        return {
+            gruposDisponibles: sorted,
+            conteoPorGrupo: { ...counts, __sinGrupo: sinGrupo }
+        };
+    }, [auditoriaData, cuestionario]);
+
+    // Intentos filtrados y ordenados según los controles activos
+    const intentosFiltrados = useMemo(() => {
+        let list = [...(auditoriaData?.intentos || [])];
+
+        // 1. Filtro por grupo/sección
+        if (filtroGrupo !== 'TODOS') {
+            if (filtroGrupo === 'SIN_GRUPO') {
+                list = list.filter(it => !it.grupo || !it.grupo.trim());
+            } else {
+                list = list.filter(it => (it.grupo || '').trim().toLowerCase() === filtroGrupo.toLowerCase());
+            }
+        }
+
+        // 2. Filtro por búsqueda de texto (nombre o grupo)
+        if (busqueda.trim()) {
+            const q = busqueda.trim().toLowerCase();
+            list = list.filter(it =>
+                (it.nombreAlumno && it.nombreAlumno.toLowerCase().includes(q)) ||
+                (it.grupo && it.grupo.toLowerCase().includes(q))
+            );
+        }
+
+        // 3. Filtro por estado / desempeño
+        if (filtroEstado === 'APROBADOS') {
+            list = list.filter(it => it.calificacion != null && it.calificacion >= 11);
+        } else if (filtroEstado === 'DESAPROBADOS') {
+            list = list.filter(it => it.calificacion != null && it.calificacion < 11);
+        } else if (filtroEstado === 'SOBRESALIENTES') {
+            list = list.filter(it => it.calificacion != null && it.calificacion >= 16);
+        } else if (filtroEstado === 'CON_INCIDENTES') {
+            list = list.filter(it => (it.advertencias && it.advertencias > 0) || it.finalizadoPorInfraccion);
+        }
+
+        // 4. Ordenamiento dinámico
+        list.sort((a, b) => {
+            if (ordenarPor === 'calificacion-desc') {
+                return (b.calificacion ?? -1) - (a.calificacion ?? -1);
+            }
+            if (ordenarPor === 'calificacion-asc') {
+                return (a.calificacion ?? 999) - (b.calificacion ?? 999);
+            }
+            if (ordenarPor === 'nombre-asc') {
+                return (a.nombreAlumno || '').localeCompare(b.nombreAlumno || '');
+            }
+            if (ordenarPor === 'fecha-desc') {
+                const da = `${a.fecha || ''} ${a.hora || ''}`;
+                const db = `${b.fecha || ''} ${b.hora || ''}`;
+                return db.localeCompare(da);
+            }
+            return 0;
+        });
+
+        return list;
+    }, [auditoriaData, filtroGrupo, busqueda, filtroEstado, ordenarPor]);
+
+    // Métricas dinámicas calculadas para el grupo / filtro activo
+    const metricasFiltradas = useMemo(() => {
+        const total = intentosFiltrados.length;
+        const calificados = intentosFiltrados.filter(it => it.calificacion != null);
+        const suma = calificados.reduce((acc, curr) => acc + curr.calificacion, 0);
+        const prom = calificados.length > 0 ? (suma / calificados.length) : 0.0;
+        const aprobados = calificados.filter(it => it.calificacion >= 11).length;
+        const desaprobados = calificados.filter(it => it.calificacion < 11).length;
+        const tasaAprob = calificados.length > 0 ? Math.round((aprobados / calificados.length) * 100) : 0;
+        return {
+            total,
+            promedio: prom,
+            aprobados,
+            desaprobados,
+            tasaAprobacion: tasaAprob
+        };
+    }, [intentosFiltrados]);
+
     const handleExportarExcel = () => {
         try {
-            exportarNotasExcel(cuestionario, auditoriaData);
+            const dataExport = {
+                ...auditoriaData,
+                totalParticipantes: intentosFiltrados.length,
+                promedio: metricasFiltradas.promedio,
+                intentos: intentosFiltrados
+            };
+            exportarNotasExcel(cuestionario, dataExport, filtroGrupo);
         } catch (err) {
             console.error('Error al exportar notas a Excel:', err);
             alert('No se pudo exportar el archivo de notas.');
         }
     };
-
-    const titulo = auditoriaData?.titulo || cuestionario?.titulo || 'Cuestionario';
-    const totalParticipantes = auditoriaData?.totalParticipantes ?? 0;
-    const promedio = auditoriaData?.promedio ?? (cuestionario?.promedioCalificacion || 0.0);
-    const intentos = auditoriaData?.intentos || [];
 
     // Calcular estadísticas por pregunta de este cuestionario para las gráficas
     const preguntasAuditoria = useMemo(() => {
@@ -131,6 +247,8 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
         }).sort((a, b) => a.orden - b.orden);
     }, [auditoriaData, cuestionario, titulo]);
 
+    if (!isOpen) return null;
+
     return (
         <div style={{
             position: 'fixed',
@@ -166,7 +284,20 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
                             Auditoría de resultados
                         </h2>
                         <span style={{ fontSize: '14px', color: '#64748b' }}>
-                            {titulo} · {totalParticipantes} {totalParticipantes === 1 ? 'participante' : 'participantes'}
+                            {titulo} · {totalParticipantes} {totalParticipantes === 1 ? 'evaluación registrada' : 'evaluaciones registradas'}
+                            {filtroGrupo !== 'TODOS' && (
+                                <span style={{
+                                    marginLeft: '8px',
+                                    padding: '3px 9px',
+                                    borderRadius: '6px',
+                                    backgroundColor: '#e0e7ff',
+                                    color: '#3730a3',
+                                    fontWeight: '700',
+                                    fontSize: '12px'
+                                }}>
+                                    Grupo: {filtroGrupo === 'SIN_GRUPO' ? 'Sin asignar' : filtroGrupo} ({intentosFiltrados.length})
+                                </span>
+                            )}
                         </span>
                     </div>
 
@@ -174,22 +305,22 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
                         <button
                             type="button"
                             onClick={handleExportarExcel}
-                            disabled={intentos.length === 0}
-                            title={intentos.length === 0 ? "No hay evaluaciones registradas para descargar" : "Descargar notas en Excel"}
+                            disabled={intentosFiltrados.length === 0}
+                            title={intentosFiltrados.length === 0 ? "No hay evaluaciones para descargar" : "Descargar notas en Excel"}
                             style={{
-                                backgroundColor: intentos.length > 0 ? '#10b981' : '#cbd5e1',
+                                backgroundColor: intentosFiltrados.length > 0 ? '#10b981' : '#cbd5e1',
                                 color: '#ffffff',
                                 border: 'none',
                                 borderRadius: '8px',
                                 padding: '8px 14px',
                                 fontSize: '13px',
                                 fontWeight: '600',
-                                cursor: intentos.length > 0 ? 'pointer' : 'not-allowed',
+                                cursor: intentosFiltrados.length > 0 ? 'pointer' : 'not-allowed',
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '6px',
                                 transition: 'all 0.2s',
-                                boxShadow: intentos.length > 0 ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
+                                boxShadow: intentosFiltrados.length > 0 ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
                             }}
                         >
                             <Download size={15} /> Descargar Excel
@@ -197,11 +328,11 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
 
                         <div style={{ textAlign: 'right' }}>
                             <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                Promedio
+                                {filtroGrupo !== 'TODOS' ? `Promedio (${filtroGrupo})` : 'Promedio'}
                             </div>
                             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: '2px' }}>
                                 <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#0f172a' }}>
-                                    {promedio > 0 ? promedio.toFixed(1) : '0.0'}
+                                    {metricasFiltradas.promedio > 0 ? metricasFiltradas.promedio.toFixed(1) : (promedio > 0 ? promedio.toFixed(1) : '0.0')}
                                 </span>
                                 <span style={{ fontSize: '14px', color: '#94a3b8', fontWeight: '500' }}>
                                     /20
@@ -315,32 +446,316 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
                                 tituloModulo="Rendimiento de este Cuestionario"
                             />
                         ) : (
-                            /* TABLA DE AUDITORÍA */
+                            /* TABLA DE AUDITORÍA CON FILTROS AVANZADOS POR GRUPO / SECCIÓN */
                             <div>
+                                {/* BARRA DE FILTROS AVANZADOS */}
+                                <div style={{
+                                    backgroundColor: '#f8fafc',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '12px',
+                                    padding: '14px 16px',
+                                    marginBottom: '16px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '12px'
+                                }}>
+                                    {/* PÍLDORAS RÁPIDAS DE SELECCIÓN DE GRUPO */}
+                                    {gruposDisponibles.length > 0 && (
+                                        <div>
+                                            <div style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <Users size={13} color="#475569" /> Filtrar por Aula / Grupo:
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setFiltroGrupo('TODOS')}
+                                                    style={{
+                                                        padding: '5px 12px',
+                                                        borderRadius: '20px',
+                                                        fontSize: '12px',
+                                                        fontWeight: '700',
+                                                        cursor: 'pointer',
+                                                        backgroundColor: filtroGrupo === 'TODOS' ? '#0f172a' : '#ffffff',
+                                                        color: filtroGrupo === 'TODOS' ? '#ffffff' : '#475569',
+                                                        border: filtroGrupo === 'TODOS' ? '1px solid #0f172a' : '1px solid #cbd5e1',
+                                                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                                                        transition: 'all 0.15s'
+                                                    }}
+                                                >
+                                                    Todos los grupos ({intentos.length})
+                                                </button>
+                                                {gruposDisponibles.map(grp => {
+                                                    const count = conteoPorGrupo[grp] || 0;
+                                                    const esActivo = filtroGrupo.toLowerCase() === grp.toLowerCase();
+                                                    return (
+                                                        <button
+                                                            key={grp}
+                                                            type="button"
+                                                            onClick={() => setFiltroGrupo(grp)}
+                                                            style={{
+                                                                padding: '5px 12px',
+                                                                borderRadius: '20px',
+                                                                fontSize: '12px',
+                                                                fontWeight: '700',
+                                                                cursor: 'pointer',
+                                                                backgroundColor: esActivo ? '#4338ca' : '#ffffff',
+                                                                color: esActivo ? '#ffffff' : '#3730a3',
+                                                                border: esActivo ? '1px solid #4338ca' : '1px solid #c7d2fe',
+                                                                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                                                                transition: 'all 0.15s',
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: '6px'
+                                                            }}
+                                                        >
+                                                            <span>{grp}</span>
+                                                            <span style={{
+                                                                backgroundColor: esActivo ? 'rgba(255,255,255,0.25)' : '#e0e7ff',
+                                                                color: esActivo ? '#ffffff' : '#3730a3',
+                                                                padding: '1px 6px',
+                                                                borderRadius: '10px',
+                                                                fontSize: '10px'
+                                                            }}>
+                                                                {count}
+                                                            </span>
+                                                        </button>
+                                                    );
+                                                })}
+                                                {conteoPorGrupo.__sinGrupo > 0 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFiltroGrupo('SIN_GRUPO')}
+                                                        style={{
+                                                            padding: '5px 12px',
+                                                            borderRadius: '20px',
+                                                            fontSize: '12px',
+                                                            fontWeight: '600',
+                                                            cursor: 'pointer',
+                                                            backgroundColor: filtroGrupo === 'SIN_GRUPO' ? '#64748b' : '#ffffff',
+                                                            color: filtroGrupo === 'SIN_GRUPO' ? '#ffffff' : '#64748b',
+                                                            border: filtroGrupo === 'SIN_GRUPO' ? '1px solid #64748b' : '1px solid #cbd5e1',
+                                                            transition: 'all 0.15s'
+                                                        }}
+                                                    >
+                                                        Sin grupo ({conteoPorGrupo.__sinGrupo})
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* FILA DE CONTROLES: BÚSQUEDA, SELECTOR GRUPO, DESEMPEÑO Y ORDEN */}
+                                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                        {/* Buscador de alumnos */}
+                                        <div style={{ position: 'relative', flex: 1, minWidth: '190px' }}>
+                                            <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                                            <input
+                                                type="text"
+                                                value={busqueda}
+                                                onChange={(e) => setBusqueda(e.target.value)}
+                                                placeholder="Buscar por alumno o grupo..."
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '8px 30px 8px 34px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #cbd5e1',
+                                                    fontSize: '13px',
+                                                    outline: 'none',
+                                                    backgroundColor: '#ffffff',
+                                                    boxSizing: 'border-box'
+                                                }}
+                                            />
+                                            {busqueda && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setBusqueda('')}
+                                                    style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex' }}
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* Selector de Grupo si no usó las píldoras */}
+                                        <div style={{ minWidth: '160px' }}>
+                                            <select
+                                                value={filtroGrupo}
+                                                onChange={(e) => setFiltroGrupo(e.target.value)}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '8px 10px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #cbd5e1',
+                                                    fontSize: '12px',
+                                                    fontWeight: '600',
+                                                    backgroundColor: '#ffffff',
+                                                    color: filtroGrupo !== 'TODOS' ? '#4338ca' : '#334155',
+                                                    outline: 'none',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                <option value="TODOS">👥 Todos los grupos ({intentos.length})</option>
+                                                {gruposDisponibles.map(g => (
+                                                    <option key={g} value={g}>Grupo: {g} ({conteoPorGrupo[g] || 0})</option>
+                                                ))}
+                                                {conteoPorGrupo.__sinGrupo > 0 && (
+                                                    <option value="SIN_GRUPO">Sin grupo asignado ({conteoPorGrupo.__sinGrupo})</option>
+                                                )}
+                                            </select>
+                                        </div>
+
+                                        {/* Filtro por desempeño */}
+                                        <div style={{ minWidth: '150px' }}>
+                                            <select
+                                                value={filtroEstado}
+                                                onChange={(e) => setFiltroEstado(e.target.value)}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '8px 10px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #cbd5e1',
+                                                    fontSize: '12px',
+                                                    fontWeight: '600',
+                                                    backgroundColor: '#ffffff',
+                                                    color: filtroEstado !== 'TODOS' ? '#166534' : '#334155',
+                                                    outline: 'none',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                <option value="TODOS">📊 Todas las notas</option>
+                                                <option value="APROBADOS">✅ Aprobados (≥ 11)</option>
+                                                <option value="DESAPROBADOS">❌ Desaprobados (&lt; 11)</option>
+                                                <option value="SOBRESALIENTES">⭐ Sobresalientes (≥ 16)</option>
+                                                <option value="CON_INCIDENTES">⚠️ Con advertencias</option>
+                                            </select>
+                                        </div>
+
+                                        {/* Ordenamiento */}
+                                        <div style={{ minWidth: '150px' }}>
+                                            <select
+                                                value={ordenarPor}
+                                                onChange={(e) => setOrdenarPor(e.target.value)}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '8px 10px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #cbd5e1',
+                                                    fontSize: '12px',
+                                                    fontWeight: '600',
+                                                    backgroundColor: '#ffffff',
+                                                    color: '#334155',
+                                                    outline: 'none',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                <option value="calificacion-desc">↓ Mayor calificación</option>
+                                                <option value="calificacion-asc">↑ Menor calificación</option>
+                                                <option value="nombre-asc">A-Z Alumno</option>
+                                                <option value="fecha-desc">🕒 Más reciente</option>
+                                            </select>
+                                        </div>
+
+                                        {/* Botón de limpiar filtros si hay alguno activo */}
+                                        {(filtroGrupo !== 'TODOS' || filtroEstado !== 'TODOS' || busqueda.trim()) && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setFiltroGrupo('TODOS');
+                                                    setFiltroEstado('TODOS');
+                                                    setBusqueda('');
+                                                }}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px',
+                                                    padding: '8px 12px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #fca5a5',
+                                                    backgroundColor: '#fef2f2',
+                                                    color: '#b91c1c',
+                                                    fontSize: '12px',
+                                                    fontWeight: '600',
+                                                    cursor: 'pointer'
+                                                }}
+                                                title="Restablecer todos los filtros"
+                                            >
+                                                <RotateCcw size={13} /> Limpiar
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* BARRA INFORMATIVA DE MÉTRICAS DEL GRUPO FILTRADO */}
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        flexWrap: 'wrap',
+                                        gap: '8px',
+                                        paddingTop: '8px',
+                                        borderTop: '1px dashed #e2e8f0',
+                                        fontSize: '12px',
+                                        color: '#475569'
+                                    }}>
+                                        <div>
+                                            Mostrando <strong>{intentosFiltrados.length}</strong> de <strong>{intentos.length}</strong> evaluaciones
+                                            {filtroGrupo !== 'TODOS' && <span> en <strong>{filtroGrupo === 'SIN_GRUPO' ? 'Sin Grupo' : filtroGrupo}</strong></span>}
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                                            <span>Promedio: <strong style={{ color: '#0f172a' }}>{metricasFiltradas.promedio.toFixed(1)}/20</strong></span>
+                                            <span>Aprobación: <strong style={{ color: metricasFiltradas.tasaAprobacion >= 70 ? '#15803d' : '#b45309' }}>{metricasFiltradas.tasaAprobacion}%</strong> ({metricasFiltradas.aprobados} de {metricasFiltradas.total})</span>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 {/* CABECERA DE TABLA */}
                                 <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'minmax(180px, 1.3fr) 100px 140px 90px 70px 36px',
-                            padding: '10px 8px',
-                            borderBottom: '1px solid #e2e8f0',
-                            fontSize: '11px',
-                            fontWeight: '700',
-                            color: '#94a3b8',
-                            letterSpacing: '0.6px',
-                            textTransform: 'uppercase',
-                            alignItems: 'center'
-                        }}>
-                            <div>ALUMNO</div>
-                            <div>CALIFICACIÓN</div>
-                            <div>MODO SEGURO</div>
-                            <div>FECHA</div>
-                            <div>HORA</div>
-                            <div></div>
-                        </div>
+                                    display: 'grid',
+                                    gridTemplateColumns: 'minmax(160px, 1.2fr) 110px 95px 120px 85px 65px 32px',
+                                    padding: '10px 8px',
+                                    borderBottom: '1px solid #e2e8f0',
+                                    fontSize: '11px',
+                                    fontWeight: '700',
+                                    color: '#94a3b8',
+                                    letterSpacing: '0.6px',
+                                    textTransform: 'uppercase',
+                                    alignItems: 'center'
+                                }}>
+                                    <div>ALUMNO</div>
+                                    <div>GRUPO / SECCIÓN</div>
+                                    <div>CALIFICACIÓN</div>
+                                    <div>MODO SEGURO</div>
+                                    <div>FECHA</div>
+                                    <div>HORA</div>
+                                    <div></div>
+                                </div>
 
-                        {/* LISTA DE FILAS DE ALUMNOS */}
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            {intentos.map((intento) => {
+                                {/* LISTA DE FILAS DE ALUMNOS */}
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    {intentosFiltrados.length === 0 ? (
+                                        <div style={{ padding: '36px 16px', textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
+                                            <p style={{ margin: '0 0 8px 0', fontWeight: '600', color: '#334155' }}>No se encontraron alumnos para los filtros aplicados</p>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setFiltroGrupo('TODOS');
+                                                    setFiltroEstado('TODOS');
+                                                    setBusqueda('');
+                                                }}
+                                                style={{
+                                                    backgroundColor: '#0f172a',
+                                                    color: '#fff',
+                                                    border: 'none',
+                                                    padding: '6px 14px',
+                                                    borderRadius: '6px',
+                                                    fontSize: '12px',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                Restablecer filtros
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        intentosFiltrados.map((intento) => {
                                 const isExpanded = expandedIntentoId === intento.intentoId;
                                 const calif = intento.calificacion;
 
@@ -371,7 +786,7 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
                                             onClick={() => toggleExpand(intento.intentoId)}
                                             style={{
                                                 display: 'grid',
-                                                gridTemplateColumns: 'minmax(180px, 1.3fr) 100px 140px 90px 70px 36px',
+                                                gridTemplateColumns: 'minmax(160px, 1.2fr) 110px 95px 120px 85px 65px 32px',
                                                 padding: '14px 8px',
                                                 alignItems: 'center',
                                                 cursor: 'pointer',
@@ -412,6 +827,29 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
                                                 }}>
                                                     {intento.nombreAlumno}
                                                 </span>
+                                            </div>
+
+                                            {/* GRUPO / SECCIÓN */}
+                                            <div>
+                                                {intento.grupo ? (
+                                                    <span style={{
+                                                        backgroundColor: '#ede9fe',
+                                                        color: '#6d28d9',
+                                                        fontSize: '11px',
+                                                        fontWeight: '700',
+                                                        padding: '3px 8px',
+                                                        borderRadius: '6px',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px'
+                                                    }}>
+                                                        <Users size={11} /> {intento.grupo}
+                                                    </span>
+                                                ) : (
+                                                    <span style={{ color: '#94a3b8', fontSize: '11px', fontStyle: 'italic' }}>
+                                                        Sin asignar
+                                                    </span>
+                                                )}
                                             </div>
 
                                             {/* CALIFICACIÓN */}
@@ -637,23 +1075,38 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
                                                                         padding: '12px 16px'
                                                                     }}
                                                                 >
-                                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px', flexWrap: 'wrap', gap: '8px' }}>
                                                                         <span style={{ fontWeight: '600', color: '#0f172a' }}>
                                                                             {dIndex + 1}. {det.enunciado}
                                                                         </span>
-                                                                        {esEscrita ? (
-                                                                            <span style={{ fontSize: '11px', fontWeight: '700', color: '#2563eb', backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '10px' }}>
-                                                                                Respuesta escrita
-                                                                            </span>
-                                                                        ) : esCorrecta ? (
-                                                                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: '700', color: '#16a34a', backgroundColor: '#dcfce7', padding: '2px 8px', borderRadius: '10px' }}>
-                                                                                <CheckCircle size={12} /> Correcta
-                                                                            </span>
-                                                                        ) : (
-                                                                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: '700', color: '#dc2626', backgroundColor: '#fee2e2', padding: '2px 8px', borderRadius: '10px' }}>
-                                                                                <XCircle size={12} /> Incorrecta
-                                                                            </span>
-                                                                        )}
+                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                                            {det.puntosAsignados != null && (
+                                                                                <span style={{
+                                                                                    fontSize: '11px',
+                                                                                    fontWeight: '700',
+                                                                                    color: esCorrecta ? '#15803d' : '#64748b',
+                                                                                    backgroundColor: esCorrecta ? '#f0fdf4' : '#f8fafc',
+                                                                                    border: `1px solid ${esCorrecta ? '#86efac' : '#cbd5e1'}`,
+                                                                                    padding: '2px 8px',
+                                                                                    borderRadius: '10px'
+                                                                                }}>
+                                                                                    {det.puntosObtenidos != null ? det.puntosObtenidos.toFixed(1) : (esCorrecta ? det.puntosAsignados.toFixed(1) : '0.0')} / {det.puntosAsignados.toFixed(1)} pts
+                                                                                </span>
+                                                                            )}
+                                                                            {esEscrita ? (
+                                                                                <span style={{ fontSize: '11px', fontWeight: '700', color: '#2563eb', backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '10px' }}>
+                                                                                    Respuesta escrita
+                                                                                </span>
+                                                                            ) : esCorrecta ? (
+                                                                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: '700', color: '#16a34a', backgroundColor: '#dcfce7', padding: '2px 8px', borderRadius: '10px' }}>
+                                                                                    <CheckCircle size={12} /> Correcta
+                                                                                </span>
+                                                                            ) : (
+                                                                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: '700', color: '#dc2626', backgroundColor: '#fee2e2', padding: '2px 8px', borderRadius: '10px' }}>
+                                                                                    <XCircle size={12} /> Incorrecta
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
 
                                                                     {det.imagenUrl && (
@@ -689,6 +1142,21 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
                                                                             <strong>Respuesta correcta:</strong> {det.respuestaCorrecta}
                                                                         </div>
                                                                     )}
+
+                                                                    {det.explicacion && (
+                                                                        <div style={{
+                                                                            marginTop: '8px',
+                                                                            padding: '8px 10px',
+                                                                            backgroundColor: '#fffbeb',
+                                                                            border: '1px solid #fef3c7',
+                                                                            borderRadius: '6px',
+                                                                            fontSize: '12px',
+                                                                            color: '#92400e',
+                                                                            lineHeight: '1.4'
+                                                                        }}>
+                                                                            <strong>💡 Explicación pedagógica asignada:</strong> {det.explicacion}
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             );
                                                         })}
@@ -702,7 +1170,8 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
                                         )}
                                     </div>
                                 );
-                            })}
+                            })
+                        )}
                         </div>
                     </div>
                     )}

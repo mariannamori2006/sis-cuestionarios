@@ -70,6 +70,14 @@ public class Cuestionario {
     @Column(name = "tipo_calificacion_intentos", length = 30)
     private String tipoCalificacionIntentos = "MEJOR_NOTA";
 
+    // Mostrar retroalimentación pedagógica inmediata al finalizar la prueba (por defecto true)
+    @Column(name = "mostrar_retroalimentacion")
+    private Boolean mostrarRetroalimentacion = true;
+
+    // Grupos o secciones objetivo separados por comas (ej: "5to A, 5to B, 5to C")
+    @Column(name = "grupos_permitidos", length = 500)
+    private String gruposPermitidos;
+
     @OneToMany(mappedBy = "cuestionario", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Pregunta> preguntas = new ArrayList<>();
@@ -100,6 +108,9 @@ public class Cuestionario {
         }
         if (limiteAdvertencias == null) {
             limiteAdvertencias = 3;
+        }
+        if (mostrarRetroalimentacion == null) {
+            mostrarRetroalimentacion = true;
         }
         // Generar un código de acceso de 6 números automáticamente si no viene definido
         if (codigoAcceso == null || codigoAcceso.trim().isEmpty()) {
@@ -286,5 +297,21 @@ public class Cuestionario {
 
     public void setTipoCalificacionIntentos(String tipoCalificacionIntentos) {
         this.tipoCalificacionIntentos = tipoCalificacionIntentos;
+    }
+
+    public Boolean getMostrarRetroalimentacion() {
+        return mostrarRetroalimentacion;
+    }
+
+    public void setMostrarRetroalimentacion(Boolean mostrarRetroalimentacion) {
+        this.mostrarRetroalimentacion = mostrarRetroalimentacion;
+    }
+
+    public String getGruposPermitidos() {
+        return gruposPermitidos;
+    }
+
+    public void setGruposPermitidos(String gruposPermitidos) {
+        this.gruposPermitidos = gruposPermitidos;
     }
 }
