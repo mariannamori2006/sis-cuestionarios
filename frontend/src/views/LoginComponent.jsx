@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { login, register, googleLogin, verificarCodigo, reenviarCodigo } from '../services/authService';
 import GoogleAuthButton from '../components/common/GoogleAuthButton';
 import logoNativa from '../images/logoNativa.jpeg';
+import useResponsive from '../hooks/useResponsive';
 import { Mail, Lock, User, LogIn, UserPlus, KeyRound, CheckCircle2, RotateCcw, ArrowLeft } from 'lucide-react';
 
 export default function LoginComponent() {
+    const { isMobile } = useResponsive();
     const [isRegister, setIsRegister] = useState(false);
 
     // Campos de Login / Registro
@@ -161,13 +163,13 @@ export default function LoginComponent() {
             backgroundColor: '#f1f5f9',
             fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
         }}>
-            {/* Panel lateral estético institucional */}
+            {/* Panel lateral estético institucional (Oculto en celulares) */}
             <div style={{
                 flex: '1',
                 backgroundColor: '#0f172a',
                 color: '#ffffff',
                 padding: '60px',
-                display: 'flex',
+                display: isMobile ? 'none' : 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between'
             }}>
@@ -195,17 +197,23 @@ export default function LoginComponent() {
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                padding: '40px',
+                padding: isMobile ? '20px 14px' : '40px',
                 overflowY: 'auto'
             }}>
                 <div style={{
                     background: '#ffffff',
-                    padding: '40px',
+                    padding: isMobile ? '28px 20px' : '40px',
                     borderRadius: '16px',
                     boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
                     width: '100%',
                     maxWidth: '440px'
                 }}>
+                    {/* Logo visible en celulares */}
+                    {isMobile && (
+                        <div style={{ textAlign: 'center', marginBottom: '20px', display: 'flex', justifyContent: 'center' }}>
+                            <img src={logoNativa} alt="NativaTec" style={{ height: '34px', objectFit: 'contain' }} />
+                        </div>
+                    )}
                     {esperandoCodigo ? (
                         /* PANTALLA DE VERIFICACIÓN DE CÓDIGO OTP (6 DÍGITOS) */
                         <form onSubmit={handleVerificarCodigo} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
@@ -277,9 +285,9 @@ export default function LoginComponent() {
                                         borderRadius: '10px',
                                         border: '2px solid #3b82f6',
                                         outline: 'none',
-                                        fontSize: '28px',
+                                        fontSize: isMobile ? '22px' : '28px',
                                         fontWeight: '800',
-                                        letterSpacing: '10px',
+                                        letterSpacing: isMobile ? '5px' : '10px',
                                         textAlign: 'center',
                                         fontFamily: 'monospace',
                                         backgroundColor: '#f8fafc',

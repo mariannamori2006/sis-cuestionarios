@@ -34,33 +34,39 @@ export default function CompartirCuestionarioModal({ isOpen, onClose, cuestionar
     };
 
     return (
-        <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            backgroundColor: 'rgba(15, 23, 42, 0.65)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1100,
-            padding: '20px',
-            boxSizing: 'border-box',
-            fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
-        }}>
-            <div style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '20px',
-                width: '100%',
-                maxWidth: '460px',
-                maxHeight: '92vh',
-                overflowY: 'auto',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                padding: '28px',
-                position: 'relative',
-                boxSizing: 'border-box'
-            }}>
+        <div 
+            onClick={onClose}
+            style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                backgroundColor: 'rgba(15, 23, 42, 0.65)',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 1100,
+                padding: '20px',
+                boxSizing: 'border-box',
+                fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
+            }}
+        >
+            <div 
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                    backgroundColor: '#ffffff',
+                    borderRadius: '20px',
+                    width: '100%',
+                    maxWidth: '460px',
+                    maxHeight: '92vh',
+                    overflowY: 'auto',
+                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                    padding: '28px',
+                    position: 'relative',
+                    boxSizing: 'border-box'
+                }}
+            >
                 {/* ENCABEZADO */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
                     <div>

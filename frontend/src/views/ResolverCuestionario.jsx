@@ -2,12 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import logoNativa from '../images/logoNativa.jpeg';
+import useResponsive from '../hooks/useResponsive';
 import { Award, CheckCircle, LogOut, Clock, AlertTriangle, AlertCircle, Shuffle, ShieldAlert, ShieldCheck, RotateCcw, Calendar, Lightbulb, BookOpen, Check, X, Filter, Users } from 'lucide-react';
 import { responderCuestionario, verificarDisponibilidadCuestionario } from '../services/cuestionarioService';
 
 export default function ResolverCuestionario() {
     const { id } = useParams(); // ID o Código del cuestionario
     const navigate = useNavigate();
+    const { isMobile } = useResponsive();
 
     const [nombreParticipante, setNombreParticipante] = useState(sessionStorage.getItem('nombreParticipante') || '');
     const [nombreInput, setNombreInput] = useState('');
@@ -817,7 +819,7 @@ export default function ResolverCuestionario() {
     const esTiempoPoco = tieneTemporizador && tiempoRestanteSegundos !== null && porcentajeTiempo <= 25 && !esTiempoCritico;
 
     return (
-        <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh', padding: '40px 20px', fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif' }}>
+        <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh', padding: isMobile ? '16px 10px' : '40px 20px', fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif' }}>
             
             {/* BARRA FLOTANTE DE TEMPORIZADOR */}
             {tieneTemporizador && !resultado && (
@@ -826,7 +828,7 @@ export default function ResolverCuestionario() {
                     margin: '0 auto 16px auto',
                     backgroundColor: '#ffffff',
                     borderRadius: '14px',
-                    padding: '14px 20px',
+                    padding: isMobile ? '12px 14px' : '14px 20px',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
                     border: esTiempoCritico ? '2px solid #ef4444' : esTiempoPoco ? '2px solid #f59e0b' : '1px solid #e2e8f0',
                     transition: 'all 0.3s ease'
@@ -834,12 +836,12 @@ export default function ResolverCuestionario() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Clock size={20} color={esTiempoCritico ? '#ef4444' : esTiempoPoco ? '#d97706' : '#2563eb'} />
-                            <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>
+                            <span style={{ fontSize: isMobile ? '11px' : '13px', fontWeight: '600', color: '#475569' }}>
                                 TIEMPO RESTANTE
                             </span>
                         </div>
                         <div style={{
-                            fontSize: '20px',
+                            fontSize: isMobile ? '18px' : '20px',
                             fontWeight: 'bold',
                             fontFamily: 'monospace',
                             color: esTiempoCritico ? '#dc2626' : esTiempoPoco ? '#d97706' : '#0f172a',
@@ -867,18 +869,18 @@ export default function ResolverCuestionario() {
                 </div>
             )}
 
-            <div style={{ maxWidth: '700px', margin: '0 auto', backgroundColor: '#ffffff', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+            <div style={{ maxWidth: '700px', margin: '0 auto', backgroundColor: '#ffffff', padding: isMobile ? '20px 16px' : '30px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
 
                 {/* Cabecera del Examen */}
-                <div style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '20px', marginBottom: '20px', display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? '12px' : '0' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                         <img src={logoNativa} alt="NativaTec" style={{ height: '32px', objectFit: 'contain' }} />
                         <div>
-                            <h2 style={{ margin: '0', fontSize: '20px', color: '#0f172a' }}>{cuestionario.titulo}</h2>
+                            <h2 style={{ margin: '0', fontSize: isMobile ? '18px' : '20px', color: '#0f172a' }}>{cuestionario.titulo}</h2>
                             <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#64748b' }}>{cuestionario.descripcion}</p>
                         </div>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
+                    <div style={{ textAlign: isMobile ? 'left' : 'right' }}>
                         <span style={{ fontSize: '12px', color: '#64748b', display: 'block' }}>Participante:</span>
                         <strong style={{ fontSize: '14px', color: '#0f172a' }}>{nombreParticipante}</strong>
                         {estadoDisponibilidad && estadoDisponibilidad.limiteIntentos !== null && (
@@ -1732,31 +1734,37 @@ export default function ResolverCuestionario() {
 
             {/* MODAL DE ADVERTENCIA POR CAMBIO DE PESTAÑA */}
             {mostrarModalAdvertencia && !resultado && !enviando && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    width: '100vw',
-                    height: '100vh',
-                    backgroundColor: 'rgba(15, 23, 42, 0.75)',
-                    backdropFilter: 'blur(4px)',
-                    zIndex: 99999,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '20px',
-                    boxSizing: 'border-box'
-                }}>
-                    <div style={{
-                        backgroundColor: '#ffffff',
-                        borderRadius: '18px',
-                        padding: '32px 28px',
-                        maxWidth: '460px',
-                        width: '100%',
-                        textAlign: 'center',
-                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
-                        border: '1px solid #fecaca'
-                    }}>
+                <div 
+                    onClick={() => setMostrarModalAdvertencia(false)}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        width: '100vw',
+                        height: '100vh',
+                        backgroundColor: 'rgba(15, 23, 42, 0.75)',
+                        backdropFilter: 'blur(4px)',
+                        zIndex: 99999,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '20px',
+                        boxSizing: 'border-box'
+                    }}
+                >
+                    <div 
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            backgroundColor: '#ffffff',
+                            borderRadius: '18px',
+                            padding: '32px 28px',
+                            maxWidth: '460px',
+                            width: '100%',
+                            textAlign: 'center',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+                            border: '1px solid #fecaca'
+                        }}
+                    >
                         <div style={{
                             width: '64px',
                             height: '64px',

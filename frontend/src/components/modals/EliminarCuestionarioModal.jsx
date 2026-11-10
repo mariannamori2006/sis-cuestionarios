@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, X } from 'lucide-react';
 
 export default function EliminarCuestionarioModal({ isOpen, onClose, cuestionario, onConfirmarEliminacion }) {
     const [eliminando, setEliminando] = useState(false);
@@ -19,32 +19,64 @@ export default function EliminarCuestionarioModal({ isOpen, onClose, cuestionari
     };
 
     return (
-        <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            backgroundColor: 'rgba(15, 23, 42, 0.6)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1100,
-            fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
-        }}>
-            <div style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '20px',
-                width: '90%',
-                maxWidth: '430px',
-                padding: '32px 28px',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        <div 
+            onClick={onClose}
+            style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                backgroundColor: 'rgba(15, 23, 42, 0.6)',
                 display: 'flex',
-                flexDirection: 'column',
+                justifyContent: 'center',
                 alignItems: 'center',
-                textAlign: 'center',
-                boxSizing: 'border-box'
-            }}>
+                zIndex: 1100,
+                padding: '20px',
+                boxSizing: 'border-box',
+                fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
+            }}
+        >
+            <div 
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                    backgroundColor: '#ffffff',
+                    borderRadius: '20px',
+                    width: '90%',
+                    maxWidth: '430px',
+                    padding: '32px 28px',
+                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    textAlign: 'center',
+                    boxSizing: 'border-box',
+                    position: 'relative'
+                }}
+            >
+                {/* BOTÓN CERRAR X */}
+                <button
+                    onClick={onClose}
+                    style={{
+                        position: 'absolute',
+                        top: '16px',
+                        right: '16px',
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#94a3b8',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '50%',
+                        transition: 'color 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = '#0f172a'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
+                >
+                    <X size={20} />
+                </button>
                 {/* ICONO SUPERIOR */}
                 <div style={{
                     width: '56px',

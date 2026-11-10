@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import useResponsive from '../hooks/useResponsive';
 import {
     obtenerPreguntasBanco,
     obtenerMateriasBanco,
@@ -46,6 +47,7 @@ const MATERIAS_SUGERIDAS = [
 ];
 
 export default function BancoPreguntasView() {
+    const { isMobile } = useResponsive();
     const [preguntas, setPreguntas] = useState([]);
     const [materias, setMaterias] = useState([]);
     const [cargando, setCargando] = useState(true);
@@ -294,7 +296,7 @@ export default function BancoPreguntasView() {
     const totalDificiles = preguntas.filter(p => p.dificultad === 'DIFICIL').length;
 
     return (
-        <div style={{ flex: 1, overflowY: 'auto', padding: '32px 40px', backgroundColor: '#f8fafc' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '18px 14px' : '32px 40px', backgroundColor: '#f8fafc' }}>
             {/* ENCABEZADO */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
                 <div>
@@ -661,31 +663,37 @@ export default function BancoPreguntasView() {
 
             {/* MODAL CREAR / EDITAR PREGUNTA */}
             {modalAbierto && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(15, 23, 42, 0.65)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 9999,
-                    backdropFilter: 'blur(3px)',
-                    padding: '20px'
-                }}>
-                    <div style={{
-                        backgroundColor: '#ffffff',
-                        borderRadius: '16px',
-                        width: '100%',
-                        maxWidth: '750px',
-                        maxHeight: '90vh',
+                <div 
+                    onClick={() => setModalAbierto(false)}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(15, 23, 42, 0.65)',
                         display: 'flex',
-                        flexDirection: 'column',
-                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                        overflow: 'hidden'
-                    }}>
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 9999,
+                        backdropFilter: 'blur(3px)',
+                        padding: '20px'
+                    }}
+                >
+                    <div 
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            backgroundColor: '#ffffff',
+                            borderRadius: '16px',
+                            width: '100%',
+                            maxWidth: '750px',
+                            maxHeight: '90vh',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                            overflow: 'hidden'
+                        }}
+                    >
                         {/* HEADER MODAL */}
                         <div style={{ padding: '20px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
                             <div>

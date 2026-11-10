@@ -250,32 +250,40 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
     if (!isOpen) return null;
 
     return (
-        <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            backgroundColor: 'rgba(15, 23, 42, 0.6)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1000,
-            fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
-        }}>
-            <div style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '20px',
-                width: '100%',
-                maxWidth: '920px',
-                maxHeight: '90vh',
-                overflowY: 'auto',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        <div 
+            onClick={onClose}
+            style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                backgroundColor: 'rgba(15, 23, 42, 0.6)',
                 display: 'flex',
-                flexDirection: 'column',
-                padding: '28px 32px',
-                boxSizing: 'border-box'
-            }}>
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 1000,
+                padding: '20px',
+                boxSizing: 'border-box',
+                fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
+            }}
+        >
+            <div 
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                    backgroundColor: '#ffffff',
+                    borderRadius: '20px',
+                    width: '100%',
+                    maxWidth: '920px',
+                    maxHeight: '90vh',
+                    overflowY: 'auto',
+                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    padding: '28px 32px',
+                    boxSizing: 'border-box'
+                }}
+            >
 
                 {/* ENCABEZADO */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>

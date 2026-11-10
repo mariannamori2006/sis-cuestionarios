@@ -3,6 +3,7 @@ import CrearCuestionarioModal from '../components/modals/CrearCuestionarioModal'
 import CompartirCuestionarioModal from '../components/modals/CompartirCuestionarioModal';
 import AuditoriaResultadosModal from '../components/modals/AuditoriaResultadosModal';
 import EliminarCuestionarioModal from '../components/modals/EliminarCuestionarioModal';
+import useResponsive from '../hooks/useResponsive';
 import { obtenerCuestionarioPorId, eliminarCuestionario, obtenerAuditoriaCuestionario } from '../services/cuestionarioService';
 import { exportarNotasExcel } from '../services/excelService';
 import {
@@ -74,6 +75,7 @@ const formatearRangoFechas = (c) => {
 };
 
 export default function CuestionariosView({ cuestionarios, estadisticas, onRecargarCuestionarios }) {
+    const { isMobile } = useResponsive();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [cuestionarioAEditar, setCuestionarioAEditar] = useState(null);
     const [cargandoEdicionId, setCargandoEdicionId] = useState(null);
@@ -151,15 +153,28 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
         <div style={{ fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif' }}>
 
             {/* Cabecera y Buscador */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <div style={{
+                display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
+                justifyContent: 'space-between',
+                alignItems: isMobile ? 'flex-start' : 'center',
+                gap: isMobile ? '16px' : '0',
+                marginBottom: '24px'
+            }}>
                 <div>
-                    <h2 style={{ margin: '0 0 4px 0', fontSize: '24px', color: '#0f172a' }}>Mis cuestionarios</h2>
+                    <h2 style={{ margin: '0 0 4px 0', fontSize: isMobile ? '20px' : '24px', color: '#0f172a' }}>Mis cuestionarios</h2>
                     <span style={{ fontSize: '13px', color: '#64748b' }}>Panel de gestión · Ciclo 2026-B</span>
                 </div>
 
-                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                <div style={{
+                    display: 'flex',
+                    flexDirection: isMobile ? 'column' : 'row',
+                    gap: isMobile ? '10px' : '15px',
+                    alignItems: isMobile ? 'stretch' : 'center',
+                    width: isMobile ? '100%' : 'auto'
+                }}>
                     {/* Barra de Búsqueda */}
-                    <div style={{ position: 'relative' }}>
+                    <div style={{ position: 'relative', width: isMobile ? '100%' : 'auto' }}>
                         <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
                         <input
                             type="text"
@@ -172,7 +187,7 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                                 border: '1px solid #cbd5e1',
                                 outline: 'none',
                                 fontSize: '13px',
-                                width: '240px',
+                                width: isMobile ? '100%' : '240px',
                                 backgroundColor: '#ffffff',
                                 boxSizing: 'border-box'
                             }}
@@ -193,7 +208,9 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                             fontSize: '13px',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '8px'
+                            justifyContent: 'center',
+                            gap: '8px',
+                            width: isMobile ? '100%' : 'auto'
                         }}
                     >
                         <Plus size={16} /> Nuevo cuestionario
@@ -202,7 +219,7 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
             </div>
 
             {/* Tarjetas de Métricas Dinámicas desde Base de Datos */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '30px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '30px' }}>
                 <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                         <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>CUESTIONARIOS</span>
@@ -240,7 +257,7 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
             </div>
 
             {/* Grid de Tarjetas de Cuestionarios */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
                 {cuestionariosFiltrados.length > 0 ? (
                     cuestionariosFiltrados.map((cuestionario) => {
                         const respuestasCount = cuestionario.totalRespuestas || 0;

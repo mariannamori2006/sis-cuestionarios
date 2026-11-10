@@ -682,30 +682,38 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
     const esFormularioValido = titulo.trim().length > 0;
 
     return (
-        <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            backgroundColor: 'rgba(15, 23, 42, 0.6)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1000,
-            fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
-        }}>
-            <div style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '16px',
-                width: '100%',
-                maxWidth: '740px',
-                maxHeight: '90vh',
-                overflowY: 'auto',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        <div 
+            onClick={onClose}
+            style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                backgroundColor: 'rgba(15, 23, 42, 0.6)',
                 display: 'flex',
-                flexDirection: 'column'
-            }}>
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 1000,
+                padding: '20px',
+                boxSizing: 'border-box',
+                fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
+            }}
+        >
+            <div 
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                    backgroundColor: '#ffffff',
+                    borderRadius: '16px',
+                    width: '100%',
+                    maxWidth: '740px',
+                    maxHeight: '90vh',
+                    overflowY: 'auto',
+                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}
+            >
 
                 {/* ENCABEZADO DEL MODAL */}
                 <div style={{ backgroundColor: '#0f172a', color: '#ffffff', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -2227,31 +2235,37 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
 
             {/* MODAL PARA IMPORTAR PREGUNTAS DESDE EL BANCO CENTRALIZADO */}
             {modalBancoAbierto && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(15, 23, 42, 0.75)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 10001,
-                    backdropFilter: 'blur(3px)',
-                    padding: '20px'
-                }}>
-                    <div style={{
-                        backgroundColor: '#ffffff',
-                        borderRadius: '16px',
-                        width: '100%',
-                        maxWidth: '820px',
-                        maxHeight: '85vh',
+                <div 
+                    onClick={() => setModalBancoAbierto(false)}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(15, 23, 42, 0.75)',
                         display: 'flex',
-                        flexDirection: 'column',
-                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.3)',
-                        overflow: 'hidden'
-                    }}>
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 10001,
+                        backdropFilter: 'blur(3px)',
+                        padding: '20px'
+                    }}
+                >
+                    <div 
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            backgroundColor: '#ffffff',
+                            borderRadius: '16px',
+                            width: '100%',
+                            maxWidth: '820px',
+                            maxHeight: '85vh',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.3)',
+                            overflow: 'hidden'
+                        }}
+                    >
                         {/* HEADER MODAL BANCO */}
                         <div style={{ padding: '20px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

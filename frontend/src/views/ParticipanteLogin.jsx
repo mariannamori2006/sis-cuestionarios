@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import logoNativa from '../images/logoNativa.jpeg';
+import useResponsive from '../hooks/useResponsive';
 import { User, KeyRound, ArrowRight, CheckCircle2, AlertCircle, HelpCircle, ArrowLeft, BookOpen, Clock, RotateCcw, Users } from 'lucide-react';
 import { verificarDisponibilidadCuestionario } from '../services/cuestionarioService';
 
 export default function ParticipanteLogin() {
     const navigate = useNavigate();
     const location = useLocation();
+    const { isMobile } = useResponsive();
 
     // Paso 1: Ingreso y validación obligatoria del código numérico por parte del alumno
     // Paso 2: Ingreso de nombre/apodo una vez validado el código
@@ -111,16 +113,17 @@ export default function ParticipanteLogin() {
             justifyContent: 'center',
             alignItems: 'center',
             fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif',
-            padding: '20px',
+            padding: isMobile ? '16px 12px' : '20px',
             boxSizing: 'border-box'
         }}>
             <div style={{
                 backgroundColor: '#ffffff',
-                padding: '36px',
+                padding: isMobile ? '28px 20px' : '36px',
                 borderRadius: '20px',
                 width: '100%',
                 maxWidth: '430px',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)'
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+                boxSizing: 'border-box'
             }}>
                 {/* Logo Institucional */}
                 <div style={{ textAlign: 'center', marginBottom: '24px' }}>

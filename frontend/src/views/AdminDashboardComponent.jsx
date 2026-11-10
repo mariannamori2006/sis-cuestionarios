@@ -6,6 +6,7 @@ import { obtenerCuestionarios, obtenerEstadisticas, obtenerActividadReciente, el
 import AuditoriaResultadosModal from '../components/modals/AuditoriaResultadosModal';
 import EstadisticasView from './EstadisticasView';
 import logoNativa from '../images/logoNativa.jpeg';
+import useResponsive from '../hooks/useResponsive';
 import { 
     LayoutDashboard, 
     Users, 
@@ -32,11 +33,14 @@ import {
     BarChart2,
     BarChart3,
     Copy,
-    RefreshCw
+    RefreshCw,
+    Menu
 } from 'lucide-react';
 
 export default function AdminDashboardComponent() {
     const navigate = useNavigate();
+    const { isMobile } = useResponsive();
+    const [menuAbierto, setMenuAbierto] = useState(false);
     const currentUser = getCurrentUser();
 
     const userNombre = currentUser?.nombre || '';
@@ -300,8 +304,64 @@ export default function AdminDashboardComponent() {
     const totalAlumnos = usuarios.filter(u => u.rol === 'ALUMNO').length;
     const totalUsuariosActivos = usuarios.filter(u => u.activo).length;
 
+    const cambiarVista = (vista) => {
+        setVistaActiva(vista);
+        if (isMobile) setMenuAbierto(false);
+    };
+
     return (
-        <div style={{ display: 'flex', height: '100vh', width: '100vw', backgroundColor: '#f8fafc', fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100vh', width: '100vw', backgroundColor: '#f8fafc', fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', overflow: 'hidden' }}>
+
+            {/* FONDO OSCURO PARA CERRAR EL MENÚ EN CELULARES */}
+            {isMobile && menuAbierto && (
+                <div 
+                    onClick={() => setMenuAbierto(false)}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        width: '100vw',
+                        height: '100vh',
+                        backgroundColor: 'rgba(15, 23, 42, 0.65)',
+                        zIndex: 1100,
+                        backdropFilter: 'blur(3px)'
+                    }}
+                />
+            )}
+
+            {/* BARRA SUPERIOR PARA CELULARES */}
+            {isMobile && (
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '12px 18px',
+                    backgroundColor: '#090d16',
+                    color: '#ffffff',
+                    borderBottom: '1px solid #1e293b',
+                    zIndex: 1000,
+                    flexShrink: 0
+                }}>
+                    <button
+                        onClick={() => setMenuAbierto(true)}
+                        style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#ffffff',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '4px'
+                        }}
+                    >
+                        <Menu size={24} />
+                    </button>
+                    <div style={{ background: '#ffffff', padding: '4px 10px', borderRadius: '6px', display: 'flex', alignItems: 'center' }}>
+                        <img src={logoNativa} alt="NativaTec" style={{ height: '22px', objectFit: 'contain' }} />
+                    </div>
+                    <div style={{ width: '28px' }}></div>
+                </div>
+            )}
 
             {/* TOAST FLOTANTE */}
             {toastMessage && (
@@ -327,12 +387,37 @@ export default function AdminDashboardComponent() {
             )}
 
             {/* SIDEBAR */}
-            <div style={{ width: '270px', backgroundColor: '#090d16', color: '#ffffff', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '24px 16px', borderRight: '1px solid #1e293b' }}>
+            <div style={{
+                width: isMobile ? '280px' : '270px',
+                backgroundColor: '#090d16',
+                color: '#ffffff',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                padding: '24px 16px',
+                borderRight: '1px solid #1e293b',
+                position: isMobile ? 'fixed' : 'relative',
+                top: 0,
+                bottom: 0,
+                left: isMobile ? (menuAbierto ? 0 : '-300px') : 0,
+                zIndex: isMobile ? 1200 : 10,
+                transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: isMobile && menuAbierto ? '0 0 35px rgba(0,0,0,0.5)' : 'none',
+                boxSizing: 'border-box'
+            }}>
                 <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '32px', padding: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '32px', padding: '4px' }}>
                         <div style={{ background: '#ffffff', padding: '6px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', flex: 1 }}>
                             <img src={logoNativa} alt="NativaTec" style={{ height: '26px', maxWidth: '100%', objectFit: 'contain' }} />
                         </div>
+                        {isMobile && (
+                            <button
+                                onClick={() => setMenuAbierto(false)}
+                                style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}
+                            >
+                                <X size={22} />
+                            </button>
+                        )}
                     </div>
 
                     <div style={{ padding: '0 8px 12px 8px', fontSize: '11px', fontWeight: '700', color: '#64748b', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
@@ -341,7 +426,7 @@ export default function AdminDashboardComponent() {
 
                     <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         <button
-                            onClick={() => setVistaActiva('panel')}
+                            onClick={() => cambiarVista('panel')}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -362,7 +447,7 @@ export default function AdminDashboardComponent() {
                             <LayoutDashboard size={18} /> Panel Principal
                         </button>
                         <button
-                            onClick={() => setVistaActiva('usuarios')}
+                            onClick={() => cambiarVista('usuarios')}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -383,7 +468,7 @@ export default function AdminDashboardComponent() {
                             <Users size={18} /> Gestión de Usuarios
                         </button>
                         <button
-                            onClick={() => setVistaActiva('cuestionarios')}
+                            onClick={() => cambiarVista('cuestionarios')}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -404,7 +489,7 @@ export default function AdminDashboardComponent() {
                             <FileText size={18} /> Cuestionarios Globales
                         </button>
                         <button
-                            onClick={() => setVistaActiva('estadisticas')}
+                            onClick={() => cambiarVista('estadisticas')}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -425,7 +510,7 @@ export default function AdminDashboardComponent() {
                             <BarChart3 size={18} /> Estadísticas y Rendimiento
                         </button>
                         <button
-                            onClick={() => setVistaActiva('configuracion')}
+                            onClick={() => cambiarVista('configuracion')}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -466,14 +551,14 @@ export default function AdminDashboardComponent() {
             </div>
 
             {/* CONTENIDO PRINCIPAL */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '30px 40px' }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '18px 14px' : '30px 40px', boxSizing: 'border-box' }}>
 
                 {/* VISTA: PANEL PRINCIPAL */}
                 {vistaActiva === 'panel' && (
                     <>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? '12px' : '0', marginBottom: '24px' }}>
                             <div>
-                                <h1 style={{ margin: '0 0 4px 0', fontSize: '26px', color: '#0f172a' }}>Panel de Administración</h1>
+                                <h1 style={{ margin: '0 0 4px 0', fontSize: isMobile ? '22px' : '26px', color: '#0f172a' }}>Panel de Administración</h1>
                                 <span style={{ fontSize: '13px', color: '#64748b' }}>Supervisión general del sistema, auditoría y métricas globales</span>
                             </div>
                             <button
@@ -501,16 +586,18 @@ export default function AdminDashboardComponent() {
                             backgroundColor: '#0f172a',
                             color: '#ffffff',
                             borderRadius: '16px',
-                            padding: '30px',
+                            padding: isMobile ? '20px 18px' : '30px',
                             display: 'flex',
+                            flexDirection: isMobile ? 'column' : 'row',
                             justifyContent: 'space-between',
-                            alignItems: 'center',
+                            alignItems: isMobile ? 'flex-start' : 'center',
+                            gap: isMobile ? '16px' : '0',
                             marginBottom: '28px',
                             boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.2)'
                         }}>
                             <div>
                                 <span style={{ fontSize: '14px', color: '#94a3b8' }}>Bienvenido al centro de control institucional,</span>
-                                <h2 style={{ margin: '4px 0 8px 0', fontSize: '24px' }}>{userName}</h2>
+                                <h2 style={{ margin: '4px 0 8px 0', fontSize: isMobile ? '20px' : '24px' }}>{userName}</h2>
                                 <span style={{ fontSize: '13px', color: '#94a3b8' }}>
                                     Gestiona cuentas de docentes y alumnos, audita evaluaciones y supervisa la base de datos PostgreSQL local.
                                 </span>
@@ -529,7 +616,9 @@ export default function AdminDashboardComponent() {
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '8px',
-                                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
+                                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+                                    width: isMobile ? '100%' : 'auto',
+                                    justifyContent: isMobile ? 'center' : 'flex-start'
                                 }}
                             >
                                 <UserPlus size={18} /> Registrar Usuario
@@ -537,7 +626,12 @@ export default function AdminDashboardComponent() {
                         </div>
 
                         {/* TARJETAS DE MÉTRICAS GLOBALES */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }}>
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                            gap: '16px',
+                            marginBottom: '32px'
+                        }}>
                             <div style={{ background: '#fff', padding: '22px', borderRadius: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                                     <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '700', letterSpacing: '0.05em' }}>TOTAL USUARIOS</span>
@@ -1133,26 +1227,34 @@ node backend/scripts/load_test_concurrency.js 50 148177
 
             {/* MODAL CREAR NUEVO USUARIO */}
             {modalCrearOpen && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    width: '100vw',
-                    height: '100vh',
-                    backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    zIndex: 1000
-                }}>
-                    <div style={{
-                        backgroundColor: '#ffffff',
-                        borderRadius: '16px',
-                        width: '100%',
-                        maxWidth: '480px',
-                        padding: '30px',
-                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
-                    }}>
+                <div 
+                    onClick={() => setModalCrearOpen(false)}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        width: '100vw',
+                        height: '100vh',
+                        backgroundColor: 'rgba(15, 23, 42, 0.6)',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        zIndex: 1000,
+                        padding: '20px',
+                        boxSizing: 'border-box'
+                    }}
+                >
+                    <div 
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            backgroundColor: '#ffffff',
+                            borderRadius: '16px',
+                            width: '100%',
+                            maxWidth: '480px',
+                            padding: '30px',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+                        }}
+                    >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                             <h2 style={{ margin: 0, fontSize: '20px', color: '#0f172a' }}>Registrar Nuevo Usuario</h2>
                             <button
@@ -1255,26 +1357,34 @@ node backend/scripts/load_test_concurrency.js 50 148177
 
             {/* MODAL EDITAR USUARIO */}
             {modalEditarOpen && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    width: '100vw',
-                    height: '100vh',
-                    backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    zIndex: 1000
-                }}>
-                    <div style={{
-                        backgroundColor: '#ffffff',
-                        borderRadius: '16px',
-                        width: '100%',
-                        maxWidth: '480px',
-                        padding: '30px',
-                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
-                    }}>
+                <div 
+                    onClick={() => setModalEditarOpen(false)}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        width: '100vw',
+                        height: '100vh',
+                        backgroundColor: 'rgba(15, 23, 42, 0.6)',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        zIndex: 1000,
+                        padding: '20px',
+                        boxSizing: 'border-box'
+                    }}
+                >
+                    <div 
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            backgroundColor: '#ffffff',
+                            borderRadius: '16px',
+                            width: '100%',
+                            maxWidth: '480px',
+                            padding: '30px',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+                        }}
+                    >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                             <h2 style={{ margin: 0, fontSize: '20px', color: '#0f172a' }}>Editar Usuario</h2>
                             <button

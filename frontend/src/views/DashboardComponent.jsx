@@ -7,6 +7,7 @@ import EstadisticasView from './EstadisticasView';
 import ConfiguracionView from './ConfiguracionView';
 import BancoPreguntasView from './BancoPreguntasView';
 import logoNativa from '../images/logoNativa.jpeg';
+import useResponsive from '../hooks/useResponsive';
 import { 
     LayoutDashboard, 
     FileText, 
@@ -20,11 +21,15 @@ import {
     Edit3,
     Star,
     ClipboardList,
-    BookOpen
+    BookOpen,
+    Menu,
+    X
 } from 'lucide-react';
 
 export default function DashboardComponent() {
     const navigate = useNavigate();
+    const { isMobile } = useResponsive();
+    const [menuAbierto, setMenuAbierto] = useState(false);
     const [currentUser, setCurrentUser] = useState(getCurrentUser());
 
     const userNombre = currentUser?.nombre || '';
@@ -83,32 +88,112 @@ export default function DashboardComponent() {
 
     const barColors = ['#10b981', '#1e293b', '#ea580c', '#8b5cf6'];
 
+    const cambiarVista = (vista) => {
+        setVistaActiva(vista);
+        if (isMobile) setMenuAbierto(false);
+    };
+
     return (
-        <div style={{ display: 'flex', height: '100vh', width: '100vw', backgroundColor: '#f8fafc', fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100vh', width: '100vw', backgroundColor: '#f8fafc', fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', overflow: 'hidden' }}>
+
+            {/* FONDO OSCURO PARA CERRAR EL MENÚ EN CELULARES */}
+            {isMobile && menuAbierto && (
+                <div 
+                    onClick={() => setMenuAbierto(false)}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        width: '100vw',
+                        height: '100vh',
+                        backgroundColor: 'rgba(15, 23, 42, 0.65)',
+                        zIndex: 1100,
+                        backdropFilter: 'blur(3px)'
+                    }}
+                />
+            )}
+
+            {/* BARRA SUPERIOR PARA CELULARES */}
+            {isMobile && (
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '12px 18px',
+                    backgroundColor: '#0f172a',
+                    color: '#ffffff',
+                    borderBottom: '1px solid #1e293b',
+                    zIndex: 1000,
+                    flexShrink: 0
+                }}>
+                    <button
+                        onClick={() => setMenuAbierto(true)}
+                        style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#ffffff',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '4px'
+                        }}
+                    >
+                        <Menu size={24} />
+                    </button>
+                    <div style={{ background: '#ffffff', padding: '4px 10px', borderRadius: '6px', display: 'flex', alignItems: 'center' }}>
+                        <img src={logoNativa} alt="NativaTec" style={{ height: '22px', objectFit: 'contain' }} />
+                    </div>
+                    <div style={{ width: '28px' }}></div>
+                </div>
+            )}
 
             {/* BARRA LATERAL (SIDEBAR) */}
-            <div style={{ width: '260px', backgroundColor: '#0f172a', color: '#ffffff', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '24px 16px' }}>
+            <div style={{
+                width: isMobile ? '280px' : '260px',
+                backgroundColor: '#0f172a',
+                color: '#ffffff',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                padding: '24px 16px',
+                position: isMobile ? 'fixed' : 'relative',
+                top: 0,
+                bottom: 0,
+                left: isMobile ? (menuAbierto ? 0 : '-300px') : 0,
+                zIndex: isMobile ? 1200 : 10,
+                transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: isMobile && menuAbierto ? '0 0 35px rgba(0,0,0,0.5)' : 'none',
+                boxSizing: 'border-box'
+            }}>
                 <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '32px', padding: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '32px', padding: '4px' }}>
                         <div style={{ background: '#ffffff', padding: '5px 8px', borderRadius: '8px', display: 'flex', alignItems: 'center', flex: 1 }}>
                             <img src={logoNativa} alt="NativaTec" style={{ height: '24px', maxWidth: '100%', objectFit: 'contain' }} />
                         </div>
+                        {isMobile && (
+                            <button
+                                onClick={() => setMenuAbierto(false)}
+                                style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}
+                            >
+                                <X size={22} />
+                            </button>
+                        )}
                     </div>
 
                     <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <button onClick={() => setVistaActiva('panel')} style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 14px', background: vistaActiva === 'panel' ? '#1e293b' : 'transparent', color: vistaActiva === 'panel' ? '#ffffff' : '#94a3b8', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', textAlign: 'left', transition: 'all 0.2s' }}>
+                        <button onClick={() => cambiarVista('panel')} style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 14px', background: vistaActiva === 'panel' ? '#1e293b' : 'transparent', color: vistaActiva === 'panel' ? '#ffffff' : '#94a3b8', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', textAlign: 'left', transition: 'all 0.2s' }}>
                             <LayoutDashboard size={18} /> Panel principal
                         </button>
-                        <button onClick={() => setVistaActiva('cuestionarios')} style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 14px', background: vistaActiva === 'cuestionarios' ? '#1e293b' : 'transparent', color: vistaActiva === 'cuestionarios' ? '#ffffff' : '#94a3b8', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', textAlign: 'left', transition: 'all 0.2s' }}>
+                        <button onClick={() => cambiarVista('cuestionarios')} style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 14px', background: vistaActiva === 'cuestionarios' ? '#1e293b' : 'transparent', color: vistaActiva === 'cuestionarios' ? '#ffffff' : '#94a3b8', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', textAlign: 'left', transition: 'all 0.2s' }}>
                             <FileText size={18} /> Cuestionarios
                         </button>
-                        <button onClick={() => setVistaActiva('banco')} style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 14px', background: vistaActiva === 'banco' ? '#1e293b' : 'transparent', color: vistaActiva === 'banco' ? '#ffffff' : '#94a3b8', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', textAlign: 'left', transition: 'all 0.2s' }}>
+                        <button onClick={() => cambiarVista('banco')} style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 14px', background: vistaActiva === 'banco' ? '#1e293b' : 'transparent', color: vistaActiva === 'banco' ? '#ffffff' : '#94a3b8', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', textAlign: 'left', transition: 'all 0.2s' }}>
                             <BookOpen size={18} /> Banco de Preguntas
                         </button>
-                        <button onClick={() => setVistaActiva('estadisticas')} style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 14px', background: vistaActiva === 'estadisticas' ? '#1e293b' : 'transparent', color: vistaActiva === 'estadisticas' ? '#ffffff' : '#94a3b8', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', textAlign: 'left', transition: 'all 0.2s' }}>
+                        <button onClick={() => cambiarVista('estadisticas')} style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 14px', background: vistaActiva === 'estadisticas' ? '#1e293b' : 'transparent', color: vistaActiva === 'estadisticas' ? '#ffffff' : '#94a3b8', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', textAlign: 'left', transition: 'all 0.2s' }}>
                             <BarChart3 size={18} /> Estadísticas
                         </button>
-                        <button onClick={() => setVistaActiva('configuracion')} style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 14px', background: vistaActiva === 'configuracion' ? '#1e293b' : 'transparent', color: vistaActiva === 'configuracion' ? '#ffffff' : '#94a3b8', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', textAlign: 'left', transition: 'all 0.2s' }}>
+                        <button onClick={() => cambiarVista('configuracion')} style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 14px', background: vistaActiva === 'configuracion' ? '#1e293b' : 'transparent', color: vistaActiva === 'configuracion' ? '#ffffff' : '#94a3b8', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', textAlign: 'left', transition: 'all 0.2s' }}>
                             <Settings size={18} /> Configuración
                         </button>
                     </nav>
@@ -129,31 +214,47 @@ export default function DashboardComponent() {
             </div>
 
             {/* CONTENIDO PRINCIPAL */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '30px 40px' }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '18px 14px' : '30px 40px', boxSizing: 'border-box' }}>
 
                 {/* TÍTULO DINÁMICO SEGÚN LA VISTA ACTIVA */}
                 {vistaActiva === 'panel' && (
                     <div style={{ marginBottom: '24px' }}>
-                        <h1 style={{ margin: '0 0 4px 0', fontSize: '24px', color: '#0f172a' }}>Panel principal</h1>
+                        <h1 style={{ margin: '0 0 4px 0', fontSize: isMobile ? '20px' : '24px', color: '#0f172a' }}>Panel principal</h1>
                         <span style={{ fontSize: '13px', color: '#64748b' }}>Resumen general · Ciclo 2026-B</span>
                     </div>
                 )}
 
                 {vistaActiva === 'panel' && (
                     <>
-                        <div style={{ backgroundColor: '#0f172a', color: '#ffffff', borderRadius: '16px', padding: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                        <div style={{
+                            backgroundColor: '#0f172a',
+                            color: '#ffffff',
+                            borderRadius: '16px',
+                            padding: isMobile ? '20px 18px' : '30px',
+                            display: 'flex',
+                            flexDirection: isMobile ? 'column' : 'row',
+                            justifyContent: 'space-between',
+                            alignItems: isMobile ? 'flex-start' : 'center',
+                            gap: isMobile ? '16px' : '0',
+                            marginBottom: '24px'
+                        }}>
                             <div>
                                 <span style={{ fontSize: '14px', color: '#94a3b8' }}>Buenos días,</span>
-                                <h2 style={{ margin: '4px 0 8px 0', fontSize: '22px' }}>{userName}</h2>
+                                <h2 style={{ margin: '4px 0 8px 0', fontSize: isMobile ? '19px' : '22px' }}>{userName}</h2>
                                 <span style={{ fontSize: '13px', color: '#94a3b8' }}>Ciclo 2026-B · Tienes {cuestionarios.length} cuestionarios activos</span>
                             </div>
-                            <button onClick={() => setVistaActiva('cuestionarios')} style={{ backgroundColor: '#10b981', color: '#ffffff', border: 'none', padding: '12px 20px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <button onClick={() => cambiarVista('cuestionarios')} style={{ backgroundColor: '#10b981', color: '#ffffff', border: 'none', padding: '12px 20px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', width: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'center' : 'flex-start' }}>
                                 <Plus size={18} /> Nuevo cuestionario
                             </button>
                         </div>
 
-                        {/* Tarjetas de Métricas Dinámicas desde Base de Datos */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '30px' }}>
+                        {/* Tarjetas de Métricas Dinámicas desde Base de Datos (Auto-fit responsivo) */}
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                            gap: '16px',
+                            marginBottom: '30px'
+                        }}>
                             {/* Tarjeta 1: Cuestionarios */}
                             <div style={{ background: '#fff', padding: '20px', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                 <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
@@ -216,7 +317,7 @@ export default function DashboardComponent() {
                         </div>
 
                         {/* SECCIÓN INFERIOR: ACTIVIDAD RECIENTE + MÁS RESPONDIDOS */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '24px', alignItems: 'start' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.6fr 1fr', gap: isMobile ? '16px' : '24px', alignItems: 'start' }}>
                             
                             {/* COLUMNA IZQUIERDA: ACTIVIDAD RECIENTE */}
                             <div style={{
