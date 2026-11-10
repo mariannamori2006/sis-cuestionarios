@@ -1,11 +1,11 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import LoginComponent from './components/LoginComponent';
-import DashboardComponent from './components/DashboardComponent';
-import AdminDashboardComponent from './components/AdminDashboardComponent';
-import ParticipanteLogin from './components/ParticipanteLogin';
-import ResolverCuestionario from './components/ResolverCuestionario';
-import ProtectedRoute from './components/ProtectedRoute';
+import LoginComponent from './views/LoginComponent';
+import DashboardComponent from './views/DashboardComponent';
+import AdminDashboardComponent from './views/AdminDashboardComponent';
+import ParticipanteLogin from './views/ParticipanteLogin';
+import ResolverCuestionario from './views/ResolverCuestionario';
+import ProtectedRoute from './components/common/ProtectedRoute';
 
 function App() {
     return (

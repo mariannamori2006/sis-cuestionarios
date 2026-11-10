@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { obtenerEstadisticasDetalladas } from '../services/cuestionarioService';
-import GraficasRendimientoAvanzadas from './GraficasRendimientoAvanzadas';
+import GraficasRendimientoAvanzadas from '../components/charts/GraficasRendimientoAvanzadas';
 import { Edit3, CheckSquare, Star, BarChart2, PieChart, Layers, Sparkles } from 'lucide-react';
 
 export default function EstadisticasView() {

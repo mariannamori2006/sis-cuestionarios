@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import CrearCuestionarioModal from './CrearCuestionarioModal';
-import CompartirCuestionarioModal from './CompartirCuestionarioModal';
-import AuditoriaResultadosModal from './AuditoriaResultadosModal';
-import EliminarCuestionarioModal from './EliminarCuestionarioModal';
+import CrearCuestionarioModal from '../components/modals/CrearCuestionarioModal';
+import CompartirCuestionarioModal from '../components/modals/CompartirCuestionarioModal';
+import AuditoriaResultadosModal from '../components/modals/AuditoriaResultadosModal';
+import EliminarCuestionarioModal from '../components/modals/EliminarCuestionarioModal';
 import { obtenerCuestionarioPorId, eliminarCuestionario, obtenerAuditoriaCuestionario } from '../services/cuestionarioService';
 import { exportarNotasExcel } from '../services/excelService';
 import {

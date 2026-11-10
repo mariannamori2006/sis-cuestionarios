@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login, register, googleLogin, verificarCodigo, reenviarCodigo } from '../services/authService';
-import GoogleAuthButton from './GoogleAuthButton';
+import GoogleAuthButton from '../components/common/GoogleAuthButton';
 import logoNativa from '../images/logoNativa.jpeg';
 import { Mail, Lock, User, LogIn, UserPlus, KeyRound, CheckCircle2, RotateCcw, ArrowLeft } from 'lucide-react';
 

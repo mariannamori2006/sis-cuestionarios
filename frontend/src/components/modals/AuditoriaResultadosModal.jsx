@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { obtenerAuditoriaCuestionario, calificarIntento } from '../services/cuestionarioService';
-import { exportarNotasExcel } from '../services/excelService';
-import GraficasRendimientoAvanzadas from './GraficasRendimientoAvanzadas';
+import { obtenerAuditoriaCuestionario, calificarIntento } from '../../services/cuestionarioService';
+import { exportarNotasExcel } from '../../services/excelService';
+import GraficasRendimientoAvanzadas from '../charts/GraficasRendimientoAvanzadas';
 import { X, ChevronDown, ChevronUp, CheckCircle, XCircle, Edit2, Save, Users, Award, Clock, Download, FileSpreadsheet, ShieldAlert, ShieldCheck, AlertTriangle, BarChart3, Search, Filter, ArrowUpDown, RotateCcw } from 'lucide-react';
 
 export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario, onActualizado }) {

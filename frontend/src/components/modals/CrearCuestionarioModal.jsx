@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { crearCuestionario, actualizarCuestionario } from '../services/cuestionarioService';
-import { descargarPlantillaExcel, procesarArchivoPreguntas } from '../services/excelService';
-import { obtenerPreguntasBanco, crearPreguntaBanco } from '../services/bancoPreguntaService';
+import { crearCuestionario, actualizarCuestionario } from '../../services/cuestionarioService';
+import { descargarPlantillaExcel, procesarArchivoPreguntas } from '../../services/excelService';
+import { obtenerPreguntasBanco, crearPreguntaBanco } from '../../services/bancoPreguntaService';
 import { X, UploadCloud, Download, Plus, Trash2, CheckCircle2, Type, CheckSquare, Shuffle, AlertCircle, Image as ImageIcon, Link2, ShieldAlert, Calendar, RotateCcw, Lightbulb, Users, Sliders, ChevronDown, Award, BookOpen, Sparkles, Check, Search, Layers } from 'lucide-react';
 
 const ToggleSwitch = ({ checked, onChange, activeColor = '#2563eb' }) => (

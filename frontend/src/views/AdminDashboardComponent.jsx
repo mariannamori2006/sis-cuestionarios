@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { logout, getCurrentUser } from '../services/authService';
 import { obtenerUsuarios, crearUsuario, actualizarUsuario, eliminarUsuario } from '../services/usuarioService';
 import { obtenerCuestionarios, obtenerEstadisticas, obtenerActividadReciente, eliminarCuestionario } from '../services/cuestionarioService';
-import AuditoriaResultadosModal from './AuditoriaResultadosModal';
+import AuditoriaResultadosModal from '../components/modals/AuditoriaResultadosModal';
 import EstadisticasView from './EstadisticasView';
 import logoNativa from '../images/logoNativa.jpeg';
 import { 
