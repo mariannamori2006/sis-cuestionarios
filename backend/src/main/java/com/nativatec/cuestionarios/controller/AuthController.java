@@ -7,6 +7,7 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.nativatec.cuestionarios.dto.GoogleAuthRequest;
 import com.nativatec.cuestionarios.dto.LoginRequest;
 import com.nativatec.cuestionarios.dto.RegisterRequest;
+import com.nativatec.cuestionarios.dto.VerificarCodigoRequest;
 import com.nativatec.cuestionarios.entity.Usuario;
 import com.nativatec.cuestionarios.repository.UsuarioRepository;
 import com.nativatec.cuestionarios.security.JwtTokenProvider;
@@ -84,48 +85,157 @@ public class AuthController {
         if (registerRequest.getEmail() == null || registerRequest.getEmail().trim().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("message", "El correo electrónico es requerido"));
         }
-        if (usuarioRepository.findByEmail(registerRequest.getEmail().trim()).isPresent()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "El correo electrónico ya está registrado en el sistema"));
+
+        // Validación estricta de formato, descarte de dominios temporales y verificación de registros MX / @senati.pe
+        try {
+            com.nativatec.cuestionarios.util.EmailValidatorUtil.validarCorreoExistente(registerRequest.getEmail());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
 
-        Usuario usuario = new Usuario();
-        usuario.setNombre(registerRequest.getNombre() != null ? registerRequest.getNombre().trim() : "");
-        usuario.setApellido(registerRequest.getApellido() != null ? registerRequest.getApellido().trim() : "");
-        usuario.setEmail(registerRequest.getEmail().trim());
-        usuario.setPasswordHash(passwordEncoder.encode(registerRequest.getPassword()));
+        String emailLimpio = registerRequest.getEmail().trim().toLowerCase();
+        Optional<Usuario> existenteOpt = usuarioRepository.findByEmail(emailLimpio);
 
-        if (registerRequest.getRol() != null && !registerRequest.getRol().trim().isEmpty()) {
-            try {
-                usuario.setRol(Usuario.RolUsuario.valueOf(registerRequest.getRol().trim().toUpperCase()));
-            } catch (IllegalArgumentException e) {
+        Usuario usuario;
+        if (existenteOpt.isPresent()) {
+            Usuario existente = existenteOpt.get();
+            if (Boolean.TRUE.equals(existente.getActivo())) {
+                return ResponseEntity.badRequest().body(Map.of("message", "El correo electrónico ya está registrado y activo en el sistema"));
+            }
+            // Si la cuenta estaba pendiente de verificación, reutilizar el registro
+            usuario = existente;
+            usuario.setNombre(registerRequest.getNombre() != null ? registerRequest.getNombre().trim() : usuario.getNombre());
+            usuario.setApellido(registerRequest.getApellido() != null ? registerRequest.getApellido().trim() : usuario.getApellido());
+            usuario.setPasswordHash(passwordEncoder.encode(registerRequest.getPassword()));
+        } else {
+            usuario = new Usuario();
+            usuario.setNombre(registerRequest.getNombre() != null ? registerRequest.getNombre().trim() : "");
+            usuario.setApellido(registerRequest.getApellido() != null ? registerRequest.getApellido().trim() : "");
+            usuario.setEmail(emailLimpio);
+            usuario.setPasswordHash(passwordEncoder.encode(registerRequest.getPassword()));
+
+            if (registerRequest.getRol() != null && !registerRequest.getRol().trim().isEmpty()) {
+                try {
+                    usuario.setRol(Usuario.RolUsuario.valueOf(registerRequest.getRol().trim().toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    usuario.setRol(Usuario.RolUsuario.PROFESOR);
+                }
+            } else {
                 usuario.setRol(Usuario.RolUsuario.PROFESOR);
             }
-        } else {
-            usuario.setRol(Usuario.RolUsuario.PROFESOR);
         }
 
-        usuario.setActivo(true);
+        // Generar código OTP de 6 dígitos
+        String codigoOTP = String.format("%06d", new java.util.Random().nextInt(1000000));
+        usuario.setActivo(false); // La cuenta permanece inactiva hasta que verifique el código
+        usuario.setCodigoVerificacion(codigoOTP);
+        usuario.setCodigoExpiracion(java.time.LocalDateTime.now().plusMinutes(10));
+
         Usuario savedUsuario = usuarioRepository.save(usuario);
 
-        // Autenticar directamente para retornar token de sesión inmediata
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        registerRequest.getEmail().trim(),
-                        registerRequest.getPassword()));
+        // Enviar código de verificación de 6 dígitos al correo del usuario
+        emailService.enviarCodigoVerificacion(savedUsuario.getEmail(), savedUsuario.getNombre(), codigoOTP);
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = tokenProvider.generateToken(authentication);
+        // Responder indicando que se requiere validación por código
+        Map<String, Object> response = new HashMap<>();
+        response.put("requiereVerificacion", true);
+        response.put("email", savedUsuario.getEmail());
+        response.put("message", "Hemos enviado un código de verificación de 6 dígitos a tu correo.");
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/verificar-codigo")
+    public ResponseEntity<?> verificarCodigo(@RequestBody VerificarCodigoRequest request) {
+        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "El correo electrónico es requerido"));
+        }
+        if (request.getCodigo() == null || request.getCodigo().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "El código de verificación es requerido"));
+        }
+
+        String email = request.getEmail().trim().toLowerCase();
+        String codigoIngresado = request.getCodigo().trim();
+
+        Usuario usuario = usuarioRepository.findByEmail(email).orElse(null);
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Usuario no encontrado"));
+        }
+
+        // Si ya está activo, iniciar sesión directamente
+        if (Boolean.TRUE.equals(usuario.getActivo())) {
+            String jwt = tokenProvider.generateTokenFromEmail(usuario.getEmail());
+            Map<String, Object> resp = new HashMap<>();
+            resp.put("accessToken", jwt);
+            resp.put("tokenType", "Bearer");
+            resp.put("nombre", usuario.getNombre());
+            resp.put("apellido", usuario.getApellido() != null ? usuario.getApellido() : "");
+            resp.put("email", usuario.getEmail());
+            resp.put("rol", usuario.getRol().name());
+            resp.put("message", "La cuenta ya se encuentra verificada y activa.");
+            return ResponseEntity.ok(resp);
+        }
+
+        // Validar expiración del código (10 minutos)
+        if (usuario.getCodigoExpiracion() == null || usuario.getCodigoExpiracion().isBefore(java.time.LocalDateTime.now())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "El código de verificación ha expirado. Por favor solicita uno nuevo."));
+        }
+
+        // Validar coincidencia del código
+        if (usuario.getCodigoVerificacion() == null || !usuario.getCodigoVerificacion().trim().equals(codigoIngresado)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Código de verificación incorrecto. Revisa tu buzón de correo."));
+        }
+
+        // ACTIVAR LA CUENTA
+        usuario.setActivo(true);
+        usuario.setCodigoVerificacion(null);
+        usuario.setCodigoExpiracion(null);
+        usuario.setUpdatedAt(java.time.LocalDateTime.now());
+        Usuario saved = usuarioRepository.save(usuario);
+
+        // ENVIAR EL CORREO DE BIENVENIDA OFICIAL AHORA QUE ESTÁ VERIFICADO
+        emailService.enviarCorreoBienvenida(saved.getEmail(), saved.getNombre());
+
+        // Generar token JWT de sesión inmediata
+        String jwt = tokenProvider.generateTokenFromEmail(saved.getEmail());
 
         Map<String, Object> response = new HashMap<>();
         response.put("accessToken", jwt);
         response.put("tokenType", "Bearer");
-        response.put("nombre", savedUsuario.getNombre());
-        response.put("apellido", savedUsuario.getApellido() != null ? savedUsuario.getApellido() : "");
-        response.put("email", savedUsuario.getEmail());
-        response.put("rol", savedUsuario.getRol().name());
-        response.put("message", "Cuenta creada exitosamente");
+        response.put("nombre", saved.getNombre());
+        response.put("apellido", saved.getApellido() != null ? saved.getApellido() : "");
+        response.put("email", saved.getEmail());
+        response.put("rol", saved.getRol().name());
+        response.put("message", "¡Cuenta verificada y activada con éxito! Bienvenido(a).");
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/reenviar-codigo")
+    public ResponseEntity<?> reenviarCodigo(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        if (email == null || email.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "El correo electrónico es requerido"));
+        }
+
+        String emailLimpio = email.trim().toLowerCase();
+        Usuario usuario = usuarioRepository.findByEmail(emailLimpio).orElse(null);
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Usuario no encontrado"));
+        }
+
+        if (Boolean.TRUE.equals(usuario.getActivo())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Esta cuenta ya está verificada y activa. Puedes iniciar sesión directamente."));
+        }
+
+        String nuevoCodigo = String.format("%06d", new java.util.Random().nextInt(1000000));
+        usuario.setCodigoVerificacion(nuevoCodigo);
+        usuario.setCodigoExpiracion(java.time.LocalDateTime.now().plusMinutes(10));
+        usuarioRepository.save(usuario);
+
+        emailService.enviarCodigoVerificacion(usuario.getEmail(), usuario.getNombre(), nuevoCodigo);
+
+        return ResponseEntity.ok(Map.of("message", "Nuevo código de verificación enviado a tu correo electrónico"));
     }
 
     @PostMapping("/google")

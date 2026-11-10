@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login, register, googleLogin } from '../services/authService';
+import { login, register, googleLogin, verificarCodigo, reenviarCodigo } from '../services/authService';
 import GoogleAuthButton from './GoogleAuthButton';
 import logoNativa from '../images/logoNativa.jpeg';
-import { Mail, Lock, User, LogIn, UserPlus } from 'lucide-react';
+import { Mail, Lock, User, LogIn, UserPlus, KeyRound, CheckCircle2, RotateCcw, ArrowLeft } from 'lucide-react';
 
 export default function LoginComponent() {
     const [isRegister, setIsRegister] = useState(false);
@@ -15,6 +15,12 @@ export default function LoginComponent() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [rol, setRol] = useState('PROFESOR');
+
+    // Estados para la verificación de código OTP por correo
+    const [esperandoCodigo, setEsperandoCodigo] = useState(false);
+    const [codigoOTP, setCodigoOTP] = useState('');
+    const [verificando, setVerificando] = useState(false);
+    const [reenviando, setReenviando] = useState(false);
 
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
@@ -65,15 +71,60 @@ export default function LoginComponent() {
         setLoading(true);
         try {
             const data = await register(nombre, apellido, email, password, rol);
-            setSuccessMessage('¡Cuenta creada con éxito! Redirigiendo...');
-            setTimeout(() => {
-                redireccionarSegunRol(data);
-            }, 800);
+            if (data.requiereVerificacion) {
+                setEsperandoCodigo(true);
+                setCodigoOTP('');
+                setSuccessMessage(data.message || 'Código de 6 dígitos enviado a tu correo.');
+            } else {
+                setSuccessMessage('¡Cuenta creada con éxito! Redirigiendo...');
+                setTimeout(() => {
+                    redireccionarSegunRol(data);
+                }, 800);
+            }
         } catch (err) {
             const msg = err.response?.data?.message || 'Error al registrar la cuenta. Verifica los datos.';
             setError(msg);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleVerificarCodigo = async (e) => {
+        e.preventDefault();
+        if (!codigoOTP || codigoOTP.trim().length !== 6) {
+            setError('Ingresa el código de verificación de 6 dígitos.');
+            return;
+        }
+
+        setError('');
+        setSuccessMessage('');
+        setVerificando(true);
+        try {
+            const data = await verificarCodigo(email.trim().toLowerCase(), codigoOTP.trim());
+            setSuccessMessage(data.message || '¡Cuenta verificada y activada con éxito! Redirigiendo...');
+            setTimeout(() => {
+                redireccionarSegunRol(data);
+            }, 1000);
+        } catch (err) {
+            const msg = err.response?.data?.message || 'Código incorrecto o expirado.';
+            setError(msg);
+        } finally {
+            setVerificando(false);
+        }
+    };
+
+    const handleReenviarCodigo = async () => {
+        setError('');
+        setSuccessMessage('');
+        setReenviando(true);
+        try {
+            const res = await reenviarCodigo(email.trim().toLowerCase());
+            setSuccessMessage(res.message || 'Nuevo código enviado a tu correo.');
+        } catch (err) {
+            const msg = err.response?.data?.message || 'Error al reenviar el código.';
+            setError(msg);
+        } finally {
+            setReenviando(false);
         }
     };
 
@@ -97,6 +148,7 @@ export default function LoginComponent() {
 
     const alternarModo = (modoRegistro) => {
         setIsRegister(modoRegistro);
+        setEsperandoCodigo(false);
         setError('');
         setSuccessMessage('');
     };
@@ -154,14 +206,167 @@ export default function LoginComponent() {
                     width: '100%',
                     maxWidth: '440px'
                 }}>
-                    {/* Switch / Pestañas superiores */}
-                    <div style={{
-                        display: 'flex',
-                        background: '#f1f5f9',
-                        padding: '4px',
-                        borderRadius: '10px',
-                        marginBottom: '24px'
-                    }}>
+                    {esperandoCodigo ? (
+                        /* PANTALLA DE VERIFICACIÓN DE CÓDIGO OTP (6 DÍGITOS) */
+                        <form onSubmit={handleVerificarCodigo} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                            <div style={{ textAlign: 'center', padding: '10px 0' }}>
+                                <div style={{
+                                    width: '56px',
+                                    height: '56px',
+                                    borderRadius: '50%',
+                                    backgroundColor: '#eff6ff',
+                                    color: '#2563eb',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    margin: '0 auto 16px auto',
+                                    border: '2px solid #bfdbfe'
+                                }}>
+                                    <KeyRound size={28} />
+                                </div>
+                                <h3 style={{ margin: '0 0 6px 0', fontSize: '22px', fontWeight: '700', color: '#0f172a' }}>
+                                    Verifica tu Correo
+                                </h3>
+                                <p style={{ margin: 0, fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>
+                                    Hemos enviado un código de 6 dígitos a: <br />
+                                    <strong style={{ color: '#0f172a' }}>{email}</strong>
+                                </p>
+                            </div>
+
+                            {error && (
+                                <div style={{
+                                    background: '#fee2e2',
+                                    color: '#991b1b',
+                                    padding: '12px',
+                                    borderRadius: '8px',
+                                    fontSize: '13px',
+                                    border: '1px solid #fca5a5'
+                                }}>
+                                    {error}
+                                </div>
+                            )}
+
+                            {successMessage && (
+                                <div style={{
+                                    background: '#dcfce7',
+                                    color: '#15803d',
+                                    padding: '12px',
+                                    borderRadius: '8px',
+                                    fontSize: '13px',
+                                    border: '1px solid #86efac'
+                                }}>
+                                    {successMessage}
+                                </div>
+                            )}
+
+                            <div>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#334155', marginBottom: '8px', textAlign: 'center' }}>
+                                    INGRESA EL CÓDIGO (OTP)
+                                </label>
+                                <input
+                                    type="text"
+                                    maxLength={6}
+                                    value={codigoOTP}
+                                    onChange={(e) => setCodigoOTP(e.target.value.replace(/\D/g, ''))}
+                                    placeholder="000000"
+                                    required
+                                    autoFocus
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px 14px',
+                                        borderRadius: '10px',
+                                        border: '2px solid #3b82f6',
+                                        outline: 'none',
+                                        fontSize: '28px',
+                                        fontWeight: '800',
+                                        letterSpacing: '10px',
+                                        textAlign: 'center',
+                                        fontFamily: 'monospace',
+                                        backgroundColor: '#f8fafc',
+                                        color: '#1e40af',
+                                        boxSizing: 'border-box'
+                                    }}
+                                />
+                                <span style={{ fontSize: '11px', color: '#64748b', textAlign: 'center', display: 'block', marginTop: '6px' }}>
+                                    ⏱️ El código vence en 10 minutos. Revisa tu buzón de entrada o spam.
+                                </span>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={verificando || codigoOTP.length !== 6}
+                                style={{
+                                    backgroundColor: codigoOTP.length === 6 ? '#10b981' : '#94a3b8',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    padding: '12px',
+                                    borderRadius: '8px',
+                                    fontWeight: '700',
+                                    cursor: codigoOTP.length === 6 ? 'pointer' : 'not-allowed',
+                                    fontSize: '14px',
+                                    transition: 'all 0.2s',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px'
+                                }}
+                            >
+                                <CheckCircle2 size={18} /> {verificando ? 'Verificando...' : 'Verificar y Activar Cuenta'}
+                            </button>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', borderTop: '1px solid #e2e8f0', paddingTop: '16px', marginTop: '6px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setEsperandoCodigo(false);
+                                        setError('');
+                                        setSuccessMessage('');
+                                    }}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: '#64748b',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        fontSize: '12px',
+                                        fontWeight: '600'
+                                    }}
+                                >
+                                    <ArrowLeft size={14} /> Corregir correo
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={handleReenviarCodigo}
+                                    disabled={reenviando}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: '#2563eb',
+                                        cursor: 'pointer',
+                                        fontWeight: '600',
+                                        fontSize: '12px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
+                                    }}
+                                >
+                                    <RotateCcw size={14} /> {reenviando ? 'Reenviando...' : 'Reenviar código'}
+                                </button>
+                            </div>
+                        </form>
+                    ) : (
+                        <>
+                            {/* Switch / Pestañas superiores */}
+                            <div style={{
+                                display: 'flex',
+                                background: '#f1f5f9',
+                                padding: '4px',
+                                borderRadius: '10px',
+                                marginBottom: '24px'
+                            }}>
                         <button
                             type="button"
                             onClick={() => alternarModo(false)}
@@ -423,7 +628,7 @@ export default function LoginComponent() {
                                         type="email"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        placeholder="profesor@nativatec.edu"
+                                        placeholder="usuario@senati.pe o tu@correo.com"
                                         required
                                         style={{
                                             width: '100%',
@@ -436,6 +641,9 @@ export default function LoginComponent() {
                                         }}
                                     />
                                 </div>
+                                <span style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                                    ✓ Acepta correo institucional <strong>@senati.pe</strong> o correos personales válidos.
+                                </span>
                             </div>
 
                             <div>
@@ -551,6 +759,8 @@ export default function LoginComponent() {
                             </div>
                         </form>
                     )}
+                </>
+            )}
                 </div>
             </div>
         </div>

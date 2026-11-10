@@ -31,6 +31,12 @@ public class Usuario {
     @Column(nullable = false)
     private Boolean activo = true;
 
+    @Column(name = "codigo_verificacion", length = 10)
+    private String codigoVerificacion;
+
+    @Column(name = "codigo_expiracion")
+    private LocalDateTime codigoExpiracion;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -125,6 +131,22 @@ public class Usuario {
 
     public void setActivo(Boolean activo) {
         this.activo = activo;
+    }
+
+    public String getCodigoVerificacion() {
+        return codigoVerificacion;
+    }
+
+    public void setCodigoVerificacion(String codigoVerificacion) {
+        this.codigoVerificacion = codigoVerificacion;
+    }
+
+    public LocalDateTime getCodigoExpiracion() {
+        return codigoExpiracion;
+    }
+
+    public void setCodigoExpiracion(LocalDateTime codigoExpiracion) {
+        this.codigoExpiracion = codigoExpiracion;
     }
 
     public LocalDateTime getCreatedAt() {

@@ -24,6 +24,19 @@ export const register = async (nombre, apellido, email, password, rol = 'PROFESO
     return response.data;
 };
 
+export const verificarCodigo = async (email, codigo) => {
+    const response = await axios.post(API_URL + 'verificar-codigo', { email, codigo });
+    if (response.data.accessToken) {
+        localStorage.setItem('user', JSON.stringify(response.data));
+    }
+    return response.data;
+};
+
+export const reenviarCodigo = async (email) => {
+    const response = await axios.post(API_URL + 'reenviar-codigo', { email });
+    return response.data;
+};
+
 export const googleLogin = async (idToken, rol = 'PROFESOR') => {
     const response = await axios.post(API_URL + 'google', {
         idToken,
