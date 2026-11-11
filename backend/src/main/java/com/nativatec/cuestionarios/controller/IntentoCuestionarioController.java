@@ -21,7 +21,7 @@ import com.nativatec.cuestionarios.service.IntentoCuestionarioService;
 
 @RestController
 @RequestMapping("/api/intentos")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(originPatterns = "*")
 public class IntentoCuestionarioController {
 
     @Autowired

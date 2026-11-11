@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import api from '../services/api';
 import logoNativa from '../images/logoNativa.jpeg';
 import useResponsive from '../hooks/useResponsive';
 import {
@@ -70,7 +71,7 @@ export default function ParticipanteLogin() {
             setValidando(true);
             setError('');
 
-            const response = await axios.get(`http://localhost:8080/api/cuestionarios/resolver/${codigo}`);
+            const response = await api.get(`/cuestionarios/resolver/${codigo}`);
             if (response.data && response.data.id) {
                 // Verificar restricciones de disponibilidad
                 try {

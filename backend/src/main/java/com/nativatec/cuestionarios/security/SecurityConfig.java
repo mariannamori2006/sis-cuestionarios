@@ -56,11 +56,11 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // Bean que define los orígenes permitidos para tu frontend en React
+    // Bean que define los orígenes permitidos para tu frontend en React (localhost y red local Wi-Fi para móviles)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173")); // Puerto de Vite / React
+        configuration.setAllowedOriginPatterns(List.of("*")); // Permite localhost, 127.0.0.1 y cualquier IP de red local (ej: móviles por Wi-Fi)
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

@@ -21,7 +21,7 @@ import com.nativatec.cuestionarios.service.UsuarioService;
 
 @RestController
 @RequestMapping("/api/usuarios")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(originPatterns = "*")
 public class UsuarioController {
     @Autowired
     private UsuarioService usuarioService;

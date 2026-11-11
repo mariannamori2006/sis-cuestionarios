@@ -1,15 +1,28 @@
 import React, { useState } from 'react';
-import { X, Copy, Check, Users, KeyRound, Link, QrCode } from 'lucide-react';
+import { X, Copy, Check, Users, KeyRound, Link, QrCode, Smartphone, Monitor } from 'lucide-react';
 
 export default function CompartirCuestionarioModal({ isOpen, onClose, cuestionario }) {
     const [copiadoEnlace, setCopiadoEnlace] = useState(false);
     const [copiadoCodigo, setCopiadoCodigo] = useState(false);
 
+    // Detección de entorno local
+    const esLocalhost = typeof window !== 'undefined' && 
+        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    const [modoRed, setModoRed] = useState('wifi'); // 'wifi' para celulares en la misma red o 'local'
+    const ipRed = '192.168.100.112';
+
     if (!isOpen || !cuestionario) return null;
 
     const codigo = cuestionario.codigoAcceso || (cuestionario.id ? cuestionario.id.substring(0, 6).toUpperCase() : '');
-    const enlacePortal = `${window.location.origin}/unirse`;
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(enlacePortal)}&color=0f172a`;
+    
+    // Determinar la base del enlace según si se prueba desde PC local o desde móvil en Wi-Fi
+    const hostBase = (esLocalhost && modoRed === 'wifi') 
+        ? `http://${ipRed}:5173` 
+        : window.location.origin;
+
+    // Enlace directo incluyendo el parámetro ?pin= para acceso inmediato
+    const enlacePortal = `${hostBase}/unirse?pin=${codigo}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(enlacePortal)}&color=0f172a`;
 
     const handleCopiarEnlace = () => {
         navigator.clipboard.writeText(enlacePortal).then(() => {
@@ -63,19 +76,19 @@ export default function CompartirCuestionarioModal({ isOpen, onClose, cuestionar
                     maxHeight: '92vh',
                     overflowY: 'auto',
                     boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                    padding: '30px',
+                    padding: '28px',
                     position: 'relative',
                     boxSizing: 'border-box',
                     border: '1px solid #e2e8f0'
                 }}
             >
                 {/* ENCABEZADO */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '22px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '18px' }}>
                     <div>
                         <h3 style={{ margin: '0 0 4px 0', fontSize: '20px', color: '#0f172a', fontWeight: '800', letterSpacing: '-0.02em' }}>
                             Compartir Cuestionario
                         </h3>
-                        <p style={{ margin: 0, fontSize: '13px', color: '#64748b', fontWeight: '500' }}>
+                        <p style={{ margin: 0, fontSize: '13px', color: '#64748b', fontWeight: '600' }}>
                             {cuestionario.titulo}
                         </p>
                     </div>
@@ -100,9 +113,9 @@ export default function CompartirCuestionarioModal({ isOpen, onClose, cuestionar
                 <div style={{
                     background: 'linear-gradient(135deg, #090d16 0%, #1e293b 100%)',
                     borderRadius: '16px',
-                    padding: '20px',
+                    padding: '18px 20px',
                     color: '#ffffff',
-                    marginBottom: '20px',
+                    marginBottom: '16px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
@@ -139,8 +152,77 @@ export default function CompartirCuestionarioModal({ isOpen, onClose, cuestionar
                     </button>
                 </div>
 
-                {/* 2. ENLACE PARA EL ALUMNO */}
-                <div style={{ marginBottom: '20px' }}>
+                {/* SELECTOR PARA PRUEBAS EN CELULAR (RED WI-FI) VS LOCALHOST */}
+                {esLocalhost && (
+                    <div style={{
+                        marginBottom: '16px',
+                        padding: '10px 12px',
+                        backgroundColor: '#f8fafc',
+                        borderRadius: '14px',
+                        border: '1px solid #e2e8f0',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                ¿Cómo vas a probarlo?
+                            </span>
+                            <span style={{ fontSize: '11px', color: modoRed === 'wifi' ? '#059669' : '#64748b', fontWeight: '700' }}>
+                                {modoRed === 'wifi' ? '✓ Listo para celular' : 'Navegador de esta PC'}
+                            </span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                            <button
+                                type="button"
+                                onClick={() => setModoRed('wifi')}
+                                style={{
+                                    backgroundColor: modoRed === 'wifi' ? '#ffffff' : 'transparent',
+                                    color: modoRed === 'wifi' ? '#2563eb' : '#64748b',
+                                    border: modoRed === 'wifi' ? '1.5px solid #2563eb' : '1px solid #e2e8f0',
+                                    boxShadow: modoRed === 'wifi' ? '0 2px 8px rgba(37,99,235,0.12)' : 'none',
+                                    padding: '8px 10px',
+                                    borderRadius: '10px',
+                                    fontSize: '11.5px',
+                                    fontWeight: '700',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px',
+                                    transition: 'all 0.15s ease'
+                                }}
+                            >
+                                <Smartphone size={14} /> Celular Wi-Fi
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setModoRed('local')}
+                                style={{
+                                    backgroundColor: modoRed === 'local' ? '#ffffff' : 'transparent',
+                                    color: modoRed === 'local' ? '#2563eb' : '#64748b',
+                                    border: modoRed === 'local' ? '1.5px solid #2563eb' : '1px solid #e2e8f0',
+                                    boxShadow: modoRed === 'local' ? '0 2px 8px rgba(37,99,235,0.12)' : 'none',
+                                    padding: '8px 10px',
+                                    borderRadius: '10px',
+                                    fontSize: '11.5px',
+                                    fontWeight: '700',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px',
+                                    transition: 'all 0.15s ease'
+                                }}
+                            >
+                                <Monitor size={14} /> Localhost (PC)
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* 2. ENLACE DIRECTO PARA EL ALUMNO */}
+                <div style={{ marginBottom: '18px' }}>
                     <label style={{
                         display: 'block',
                         fontSize: '11px',
@@ -150,7 +232,7 @@ export default function CompartirCuestionarioModal({ isOpen, onClose, cuestionar
                         marginBottom: '8px',
                         textTransform: 'uppercase'
                     }}>
-                        ENLACE DIRECTO DEL PORTAL
+                        ENLACE DIRECTO DEL PORTAL (CON PIN INCLUIDO)
                     </label>
                     <div style={{ display: 'flex', gap: '8px' }}>
                         <input
@@ -196,25 +278,25 @@ export default function CompartirCuestionarioModal({ isOpen, onClose, cuestionar
                 </div>
 
                 {/* 3. CÓDIGO QR */}
-                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                <div style={{ textAlign: 'center', marginBottom: '18px' }}>
                     <div style={{
                         fontSize: '11px',
                         fontWeight: '700',
                         color: '#64748b',
                         letterSpacing: '0.6px',
-                        marginBottom: '12px',
+                        marginBottom: '10px',
                         textTransform: 'uppercase'
                     }}>
-                        CÓDIGO QR PARA ACCESO RÁPIDO AL PORTAL
+                        CÓDIGO QR PARA ACCESO INMEDIATO
                     </div>
 
                     <div style={{
                         display: 'inline-flex',
                         padding: '12px',
                         backgroundColor: '#ffffff',
-                        borderRadius: '16px',
-                        border: '1px solid #e2e8f0',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                        borderRadius: '18px',
+                        border: '1.5px solid #e2e8f0',
+                        boxShadow: '0 4px 14px rgba(0,0,0,0.06)'
                     }}>
                         <img
                             src={qrUrl}
@@ -234,20 +316,21 @@ export default function CompartirCuestionarioModal({ isOpen, onClose, cuestionar
                     backgroundColor: '#eff6ff',
                     border: '1px solid #dbeafe',
                     borderRadius: '12px',
-                    padding: '14px',
+                    padding: '13px 15px',
                     fontSize: '12px',
                     color: '#1e3a8a',
                     lineHeight: '1.5'
                 }}>
                     <strong>Instrucciones para el alumno:</strong>
                     <ol style={{ margin: '6px 0 0 0', paddingLeft: '18px' }}>
-                        <li>Ingresa al enlace o escanea el QR.</li>
-                        <li>Escribe el código numérico: <strong>{codigo}</strong>.</li>
-                        <li>Ingresa su nombre o apodo y podrá resolver el examen.</li>
+                        <li>Escanea el código QR o ingresa al enlace directo.</li>
+                        <li>El código PIN <strong>{codigo}</strong> se cargará automáticamente.</li>
+                        <li>Ingresa tu nombre y apellidos para iniciar la evaluación.</li>
                     </ol>
                 </div>
             </div>
         </div>
     );
 }
+
 

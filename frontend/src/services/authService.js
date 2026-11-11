@@ -1,9 +1,7 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:8080/api/auth/';
+import api from './api';
 
 export const login = async (email, password) => {
-    const response = await axios.post(API_URL + 'login', { email, password });
+    const response = await api.post('/auth/login', { email, password });
     if (response.data.accessToken) {
         localStorage.setItem('user', JSON.stringify(response.data));
     }
@@ -11,7 +9,7 @@ export const login = async (email, password) => {
 };
 
 export const register = async (nombre, apellido, email, password, rol = 'PROFESOR') => {
-    const response = await axios.post(API_URL + 'register', {
+    const response = await api.post('/auth/register', {
         nombre,
         apellido,
         email,
@@ -25,7 +23,7 @@ export const register = async (nombre, apellido, email, password, rol = 'PROFESO
 };
 
 export const verificarCodigo = async (email, codigo) => {
-    const response = await axios.post(API_URL + 'verificar-codigo', { email, codigo });
+    const response = await api.post('/auth/verificar-codigo', { email, codigo });
     if (response.data.accessToken) {
         localStorage.setItem('user', JSON.stringify(response.data));
     }
@@ -33,12 +31,12 @@ export const verificarCodigo = async (email, codigo) => {
 };
 
 export const reenviarCodigo = async (email) => {
-    const response = await axios.post(API_URL + 'reenviar-codigo', { email });
+    const response = await api.post('/auth/reenviar-codigo', { email });
     return response.data;
 };
 
 export const googleLogin = async (idToken, rol = 'PROFESOR') => {
-    const response = await axios.post(API_URL + 'google', {
+    const response = await api.post('/auth/google', {
         idToken,
         rol
     });

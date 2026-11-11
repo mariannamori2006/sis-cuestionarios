@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import api from '../services/api';
 import logoNativa from '../images/logoNativa.jpeg';
 import useResponsive from '../hooks/useResponsive';
 import { Award, CheckCircle, LogOut, Clock, AlertTriangle, AlertCircle, Shuffle, ShieldAlert, ShieldCheck, RotateCcw, Calendar, Lightbulb, BookOpen, Check, X, Filter, Users } from 'lucide-react';
@@ -65,7 +66,7 @@ export default function ResolverCuestionario() {
         }
 
         // Obtenemos los detalles del cuestionario y sus preguntas desde el backend
-        axios.get(`http://localhost:8080/api/cuestionarios/resolver/${id}`)
+        api.get(`/cuestionarios/resolver/${id}`)
             .then(async res => {
                 const data = res.data;
 
