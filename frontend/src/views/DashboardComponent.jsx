@@ -6,6 +6,7 @@ import CuestionariosView from './CuestionariosView';
 import EstadisticasView from './EstadisticasView';
 import ConfiguracionView from './ConfiguracionView';
 import BancoPreguntasView from './BancoPreguntasView';
+import ConfirmarLogoutModal from '../components/modals/ConfirmarLogoutModal';
 import logoNativa from '../images/logoNativa.jpeg';
 import useResponsive from '../hooks/useResponsive';
 import { 
@@ -49,6 +50,7 @@ export default function DashboardComponent() {
         alumnosUnicos: 0
     });
     const [vistaActiva, setVistaActiva] = useState('panel');
+    const [mostrarModalLogout, setMostrarModalLogout] = useState(false);
 
     const cargarDatos = () => {
         obtenerCuestionarios()
@@ -307,7 +309,7 @@ export default function DashboardComponent() {
                             <div style={{ fontSize: '11px', color: '#94a3b8', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{userEmail}</div>
                         </div>
                     </div>
-                    <button onClick={handleLogout} title="Cerrar sesión" style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px', borderRadius: '6px' }}>
+                    <button onClick={() => setMostrarModalLogout(true)} title="Cerrar sesión" style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px', borderRadius: '6px' }}>
                         <LogOut size={18} />
                     </button>
                 </div>
@@ -678,6 +680,13 @@ export default function DashboardComponent() {
                     <ConfiguracionView onUserUpdated={(u) => setCurrentUser(u)} />
                 )}
             </div>
+
+            {/* Modal de confirmación para cerrar sesión */}
+            <ConfirmarLogoutModal
+                isOpen={mostrarModalLogout}
+                onClose={() => setMostrarModalLogout(false)}
+                onConfirm={handleLogout}
+            />
         </div>
     );
 }

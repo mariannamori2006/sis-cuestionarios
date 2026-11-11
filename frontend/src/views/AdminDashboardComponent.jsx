@@ -4,6 +4,7 @@ import { logout, getCurrentUser } from '../services/authService';
 import { obtenerUsuarios, crearUsuario, actualizarUsuario, eliminarUsuario } from '../services/usuarioService';
 import { obtenerCuestionarios, obtenerEstadisticas, obtenerActividadReciente, eliminarCuestionario } from '../services/cuestionarioService';
 import AuditoriaResultadosModal from '../components/modals/AuditoriaResultadosModal';
+import ConfirmarLogoutModal from '../components/modals/ConfirmarLogoutModal';
 import EstadisticasView from './EstadisticasView';
 import logoNativa from '../images/logoNativa.jpeg';
 import useResponsive from '../hooks/useResponsive';
@@ -52,6 +53,7 @@ export default function AdminDashboardComponent() {
     const userInitials = ((userNombre ? userNombre[0] : '') + (userApellido ? userApellido[0] : '') || 'AD').toUpperCase();
 
     const [vistaActiva, setVistaActiva] = useState('panel');
+    const [mostrarModalLogout, setMostrarModalLogout] = useState(false);
     const [usuarios, setUsuarios] = useState([]);
     const [cuestionarios, setCuestionarios] = useState([]);
     const [estadisticas, setEstadisticas] = useState(null);
@@ -560,7 +562,7 @@ export default function AdminDashboardComponent() {
                             <div style={{ fontSize: '11px', color: '#94a3b8', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{userEmail}</div>
                         </div>
                     </div>
-                    <button onClick={handleLogout} title="Cerrar sesión" style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px', borderRadius: '6px' }}>
+                    <button onClick={() => setMostrarModalLogout(true)} title="Cerrar sesión" style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px', borderRadius: '6px' }}>
                         <LogOut size={18} />
                     </button>
                 </div>
@@ -1580,6 +1582,13 @@ node backend/scripts/load_test_concurrency.js 50 148177
                     }}
                 />
             )}
+
+            {/* MODAL DE CONFIRMACIÓN PARA CERRAR SESIÓN */}
+            <ConfirmarLogoutModal
+                isOpen={mostrarModalLogout}
+                onClose={() => setMostrarModalLogout(false)}
+                onConfirm={handleLogout}
+            />
         </div>
     );
 }

@@ -4,7 +4,7 @@ import { login, register, googleLogin, verificarCodigo, reenviarCodigo } from '.
 import GoogleAuthButton from '../components/common/GoogleAuthButton';
 import logoNativa from '../images/logoNativa.jpeg';
 import useResponsive from '../hooks/useResponsive';
-import { Mail, Lock, User, LogIn, UserPlus, KeyRound, CheckCircle2, RotateCcw, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, User, LogIn, UserPlus, KeyRound, CheckCircle2, RotateCcw, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginComponent() {
     const { isMobile } = useResponsive();
@@ -17,6 +17,10 @@ export default function LoginComponent() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [rol, setRol] = useState('PROFESOR');
+
+    // Estados para ver / ocultar contraseñas
+    const [mostrarPassword, setMostrarPassword] = useState(false);
+    const [mostrarConfirmPassword, setMostrarConfirmPassword] = useState(false);
 
     // Estados para la verificación de código OTP por correo
     const [esperandoCodigo, setEsperandoCodigo] = useState(false);
@@ -591,14 +595,14 @@ export default function LoginComponent() {
                                 <div style={{ position: 'relative' }}>
                                     <Lock size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
                                     <input
-                                        type="password"
+                                        type={mostrarPassword ? "text" : "password"}
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         placeholder="••••••••"
                                         required
                                         style={{
                                             width: '100%',
-                                            padding: '12px 14px 12px 40px',
+                                            padding: '12px 42px 12px 40px',
                                             borderRadius: '10px',
                                             border: '1px solid #cbd5e1',
                                             outline: 'none',
@@ -608,6 +612,26 @@ export default function LoginComponent() {
                                             backgroundColor: '#ffffff'
                                         }}
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setMostrarPassword(!mostrarPassword)}
+                                        title={mostrarPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                                        style={{
+                                            position: 'absolute',
+                                            right: '12px',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: '#94a3b8',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            padding: '4px'
+                                        }}
+                                    >
+                                        {mostrarPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
                                 </div>
                             </div>
 
@@ -766,43 +790,87 @@ export default function LoginComponent() {
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>
                                         Contraseña *
                                     </label>
-                                    <input
-                                        type="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        placeholder="Mín. 6 carácteres"
-                                        required
-                                        style={{
-                                            width: '100%',
-                                            padding: '10px 12px',
-                                            borderRadius: '10px',
-                                            border: '1px solid #cbd5e1',
-                                            outline: 'none',
-                                            fontSize: '13px',
-                                            boxSizing: 'border-box'
-                                        }}
-                                    />
+                                    <div style={{ position: 'relative' }}>
+                                        <input
+                                            type={mostrarPassword ? "text" : "password"}
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            placeholder="Mín. 6 carácteres"
+                                            required
+                                            style={{
+                                                width: '100%',
+                                                padding: '10px 36px 10px 12px',
+                                                borderRadius: '10px',
+                                                border: '1px solid #cbd5e1',
+                                                outline: 'none',
+                                                fontSize: '13px',
+                                                boxSizing: 'border-box'
+                                            }}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setMostrarPassword(!mostrarPassword)}
+                                            title={mostrarPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                                            style={{
+                                                position: 'absolute',
+                                                right: '8px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                background: 'none',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                color: '#94a3b8',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                padding: '4px'
+                                            }}
+                                        >
+                                            {mostrarPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                                        </button>
+                                    </div>
                                 </div>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>
                                         Confirmar *
                                     </label>
-                                    <input
-                                        type="password"
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        placeholder="Repite contraseña"
-                                        required
-                                        style={{
-                                            width: '100%',
-                                            padding: '10px 12px',
-                                            borderRadius: '10px',
-                                            border: '1px solid #cbd5e1',
-                                            outline: 'none',
-                                            fontSize: '13px',
-                                            boxSizing: 'border-box'
-                                        }}
-                                    />
+                                    <div style={{ position: 'relative' }}>
+                                        <input
+                                            type={mostrarConfirmPassword ? "text" : "password"}
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            placeholder="Repite contraseña"
+                                            required
+                                            style={{
+                                                width: '100%',
+                                                padding: '10px 36px 10px 12px',
+                                                borderRadius: '10px',
+                                                border: '1px solid #cbd5e1',
+                                                outline: 'none',
+                                                fontSize: '13px',
+                                                boxSizing: 'border-box'
+                                            }}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setMostrarConfirmPassword(!mostrarConfirmPassword)}
+                                            title={mostrarConfirmPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                                            style={{
+                                                position: 'absolute',
+                                                right: '8px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                background: 'none',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                color: '#94a3b8',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                padding: '4px'
+                                            }}
+                                        >
+                                            {mostrarConfirmPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
