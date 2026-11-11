@@ -33,6 +33,7 @@ import {
     BarChart2,
     BarChart3,
     Copy,
+    Clock,
     RefreshCw,
     Menu
 } from 'lucide-react';
@@ -784,11 +785,11 @@ export default function AdminDashboardComponent() {
                                     </div>
                                 ) : (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                        {actividadReciente.slice(0, 5).map(act => (
-                                            <div key={act.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: '#f8fafc', borderRadius: '8px' }}>
+                                        {actividadReciente.slice(0, 5).map((act, idx) => (
+                                            <div key={act.intentoId || act.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: '#f8fafc', borderRadius: '8px' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: act.avatarColor || '#3b82f6', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold' }}>
-                                                        {act.avatarIniciales || 'AL'}
+                                                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: act.colorAvatar || act.avatarColor || '#3b82f6', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold' }}>
+                                                        {act.iniciales || act.avatarIniciales || 'AL'}
                                                     </div>
                                                     <div>
                                                         <div style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a' }}>{act.nombreAlumno}</div>
@@ -1095,8 +1096,8 @@ export default function AdminDashboardComponent() {
                             </div>
                         ) : (
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}>
-                                {cuestionariosFiltrados.map(c => (
-                                    <div key={c.id} className="interactive-card" style={{ background: '#ffffff', borderRadius: '18px', padding: '24px', border: '1px solid #e2e8f0', borderTop: '4px solid #2563eb', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                {cuestionariosFiltrados.map((c, idx) => (
+                                    <div key={c.id || idx} className="interactive-card" style={{ background: '#ffffff', borderRadius: '18px', padding: '24px', border: '1px solid #e2e8f0', borderTop: '4px solid #2563eb', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                         <div>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                                                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
