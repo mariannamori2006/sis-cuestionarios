@@ -1545,19 +1545,70 @@ export default function ResolverCuestionario() {
                         })()}
                     </div>
                 ) : (
-                    <form onSubmit={handleSubmitEvaluacion} style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+                    <form onSubmit={handleSubmitEvaluacion} style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+                        
+                        {/* Barra de Progreso del Alumno */}
+                        {cuestionario.preguntas && cuestionario.preguntas.length > 0 && (() => {
+                            const totalP = cuestionario.preguntas.length;
+                            const respondidasCount = Object.keys(respuestasSeleccionadas).filter(k => respuestasSeleccionadas[k] !== undefined && respuestasSeleccionadas[k] !== '').length;
+                            const pct = Math.round((respondidasCount / totalP) * 100);
+                            return (
+                                <div style={{
+                                    backgroundColor: '#f8fafc',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '12px',
+                                    padding: '12px 16px',
+                                    marginBottom: '4px'
+                                }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                        <span style={{ fontSize: '12px', fontWeight: '700', color: '#475569' }}>
+                                            Progreso de Respuestas: {respondidasCount} de {totalP} completadas
+                                        </span>
+                                        <span style={{ fontSize: '12px', fontWeight: '800', color: pct === 100 ? '#059669' : '#2563eb' }}>
+                                            {pct}%
+                                        </span>
+                                    </div>
+                                    <div style={{ width: '100%', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                                        <div style={{
+                                            width: `${pct}%`,
+                                            height: '100%',
+                                            backgroundColor: pct === 100 ? '#10b981' : '#3b82f6',
+                                            transition: 'width 0.3s ease, background-color 0.3s ease'
+                                        }} />
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
                         {cuestionario.preguntas && cuestionario.preguntas.length > 0 ? (
                             cuestionario.preguntas.map((pregunta, index) => {
                                 const pKey = pregunta.id || index;
                                 const tipo = pregunta.tipo || 'OPCION_MULTIPLE';
                                 const esVerdaderoFalso = tipo === 'VERDADERO_FALSO' || tipo === 'Verdadero/Falso';
                                 const esEscrita = tipo === 'RESPUESTA_CORTA' || tipo === 'Respuesta escrita';
+                                const letrasOpciones = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
                                 return (
-                                    <div key={pKey} style={{ backgroundColor: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                            <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                                Pregunta {index + 1} • {esVerdaderoFalso ? 'Verdadero / Falso' : esEscrita ? 'Respuesta Escrita' : 'Opción Múltiple'}
+                                    <div key={pKey} className="interactive-card" style={{
+                                        backgroundColor: '#ffffff',
+                                        padding: isMobile ? '18px 16px' : '24px',
+                                        borderRadius: '16px',
+                                        border: '1px solid #e2e8f0',
+                                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                                    }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                                            <span style={{
+                                                fontSize: '11px',
+                                                fontWeight: '800',
+                                                color: '#2563eb',
+                                                backgroundColor: '#eff6ff',
+                                                border: '1px solid #bfdbfe',
+                                                padding: '3px 10px',
+                                                borderRadius: '20px',
+                                                letterSpacing: '0.04em',
+                                                textTransform: 'uppercase'
+                                            }}>
+                                                Pregunta {index + 1} de {cuestionario.preguntas.length} · {esVerdaderoFalso ? 'V/F' : esEscrita ? 'Escrita' : 'Múltiple'}
                                             </span>
                                             {pregunta.puntos !== undefined && pregunta.puntos !== null && (
                                                 <span style={{
@@ -1566,28 +1617,27 @@ export default function ResolverCuestionario() {
                                                     backgroundColor: '#ecfdf5',
                                                     color: '#047857',
                                                     border: '1px solid #a7f3d0',
-                                                    padding: '2px 8px',
-                                                    borderRadius: '12px'
+                                                    padding: '3px 10px',
+                                                    borderRadius: '20px'
                                                 }}>
-                                                    Valor: {pregunta.puntos.toFixed(1)} pts
+                                                    {pregunta.puntos.toFixed(1)} pts
                                                 </span>
                                             )}
                                         </div>
 
-                                        <h4 style={{ margin: '0 0 14px 0', fontSize: '15px', color: '#1e293b', lineHeight: '1.4' }}>
+                                        <h4 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: '700', color: '#0f172a', lineHeight: '1.45' }}>
                                             {pregunta.enunciado || pregunta.textoPregunta}
                                         </h4>
 
                                         {/* IMAGEN / DIAGRAMA DE LA PREGUNTA (SI EXISTE) */}
                                         {(pregunta.imagenUrl || pregunta.imagen_url) && (
                                             <div style={{
-                                                margin: '0 0 16px 0',
+                                                margin: '0 0 18px 0',
                                                 padding: '12px',
-                                                backgroundColor: '#ffffff',
-                                                borderRadius: '10px',
-                                                border: '1px solid #cbd5e1',
-                                                textAlign: 'center',
-                                                boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
+                                                backgroundColor: '#f8fafc',
+                                                borderRadius: '12px',
+                                                border: '1px solid #e2e8f0',
+                                                textAlign: 'center'
                                             }}>
                                                 <img
                                                     src={pregunta.imagenUrl || pregunta.imagen_url}
@@ -1609,7 +1659,7 @@ export default function ResolverCuestionario() {
 
                                         {/* TIPO 1: VERDADERO / FALSO */}
                                         {esVerdaderoFalso && (
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px' }}>
                                                 {pregunta.opciones && pregunta.opciones.map((opcion, oIndex) => {
                                                     const oKey = opcion.id || oIndex;
                                                     const isChecked = respuestasSeleccionadas[pKey] === oKey;
@@ -1619,16 +1669,17 @@ export default function ResolverCuestionario() {
                                                             style={{
                                                                 display: 'flex',
                                                                 alignItems: 'center',
-                                                                gap: '10px',
-                                                                padding: '14px 16px',
-                                                                borderRadius: '10px',
-                                                                backgroundColor: isChecked ? '#eff6ff' : '#ffffff',
-                                                                border: isChecked ? '2px solid #2563eb' : '1px solid #cbd5e1',
+                                                                gap: '12px',
+                                                                padding: '14px 18px',
+                                                                borderRadius: '12px',
+                                                                backgroundColor: isChecked ? '#eff6ff' : '#f8fafc',
+                                                                border: isChecked ? '2px solid #2563eb' : '1px solid #e2e8f0',
                                                                 cursor: 'pointer',
-                                                                fontWeight: '600',
+                                                                fontWeight: isChecked ? '700' : '600',
                                                                 fontSize: '14px',
                                                                 color: isChecked ? '#1e40af' : '#334155',
-                                                                transition: 'all 0.2s'
+                                                                transition: 'all 0.2s ease',
+                                                                boxShadow: isChecked ? '0 4px 12px rgba(37, 99, 235, 0.12)' : 'none'
                                                             }}
                                                         >
                                                             <input
@@ -1652,52 +1703,73 @@ export default function ResolverCuestionario() {
                                                     type="text"
                                                     value={respuestasSeleccionadas[pKey] || ''}
                                                     onChange={(e) => handleTextoRespuesta(pKey, e.target.value)}
-                                                    placeholder="Escribe tu respuesta aquí..."
+                                                    placeholder="Escribe tu respuesta aquí con claridad..."
                                                     style={{
                                                         width: '100%',
-                                                        padding: '12px 14px',
-                                                        borderRadius: '8px',
+                                                        padding: '13px 16px',
+                                                        borderRadius: '10px',
                                                         border: '1px solid #cbd5e1',
                                                         outline: 'none',
                                                         fontSize: '14px',
-                                                        backgroundColor: '#ffffff',
-                                                        boxSizing: 'border-box'
+                                                        backgroundColor: '#f8fafc',
+                                                        boxSizing: 'border-box',
+                                                        transition: 'border 0.2s ease'
                                                     }}
                                                 />
                                             </div>
                                         )}
 
-                                        {/* TIPO 3: OPCIÓN MÚLTIPLE */}
+                                        {/* TIPO 3: OPCIÓN MÚLTIPLE CON BADGES A, B, C, D */}
                                         {!esVerdaderoFalso && !esEscrita && (
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                                 {pregunta.opciones && pregunta.opciones.map((opcion, oIndex) => {
                                                     const oKey = opcion.id || oIndex;
                                                     const isChecked = respuestasSeleccionadas[pKey] === oKey;
+                                                    const letra = letrasOpciones[oIndex] || `${oIndex + 1}`;
                                                     return (
                                                         <label
                                                             key={oKey}
                                                             style={{
                                                                 display: 'flex',
                                                                 alignItems: 'center',
-                                                                gap: '10px',
+                                                                gap: '12px',
                                                                 fontSize: '14px',
                                                                 color: isChecked ? '#1e40af' : '#334155',
                                                                 cursor: 'pointer',
-                                                                padding: '10px 14px',
-                                                                borderRadius: '8px',
-                                                                backgroundColor: isChecked ? '#eff6ff' : '#ffffff',
-                                                                border: isChecked ? '1px solid #2563eb' : '1px solid #cbd5e1',
-                                                                transition: 'all 0.2s'
+                                                                padding: '12px 16px',
+                                                                borderRadius: '12px',
+                                                                backgroundColor: isChecked ? '#eff6ff' : '#f8fafc',
+                                                                border: isChecked ? '2px solid #2563eb' : '1px solid #e2e8f0',
+                                                                transition: 'all 0.2s ease',
+                                                                boxShadow: isChecked ? '0 4px 12px rgba(37, 99, 235, 0.1)' : 'none',
+                                                                fontWeight: isChecked ? '700' : '500'
                                                             }}
                                                         >
+                                                            {/* Insignia Circular A / B / C / D */}
+                                                            <span style={{
+                                                                width: '28px',
+                                                                height: '28px',
+                                                                borderRadius: '50%',
+                                                                backgroundColor: isChecked ? '#2563eb' : '#e2e8f0',
+                                                                color: isChecked ? '#ffffff' : '#64748b',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                fontWeight: '800',
+                                                                fontSize: '12px',
+                                                                flexShrink: 0,
+                                                                transition: 'all 0.2s ease'
+                                                            }}>
+                                                                {letra}
+                                                            </span>
                                                             <input
                                                                 type="radio"
                                                                 name={`pregunta_${pKey}`}
                                                                 checked={isChecked}
                                                                 onChange={() => handleSelectOpcion(pKey, oKey)}
-                                                                style={{ accentColor: '#2563eb' }}
+                                                                style={{ display: 'none' }}
                                                             />
-                                                            <span>{opcion.texto || opcion.textoOpcion}</span>
+                                                            <span style={{ lineHeight: '1.4' }}>{opcion.texto || opcion.textoOpcion}</span>
                                                         </label>
                                                     );
                                                 })}
@@ -1713,20 +1785,27 @@ export default function ResolverCuestionario() {
                         <button
                             type="submit"
                             disabled={enviando}
+                            className="interactive-card"
                             style={{
-                                backgroundColor: '#10b981',
+                                background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
                                 color: '#ffffff',
                                 border: 'none',
-                                padding: '14px',
-                                borderRadius: '8px',
-                                fontWeight: '600',
-                                cursor: 'pointer',
+                                padding: '16px',
+                                borderRadius: '12px',
+                                fontWeight: '700',
+                                cursor: enviando ? 'not-allowed' : 'pointer',
                                 fontSize: '15px',
                                 marginTop: '10px',
-                                opacity: enviando ? 0.7 : 1
+                                opacity: enviando ? 0.7 : 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                boxShadow: '0 4px 16px rgba(16, 185, 129, 0.3)',
+                                transition: 'all 0.2s ease'
                             }}
                         >
-                            {enviando ? 'Enviando respuestas...' : 'Enviar Respuestas y Calificar'}
+                            <CheckCircle size={18} /> {enviando ? 'Enviando y calificando...' : 'Finalizar y Calificar Examen'}
                         </button>
                     </form>
                 )}

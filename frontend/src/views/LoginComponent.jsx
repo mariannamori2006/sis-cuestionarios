@@ -160,34 +160,109 @@ export default function LoginComponent() {
             display: 'flex',
             height: '100vh',
             width: '100vw',
-            backgroundColor: '#f1f5f9',
+            backgroundColor: '#f8fafc',
             fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
         }}>
             {/* Panel lateral estético institucional (Oculto en celulares) */}
             <div style={{
-                flex: '1',
-                backgroundColor: '#0f172a',
+                flex: '1.1',
+                background: 'radial-gradient(circle at 10% 20%, #1e293b 0%, #0f172a 100%)',
                 color: '#ffffff',
-                padding: '60px',
+                padding: '60px 50px',
                 display: isMobile ? 'none' : 'flex',
                 flexDirection: 'column',
-                justifyContent: 'space-between'
+                justifyContent: 'space-between',
+                position: 'relative',
+                overflow: 'hidden'
             }}>
-                <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '40px' }}>
-                        <div style={{ background: '#ffffff', padding: '6px 14px', borderRadius: '10px', display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
-                            <img src={logoNativa} alt="NativaTec" style={{ height: '36px', objectFit: 'contain' }} />
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                    {/* Header con Logo y Badge */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '48px' }}>
+                        <div style={{ background: '#ffffff', padding: '6px 14px', borderRadius: '12px', display: 'flex', alignItems: 'center', boxShadow: '0 4px 14px rgba(0,0,0,0.2)' }}>
+                            <img src={logoNativa} alt="NativaTec" style={{ height: '34px', objectFit: 'contain' }} />
+                        </div>
+                        <span style={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            padding: '4px 12px',
+                            borderRadius: '20px',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            letterSpacing: '0.04em',
+                            color: '#93c5fd'
+                        }}>
+                            🎓 Ciclo Académico 2026-B
+                        </span>
+                    </div>
+
+                    <h1 style={{ fontSize: '36px', fontWeight: '800', lineHeight: '1.25', marginBottom: '18px', letterSpacing: '-0.02em' }}>
+                        Evaluaciones más ágiles,<br />
+                        <span style={{ color: '#38bdf8' }}>resultados inmediatos.</span>
+                    </h1>
+                    <p style={{ color: '#94a3b8', fontSize: '15px', lineHeight: '1.6', maxWidth: '480px', marginBottom: '40px' }}>
+                        Plataforma integral para profesores y administradores: diseña cuestionarios interactivos, audita respuestas al instante y genera reportes consolidados.
+                    </p>
+
+                    {/* Features destacados */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxWidth: '440px' }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '14px',
+                            backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            padding: '12px 16px',
+                            borderRadius: '12px'
+                        }}>
+                            <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: 'rgba(56, 189, 248, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8', fontSize: '18px', flexShrink: 0 }}>
+                                ⚡
+                            </div>
+                            <div>
+                                <div style={{ fontSize: '13px', fontWeight: '700', color: '#f1f5f9' }}>Calificación y feedback automático</div>
+                                <div style={{ fontSize: '12px', color: '#94a3b8' }}>Estadísticas y promedios actualizados en vivo.</div>
+                            </div>
+                        </div>
+
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '14px',
+                            backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            padding: '12px 16px',
+                            borderRadius: '12px'
+                        }}>
+                            <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#34d399', fontSize: '18px', flexShrink: 0 }}>
+                                🛡️
+                            </div>
+                            <div>
+                                <div style={{ fontSize: '13px', fontWeight: '700', color: '#f1f5f9' }}>Modo seguro anti-fraude</div>
+                                <div style={{ fontSize: '12px', color: '#94a3b8' }}>Detección de cambio de pestaña y control estricto de intentos.</div>
+                            </div>
+                        </div>
+
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '14px',
+                            backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            padding: '12px 16px',
+                            borderRadius: '12px'
+                        }}>
+                            <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: 'rgba(139, 92, 246, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa', fontSize: '18px', flexShrink: 0 }}>
+                                📊
+                            </div>
+                            <div>
+                                <div style={{ fontSize: '13px', fontWeight: '700', color: '#f1f5f9' }}>Auditoría y exportación a Excel</div>
+                                <div style={{ fontSize: '12px', color: '#94a3b8' }}>Descarga actas oficiales de notas con un solo clic.</div>
+                            </div>
                         </div>
                     </div>
-                    <h1 style={{ fontSize: '38px', lineHeight: '1.2', marginBottom: '20px' }}>
-                        Gestión inteligente de evaluaciones académicas.
-                    </h1>
-                    <p style={{ color: '#94a3b8', fontSize: '16px', lineHeight: '1.5' }}>
-                        Accede al panel de control exclusivo para profesores y administradores para supervisar cuestionarios, auditorías y reportes.
-                    </p>
                 </div>
-                <div style={{ fontSize: '13px', color: '#64748b' }}>
-                    Ciclo 2026-B • Nativatec Education
+
+                <div style={{ fontSize: '12px', color: '#64748b', position: 'relative', zIndex: 1, borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '16px' }}>
+                    © 2026 Nativatec Education · SENATI. Todos los derechos reservados.
                 </div>
             </div>
 
@@ -197,21 +272,22 @@ export default function LoginComponent() {
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                padding: isMobile ? '20px 14px' : '40px',
+                padding: isMobile ? '20px 16px' : '40px',
                 overflowY: 'auto'
             }}>
                 <div style={{
                     background: '#ffffff',
-                    padding: isMobile ? '28px 20px' : '40px',
-                    borderRadius: '16px',
-                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+                    padding: isMobile ? '28px 20px' : '40px 42px',
+                    borderRadius: '20px',
+                    boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.07), 0 0 1px 1px rgba(0, 0, 0, 0.03)',
+                    border: '1px solid #e2e8f0',
                     width: '100%',
                     maxWidth: '440px'
                 }}>
                     {/* Logo visible en celulares */}
                     {isMobile && (
-                        <div style={{ textAlign: 'center', marginBottom: '20px', display: 'flex', justifyContent: 'center' }}>
-                            <img src={logoNativa} alt="NativaTec" style={{ height: '34px', objectFit: 'contain' }} />
+                        <div style={{ textAlign: 'center', marginBottom: '22px', display: 'flex', justifyContent: 'center' }}>
+                            <img src={logoNativa} alt="NativaTec" style={{ height: '36px', objectFit: 'contain' }} />
                         </div>
                     )}
                     {esperandoCodigo ? (
@@ -245,8 +321,8 @@ export default function LoginComponent() {
                                 <div style={{
                                     background: '#fee2e2',
                                     color: '#991b1b',
-                                    padding: '12px',
-                                    borderRadius: '8px',
+                                    padding: '12px 14px',
+                                    borderRadius: '10px',
                                     fontSize: '13px',
                                     border: '1px solid #fca5a5'
                                 }}>
@@ -258,8 +334,8 @@ export default function LoginComponent() {
                                 <div style={{
                                     background: '#dcfce7',
                                     color: '#15803d',
-                                    padding: '12px',
-                                    borderRadius: '8px',
+                                    padding: '12px 14px',
+                                    borderRadius: '10px',
                                     fontSize: '13px',
                                     border: '1px solid #86efac'
                                 }}>
@@ -282,7 +358,7 @@ export default function LoginComponent() {
                                     style={{
                                         width: '100%',
                                         padding: '12px 14px',
-                                        borderRadius: '10px',
+                                        borderRadius: '12px',
                                         border: '2px solid #3b82f6',
                                         outline: 'none',
                                         fontSize: isMobile ? '22px' : '28px',
@@ -307,8 +383,8 @@ export default function LoginComponent() {
                                     backgroundColor: codigoOTP.length === 6 ? '#10b981' : '#94a3b8',
                                     color: '#ffffff',
                                     border: 'none',
-                                    padding: '12px',
-                                    borderRadius: '8px',
+                                    padding: '13px',
+                                    borderRadius: '10px',
                                     fontWeight: '700',
                                     cursor: codigoOTP.length === 6 ? 'pointer' : 'not-allowed',
                                     fontSize: '14px',
@@ -316,7 +392,8 @@ export default function LoginComponent() {
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    gap: '8px'
+                                    gap: '8px',
+                                    boxShadow: codigoOTP.length === 6 ? '0 4px 12px rgba(16, 185, 129, 0.25)' : 'none'
                                 }}
                             >
                                 <CheckCircle2 size={18} /> {verificando ? 'Verificando...' : 'Verificar y Activar Cuenta'}
@@ -372,7 +449,7 @@ export default function LoginComponent() {
                                 display: 'flex',
                                 background: '#f1f5f9',
                                 padding: '4px',
-                                borderRadius: '10px',
+                                borderRadius: '12px',
                                 marginBottom: '24px'
                             }}>
                         <button
@@ -382,14 +459,14 @@ export default function LoginComponent() {
                                 flex: 1,
                                 padding: '10px',
                                 border: 'none',
-                                borderRadius: '8px',
+                                borderRadius: '10px',
                                 background: !isRegister ? '#ffffff' : 'transparent',
                                 color: !isRegister ? '#0f172a' : '#64748b',
-                                fontWeight: '600',
+                                fontWeight: '700',
                                 fontSize: '13px',
                                 cursor: 'pointer',
-                                boxShadow: !isRegister ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
-                                transition: 'all 0.2s'
+                                boxShadow: !isRegister ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+                                transition: 'all 0.2s ease'
                             }}
                         >
                             Iniciar Sesión
@@ -401,35 +478,35 @@ export default function LoginComponent() {
                                 flex: 1,
                                 padding: '10px',
                                 border: 'none',
-                                borderRadius: '8px',
+                                borderRadius: '10px',
                                 background: isRegister ? '#ffffff' : 'transparent',
                                 color: isRegister ? '#0f172a' : '#64748b',
-                                fontWeight: '600',
+                                fontWeight: '700',
                                 fontSize: '13px',
                                 cursor: 'pointer',
-                                boxShadow: isRegister ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
-                                transition: 'all 0.2s'
+                                boxShadow: isRegister ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+                                transition: 'all 0.2s ease'
                             }}
                         >
                             Crear Cuenta
                         </button>
                     </div>
 
-                    <h2 style={{ margin: '0 0 6px 0', color: '#0f172a', fontSize: '24px' }}>
+                    <h2 style={{ margin: '0 0 6px 0', color: '#0f172a', fontSize: '24px', fontWeight: '800', letterSpacing: '-0.02em' }}>
                         {isRegister ? 'Crear Nueva Cuenta' : 'Iniciar Sesión'}
                     </h2>
-                    <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '24px' }}>
+                    <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '24px', lineHeight: '1.4' }}>
                         {isRegister
                             ? 'Completa tus datos para habilitar tu acceso institucional'
-                            : 'Ingresa tus credenciales'}
+                            : 'Ingresa con tu correo institucional o personal'}
                     </p>
 
                     {error && (
                         <div style={{
                             background: '#fee2e2',
                             color: '#991b1b',
-                            padding: '12px',
-                            borderRadius: '8px',
+                            padding: '12px 14px',
+                            borderRadius: '10px',
                             fontSize: '13px',
                             marginBottom: '20px',
                             border: '1px solid #fca5a5'
@@ -442,8 +519,8 @@ export default function LoginComponent() {
                         <div style={{
                             background: '#dcfce7',
                             color: '#15803d',
-                            padding: '12px',
-                            borderRadius: '8px',
+                            padding: '12px 14px',
+                            borderRadius: '10px',
                             fontSize: '13px',
                             marginBottom: '20px',
                             border: '1px solid #86efac'
@@ -469,7 +546,7 @@ export default function LoginComponent() {
                         margin: '16px 0 20px 0',
                         color: '#94a3b8',
                         fontSize: '11px',
-                        fontWeight: '600',
+                        fontWeight: '700',
                         textTransform: 'uppercase',
                         letterSpacing: '0.06em'
                     }}>
@@ -482,11 +559,11 @@ export default function LoginComponent() {
                         /* FORMULARIO DE LOGIN */
                         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                             <div>
-                                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+                                <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>
                                     Correo Electrónico
                                 </label>
                                 <div style={{ position: 'relative' }}>
-                                    <Mail size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                                    <Mail size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
                                     <input
                                         type="email"
                                         value={email}
@@ -495,23 +572,25 @@ export default function LoginComponent() {
                                         required
                                         style={{
                                             width: '100%',
-                                            padding: '12px 14px 12px 38px',
-                                            borderRadius: '8px',
+                                            padding: '12px 14px 12px 40px',
+                                            borderRadius: '10px',
                                             border: '1px solid #cbd5e1',
                                             outline: 'none',
                                             fontSize: '14px',
-                                            boxSizing: 'border-box'
+                                            boxSizing: 'border-box',
+                                            transition: 'border 0.2s ease',
+                                            backgroundColor: '#ffffff'
                                         }}
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+                                <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>
                                     Contraseña
                                 </label>
                                 <div style={{ position: 'relative' }}>
-                                    <Lock size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                                    <Lock size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
                                     <input
                                         type="password"
                                         value={password}
@@ -520,12 +599,14 @@ export default function LoginComponent() {
                                         required
                                         style={{
                                             width: '100%',
-                                            padding: '12px 14px 12px 38px',
-                                            borderRadius: '8px',
+                                            padding: '12px 14px 12px 40px',
+                                            borderRadius: '10px',
                                             border: '1px solid #cbd5e1',
                                             outline: 'none',
                                             fontSize: '14px',
-                                            boxSizing: 'border-box'
+                                            boxSizing: 'border-box',
+                                            transition: 'border 0.2s ease',
+                                            backgroundColor: '#ffffff'
                                         }}
                                     />
                                 </div>
@@ -534,21 +615,23 @@ export default function LoginComponent() {
                             <button
                                 type="submit"
                                 disabled={loading}
+                                className="interactive-card"
                                 style={{
                                     marginTop: '8px',
-                                    background: '#0f172a',
+                                    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
                                     color: '#ffffff',
                                     border: 'none',
-                                    padding: '12px',
-                                    borderRadius: '8px',
+                                    padding: '13px',
+                                    borderRadius: '10px',
                                     fontSize: '14px',
-                                    fontWeight: '600',
+                                    fontWeight: '700',
                                     cursor: 'pointer',
-                                    transition: 'background 0.2s',
+                                    transition: 'all 0.2s ease',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    gap: '8px'
+                                    gap: '8px',
+                                    boxShadow: '0 4px 14px rgba(15, 23, 42, 0.2)'
                                 }}
                             >
                                 <LogIn size={16} /> {loading ? 'Verificando...' : 'Entrar al Sistema'}
@@ -563,8 +646,8 @@ export default function LoginComponent() {
                                         style={{
                                             background: 'none',
                                             border: 'none',
-                                            color: '#10b981',
-                                            fontWeight: '600',
+                                            color: '#059669',
+                                            fontWeight: '700',
                                             cursor: 'pointer',
                                             padding: 0,
                                             fontSize: '13px'
@@ -580,7 +663,7 @@ export default function LoginComponent() {
                         <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>
                                         Nombre *
                                     </label>
                                     <div style={{ position: 'relative' }}>
@@ -594,7 +677,7 @@ export default function LoginComponent() {
                                             style={{
                                                 width: '100%',
                                                 padding: '10px 12px 10px 32px',
-                                                borderRadius: '8px',
+                                                borderRadius: '10px',
                                                 border: '1px solid #cbd5e1',
                                                 outline: 'none',
                                                 fontSize: '13px',
@@ -604,7 +687,7 @@ export default function LoginComponent() {
                                     </div>
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>
                                         Apellido *
                                     </label>
                                     <input
@@ -616,7 +699,7 @@ export default function LoginComponent() {
                                         style={{
                                             width: '100%',
                                             padding: '10px 12px',
-                                            borderRadius: '8px',
+                                            borderRadius: '10px',
                                             border: '1px solid #cbd5e1',
                                             outline: 'none',
                                             fontSize: '13px',
@@ -627,7 +710,7 @@ export default function LoginComponent() {
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>
                                     Correo Electrónico *
                                 </label>
                                 <div style={{ position: 'relative' }}>
@@ -641,7 +724,7 @@ export default function LoginComponent() {
                                         style={{
                                             width: '100%',
                                             padding: '10px 12px 10px 32px',
-                                            borderRadius: '8px',
+                                            borderRadius: '10px',
                                             border: '1px solid #cbd5e1',
                                             outline: 'none',
                                             fontSize: '13px',
@@ -655,7 +738,7 @@ export default function LoginComponent() {
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>
                                     Tipo de Perfil / Rol
                                 </label>
                                 <select
@@ -664,12 +747,14 @@ export default function LoginComponent() {
                                     style={{
                                         width: '100%',
                                         padding: '10px 12px',
-                                        borderRadius: '8px',
+                                        borderRadius: '10px',
                                         border: '1px solid #cbd5e1',
                                         outline: 'none',
                                         fontSize: '13px',
                                         backgroundColor: '#ffffff',
-                                        boxSizing: 'border-box'
+                                        boxSizing: 'border-box',
+                                        fontWeight: '600',
+                                        color: '#1e293b'
                                     }}
                                 >
                                     <option value="PROFESOR">Profesor (Crear y gestionar cuestionarios)</option>
@@ -679,7 +764,7 @@ export default function LoginComponent() {
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>
                                         Contraseña *
                                     </label>
                                     <input
@@ -691,7 +776,7 @@ export default function LoginComponent() {
                                         style={{
                                             width: '100%',
                                             padding: '10px 12px',
-                                            borderRadius: '8px',
+                                            borderRadius: '10px',
                                             border: '1px solid #cbd5e1',
                                             outline: 'none',
                                             fontSize: '13px',
@@ -700,7 +785,7 @@ export default function LoginComponent() {
                                     />
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>
                                         Confirmar *
                                     </label>
                                     <input
@@ -712,7 +797,7 @@ export default function LoginComponent() {
                                         style={{
                                             width: '100%',
                                             padding: '10px 12px',
-                                            borderRadius: '8px',
+                                            borderRadius: '10px',
                                             border: '1px solid #cbd5e1',
                                             outline: 'none',
                                             fontSize: '13px',
@@ -725,21 +810,23 @@ export default function LoginComponent() {
                             <button
                                 type="submit"
                                 disabled={loading}
+                                className="interactive-card"
                                 style={{
                                     marginTop: '10px',
-                                    background: '#10b981',
+                                    background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
                                     color: '#ffffff',
                                     border: 'none',
-                                    padding: '12px',
-                                    borderRadius: '8px',
+                                    padding: '13px',
+                                    borderRadius: '10px',
                                     fontSize: '14px',
-                                    fontWeight: '600',
+                                    fontWeight: '700',
                                     cursor: 'pointer',
-                                    transition: 'background 0.2s',
+                                    transition: 'all 0.2s ease',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    gap: '8px'
+                                    gap: '8px',
+                                    boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)'
                                 }}
                             >
                                 <UserPlus size={16} /> {loading ? 'Creando cuenta...' : 'Crear Cuenta'}
@@ -755,7 +842,7 @@ export default function LoginComponent() {
                                             background: 'none',
                                             border: 'none',
                                             color: '#0f172a',
-                                            fontWeight: '600',
+                                            fontWeight: '700',
                                             cursor: 'pointer',
                                             padding: 0,
                                             fontSize: '13px'

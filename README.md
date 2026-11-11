@@ -169,6 +169,14 @@ spring.datasource.password=tu_contraseña
 Abrir una terminal en la carpeta raíz del proyecto o en `backend`:
 ```bash
 cd backend
+
+# En Windows (Símbolo del sistema / CMD):
+mvnw spring-boot:run
+
+# En Windows (PowerShell):
+.\mvnw spring-boot:run
+
+# En Linux / Mac / Git Bash:
 ./mvnw spring-boot:run
 ```
 *El backend se iniciará en `http://localhost:8080`.*

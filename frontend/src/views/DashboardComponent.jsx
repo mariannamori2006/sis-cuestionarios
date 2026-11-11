@@ -181,20 +181,120 @@ export default function DashboardComponent() {
                     </div>
 
                     <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <button onClick={() => cambiarVista('panel')} style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 14px', background: vistaActiva === 'panel' ? '#1e293b' : 'transparent', color: vistaActiva === 'panel' ? '#ffffff' : '#94a3b8', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', textAlign: 'left', transition: 'all 0.2s' }}>
-                            <LayoutDashboard size={18} /> Panel principal
+                        <button 
+                            onClick={() => cambiarVista('panel')} 
+                            style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '12px', 
+                                width: '100%', 
+                                padding: '12px 14px', 
+                                background: vistaActiva === 'panel' ? 'linear-gradient(90deg, rgba(37, 99, 235, 0.18) 0%, rgba(37, 99, 235, 0.05) 100%)' : 'transparent', 
+                                color: vistaActiva === 'panel' ? '#60a5fa' : '#94a3b8', 
+                                border: 'none', 
+                                borderLeft: vistaActiva === 'panel' ? '3px solid #3b82f6' : '3px solid transparent', 
+                                borderRadius: '8px', 
+                                cursor: 'pointer', 
+                                fontSize: '14px', 
+                                fontWeight: vistaActiva === 'panel' ? '600' : '500', 
+                                textAlign: 'left', 
+                                transition: 'all 0.2s ease' 
+                            }}
+                        >
+                            <LayoutDashboard size={18} /> <span>Panel principal</span>
                         </button>
-                        <button onClick={() => cambiarVista('cuestionarios')} style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 14px', background: vistaActiva === 'cuestionarios' ? '#1e293b' : 'transparent', color: vistaActiva === 'cuestionarios' ? '#ffffff' : '#94a3b8', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', textAlign: 'left', transition: 'all 0.2s' }}>
-                            <FileText size={18} /> Cuestionarios
+                        <button 
+                            onClick={() => cambiarVista('cuestionarios')} 
+                            style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '12px', 
+                                width: '100%', 
+                                padding: '12px 14px', 
+                                background: vistaActiva === 'cuestionarios' ? 'linear-gradient(90deg, rgba(37, 99, 235, 0.18) 0%, rgba(37, 99, 235, 0.05) 100%)' : 'transparent', 
+                                color: vistaActiva === 'cuestionarios' ? '#60a5fa' : '#94a3b8', 
+                                border: 'none', 
+                                borderLeft: vistaActiva === 'cuestionarios' ? '3px solid #3b82f6' : '3px solid transparent', 
+                                borderRadius: '8px', 
+                                cursor: 'pointer', 
+                                fontSize: '14px', 
+                                fontWeight: vistaActiva === 'cuestionarios' ? '600' : '500', 
+                                textAlign: 'left', 
+                                transition: 'all 0.2s ease' 
+                            }}
+                        >
+                            <FileText size={18} /> <span>Cuestionarios</span>
+                            {cuestionarios.length > 0 && (
+                                <span style={{ marginLeft: 'auto', backgroundColor: vistaActiva === 'cuestionarios' ? '#2563eb' : '#1e293b', color: '#ffffff', fontSize: '11px', fontWeight: '700', padding: '2px 8px', borderRadius: '12px' }}>
+                                    {cuestionarios.length}
+                                </span>
+                            )}
                         </button>
-                        <button onClick={() => cambiarVista('banco')} style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 14px', background: vistaActiva === 'banco' ? '#1e293b' : 'transparent', color: vistaActiva === 'banco' ? '#ffffff' : '#94a3b8', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', textAlign: 'left', transition: 'all 0.2s' }}>
-                            <BookOpen size={18} /> Banco de Preguntas
+                        <button 
+                            onClick={() => cambiarVista('banco')} 
+                            style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '12px', 
+                                width: '100%', 
+                                padding: '12px 14px', 
+                                background: vistaActiva === 'banco' ? 'linear-gradient(90deg, rgba(37, 99, 235, 0.18) 0%, rgba(37, 99, 235, 0.05) 100%)' : 'transparent', 
+                                color: vistaActiva === 'banco' ? '#60a5fa' : '#94a3b8', 
+                                border: 'none', 
+                                borderLeft: vistaActiva === 'banco' ? '3px solid #3b82f6' : '3px solid transparent', 
+                                borderRadius: '8px', 
+                                cursor: 'pointer', 
+                                fontSize: '14px', 
+                                fontWeight: vistaActiva === 'banco' ? '600' : '500', 
+                                textAlign: 'left', 
+                                transition: 'all 0.2s ease' 
+                            }}
+                        >
+                            <BookOpen size={18} /> <span>Banco de Preguntas</span>
                         </button>
-                        <button onClick={() => cambiarVista('estadisticas')} style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 14px', background: vistaActiva === 'estadisticas' ? '#1e293b' : 'transparent', color: vistaActiva === 'estadisticas' ? '#ffffff' : '#94a3b8', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', textAlign: 'left', transition: 'all 0.2s' }}>
-                            <BarChart3 size={18} /> Estadísticas
+                        <button 
+                            onClick={() => cambiarVista('estadisticas')} 
+                            style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '12px', 
+                                width: '100%', 
+                                padding: '12px 14px', 
+                                background: vistaActiva === 'estadisticas' ? 'linear-gradient(90deg, rgba(37, 99, 235, 0.18) 0%, rgba(37, 99, 235, 0.05) 100%)' : 'transparent', 
+                                color: vistaActiva === 'estadisticas' ? '#60a5fa' : '#94a3b8', 
+                                border: 'none', 
+                                borderLeft: vistaActiva === 'estadisticas' ? '3px solid #3b82f6' : '3px solid transparent', 
+                                borderRadius: '8px', 
+                                cursor: 'pointer', 
+                                fontSize: '14px', 
+                                fontWeight: vistaActiva === 'estadisticas' ? '600' : '500', 
+                                textAlign: 'left', 
+                                transition: 'all 0.2s ease' 
+                            }}
+                        >
+                            <BarChart3 size={18} /> <span>Estadísticas</span>
                         </button>
-                        <button onClick={() => cambiarVista('configuracion')} style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 14px', background: vistaActiva === 'configuracion' ? '#1e293b' : 'transparent', color: vistaActiva === 'configuracion' ? '#ffffff' : '#94a3b8', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500', textAlign: 'left', transition: 'all 0.2s' }}>
-                            <Settings size={18} /> Configuración
+                        <button 
+                            onClick={() => cambiarVista('configuracion')} 
+                            style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '12px', 
+                                width: '100%', 
+                                padding: '12px 14px', 
+                                background: vistaActiva === 'configuracion' ? 'linear-gradient(90deg, rgba(37, 99, 235, 0.18) 0%, rgba(37, 99, 235, 0.05) 100%)' : 'transparent', 
+                                color: vistaActiva === 'configuracion' ? '#60a5fa' : '#94a3b8', 
+                                border: 'none', 
+                                borderLeft: vistaActiva === 'configuracion' ? '3px solid #3b82f6' : '3px solid transparent', 
+                                borderRadius: '8px', 
+                                cursor: 'pointer', 
+                                fontSize: '14px', 
+                                fontWeight: vistaActiva === 'configuracion' ? '600' : '500', 
+                                textAlign: 'left', 
+                                transition: 'all 0.2s ease' 
+                            }}
+                        >
+                            <Settings size={18} /> <span>Configuración</span>
                         </button>
                     </nav>
                 </div>
@@ -227,23 +327,77 @@ export default function DashboardComponent() {
                 {vistaActiva === 'panel' && (
                     <>
                         <div style={{
-                            backgroundColor: '#0f172a',
+                            background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 55%, #0f172a 100%)',
                             color: '#ffffff',
-                            borderRadius: '16px',
-                            padding: isMobile ? '20px 18px' : '30px',
+                            borderRadius: '20px',
+                            padding: isMobile ? '22px 18px' : '32px 36px',
                             display: 'flex',
                             flexDirection: isMobile ? 'column' : 'row',
                             justifyContent: 'space-between',
                             alignItems: isMobile ? 'flex-start' : 'center',
                             gap: isMobile ? '16px' : '0',
-                            marginBottom: '24px'
+                            marginBottom: '28px',
+                            boxShadow: '0 12px 30px -10px rgba(15, 23, 42, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08)',
+                            position: 'relative',
+                            overflow: 'hidden'
                         }}>
-                            <div>
-                                <span style={{ fontSize: '14px', color: '#94a3b8' }}>Buenos días,</span>
-                                <h2 style={{ margin: '4px 0 8px 0', fontSize: isMobile ? '19px' : '22px' }}>{userName}</h2>
-                                <span style={{ fontSize: '13px', color: '#94a3b8' }}>Ciclo 2026-B · Tienes {cuestionarios.length} cuestionarios activos</span>
+                            {/* Brillo radial decorativo de fondo */}
+                            <div style={{
+                                position: 'absolute',
+                                right: '-40px',
+                                top: '-40px',
+                                width: '240px',
+                                height: '240px',
+                                background: 'radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, rgba(99, 102, 241, 0) 70%)',
+                                pointerEvents: 'none'
+                            }} />
+
+                            <div style={{ zIndex: 1 }}>
+                                <div style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                                    color: '#34d399',
+                                    fontSize: '12px',
+                                    fontWeight: '700',
+                                    padding: '4px 12px',
+                                    borderRadius: '20px',
+                                    marginBottom: '10px'
+                                }}>
+                                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+                                    Ciclo Académico 2026-B • SENATI
+                                </div>
+                                <h2 style={{ margin: '0 0 6px 0', fontSize: isMobile ? '22px' : '26px', fontWeight: '800', letterSpacing: '-0.5px' }}>
+                                    ¡Hola, {userName}!
+                                </h2>
+                                <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8', maxWidth: '520px', lineHeight: '1.5' }}>
+                                    Supervisa el rendimiento académico de tus estudiantes, gestiona reactivos en el banco y administra evaluaciones con ponderación automática.
+                                </p>
                             </div>
-                            <button onClick={() => cambiarVista('cuestionarios')} style={{ backgroundColor: '#10b981', color: '#ffffff', border: 'none', padding: '12px 20px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', width: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'center' : 'flex-start' }}>
+                            <button 
+                                onClick={() => cambiarVista('cuestionarios')} 
+                                style={{ 
+                                    backgroundColor: '#10b981', 
+                                    backgroundImage: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                    color: '#ffffff', 
+                                    border: 'none', 
+                                    padding: '13px 24px', 
+                                    borderRadius: '12px', 
+                                    fontWeight: '700', 
+                                    cursor: 'pointer', 
+                                    fontSize: '14px', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: '8px', 
+                                    width: isMobile ? '100%' : 'auto', 
+                                    justifyContent: isMobile ? 'center' : 'flex-start',
+                                    boxShadow: '0 10px 20px -5px rgba(16, 185, 129, 0.4)',
+                                    transition: 'all 0.2s ease',
+                                    zIndex: 1
+                                }}
+                            >
                                 <Plus size={18} /> Nuevo cuestionario
                             </button>
                         </div>
@@ -251,66 +405,78 @@ export default function DashboardComponent() {
                         {/* Tarjetas de Métricas Dinámicas desde Base de Datos (Auto-fit responsivo) */}
                         <div style={{
                             display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                            gap: '16px',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                            gap: '18px',
                             marginBottom: '30px'
                         }}>
                             {/* Tarjeta 1: Cuestionarios */}
-                            <div style={{ background: '#fff', padding: '20px', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                                <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
-                                    <ClipboardList size={20} color="#3b82f6" />
+                            <div className="interactive-card" style={{ background: '#ffffff', padding: '22px', borderRadius: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', borderTop: '4px solid #3b82f6', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '700', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Cuestionarios</span>
+                                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <ClipboardList size={20} color="#3b82f6" />
+                                    </div>
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#0f172a', marginBottom: '4px' }}>
+                                    <div style={{ fontSize: '30px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.5px', marginBottom: '4px' }}>
                                         {cuestionarios.length}
                                     </div>
-                                    <div style={{ fontSize: '12px', color: '#64748b', lineHeight: '1.3' }}>
-                                        Cuestionarios<br />activos este ciclo
+                                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
+                                        Exámenes activos este ciclo
                                     </div>
                                 </div>
                             </div>
 
                             {/* Tarjeta 2: Respuestas totales */}
-                            <div style={{ background: '#fff', padding: '20px', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                                <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
-                                    <Edit3 size={18} color="#10b981" />
+                            <div className="interactive-card" style={{ background: '#ffffff', padding: '22px', borderRadius: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', borderTop: '4px solid #10b981', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '700', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Entregas Realizadas</span>
+                                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Edit3 size={19} color="#10b981" />
+                                    </div>
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#10b981', marginBottom: '4px' }}>
+                                    <div style={{ fontSize: '30px', fontWeight: '800', color: '#059669', letterSpacing: '-0.5px', marginBottom: '4px' }}>
                                         {estadisticas.totalRespuestas}
                                     </div>
-                                    <div style={{ fontSize: '12px', color: '#64748b', lineHeight: '1.3' }}>
-                                        Respuestas totales<br />de todos los exámenes
+                                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
+                                        Intentos calificados
                                     </div>
                                 </div>
                             </div>
 
                             {/* Tarjeta 3: Alumnos únicos */}
-                            <div style={{ background: '#fff', padding: '20px', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                                <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
-                                    <Users size={18} color="#7c3aed" />
+                            <div className="interactive-card" style={{ background: '#ffffff', padding: '22px', borderRadius: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', borderTop: '4px solid #8b5cf6', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '700', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Alumnos Evaluados</span>
+                                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Users size={19} color="#7c3aed" />
+                                    </div>
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#854d0e', marginBottom: '4px' }}>
+                                    <div style={{ fontSize: '30px', fontWeight: '800', color: '#7c3aed', letterSpacing: '-0.5px', marginBottom: '4px' }}>
                                         {estadisticas.alumnosUnicos}
                                     </div>
-                                    <div style={{ fontSize: '12px', color: '#64748b', lineHeight: '1.3' }}>
-                                        Alumnos únicos<br />han participado
+                                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
+                                        Estudiantes únicos participantes
                                     </div>
                                 </div>
                             </div>
 
                             {/* Tarjeta 4: Promedio general */}
-                            <div style={{ background: '#fff', padding: '20px', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                                <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#fefce8', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
-                                    <Star size={18} color="#eab308" />
+                            <div className="interactive-card" style={{ background: '#ffffff', padding: '22px', borderRadius: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', borderTop: '4px solid #f59e0b', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '700', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Promedio General</span>
+                                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: '#fffbeb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Star size={19} color="#d97706" />
+                                    </div>
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#6366f1', marginBottom: '4px' }}>
-                                        {promedioTexto}
+                                    <div style={{ fontSize: '30px', fontWeight: '800', color: '#d97706', letterSpacing: '-0.5px', marginBottom: '4px' }}>
+                                        {promedioTexto} <span style={{ fontSize: '16px', fontWeight: '600', color: '#94a3b8' }}>/ 20</span>
                                     </div>
-                                    <div style={{ fontSize: '12px', color: '#64748b', lineHeight: '1.3' }}>
-                                        Promedio general<br />sobre 20 puntos
+                                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
+                                        Escala vigesimal de rendimiento
                                     </div>
                                 </div>
                             </div>
