@@ -1,13 +1,67 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Chart as ChartJS, registerables } from 'chart.js';
 import { obtenerEstadisticasDetalladas } from '../services/cuestionarioService';
-import GraficasRendimientoAvanzadas from '../components/charts/GraficasRendimientoAvanzadas';
-import { Edit3, CheckSquare, Star, BarChart2, PieChart, Layers, Sparkles } from 'lucide-react';
+import useResponsive from '../hooks/useResponsive';
+import {
+    BarChart3,
+    PieChart as PieIcon,
+    TrendingUp,
+    AlertTriangle,
+    Award,
+    CheckCircle2,
+    FileText,
+    Search,
+    Filter,
+    HelpCircle,
+    ArrowUpRight,
+    ArrowDownRight,
+    Layers,
+    BookOpen
+} from 'lucide-react';
+
+ChartJS.register(...registerables);
+
+// Colores institucionales por materia
+const COLORES_MATERIA = {
+    'Matemáticas': '#3b82f6',
+    'Historia': '#f59e0b',
+    'Biología': '#10b981',
+    'Informática': '#8b5cf6',
+    'Física': '#6366f1',
+    'Química': '#ea580c',
+    'General': '#0ea5e9'
+};
+
+const getColorMateria = (materia) => {
+    if (!materia) return '#64748b';
+    for (const [key, color] of Object.entries(COLORES_MATERIA)) {
+        if (materia.toLowerCase().includes(key.toLowerCase())) {
+            return color;
+        }
+    }
+    return '#3b82f6';
+};
 
 export default function EstadisticasView() {
+    const { isMobile } = useResponsive();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [tabPrincipal, setTabPrincipal] = useState('graficas'); // 'graficas' o 'general'
+
+    // Pestaña principal: 'resumen' (Métricas y gráficos generales) o 'preguntas' (Diagnóstico de reactivos)
+    const [pestañaActiva, setPestañaActiva] = useState('resumen');
+
+    // Filtros interactivos
+    const [materiaFiltro, setMateriaFiltro] = useState('TODAS');
+    const [cuestionarioFiltro, setCuestionarioFiltro] = useState('TODOS');
+    const [busquedaPregunta, setBusquedaPregunta] = useState('');
+
+    // Refs para Chart.js
+    const canvasBarrasRef = useRef(null);
+    const chartBarrasInstance = useRef(null);
+
+    const canvasDonaRef = useRef(null);
+    const chartDonaInstance = useRef(null);
 
     useEffect(() => {
         const cargarEstadisticas = async () => {
@@ -17,7 +71,7 @@ export default function EstadisticasView() {
                 setData(stats);
             } catch (err) {
                 console.error('Error al cargar estadísticas detalladas:', err);
-                setError('No se pudieron cargar las estadísticas de la base de datos.');
+                setError('No se pudieron cargar las estadísticas.');
             } finally {
                 setLoading(false);
             }
@@ -26,134 +80,227 @@ export default function EstadisticasView() {
         cargarEstadisticas();
     }, []);
 
+    // Datos procesados
     const totalRespuestas = data?.totalRespuestas ?? 0;
     const tasaAprobacion = data?.tasaAprobacion != null ? Math.round(data.tasaAprobacion) : 0;
-    const promedioGeneral = data?.promedioGeneral ?? 0.0;
+    const promedioGeneral = data?.promedioGeneral != null ? data.promedioGeneral.toFixed(1) : '0.0';
     const cuestionarios = data?.cuestionarios || [];
     const distribucion = data?.distribucion || { rango18_20: 0, rango15_17: 0, rango11_14: 0, rango0_10: 0 };
 
-    // Cuestionarios ordenados para "Respuestas por cuestionario"
-    const maxRespuestas = cuestionarios.reduce((max, c) => Math.max(max, c.totalRespuestas || 0), 1);
+    // Lista de materias únicas disponibles
+    const listaMaterias = useMemo(() => {
+        const set = new Set();
+        (data?.rendimientoMaterias || []).forEach(m => m.materia && set.add(m.materia));
+        cuestionarios.forEach(c => c.materia && set.add(c.materia));
+        return Array.from(set);
+    }, [data, cuestionarios]);
 
-    // Valores para el gráfico de barras de distribución de calificaciones
-    const c18_20 = distribucion.rango18_20 || 0;
-    const c15_17 = distribucion.rango15_17 || 0;
-    const c11_14 = distribucion.rango11_14 || 0;
-    const c0_10 = distribucion.rango0_10 || 0;
-    const maxAlumnosRango = Math.max(c18_20, c15_17, c11_14, c0_10, 1);
-
-    // Garantizar datos de rendimiento por materia (reales del backend o calculados)
+    // Materias procesadas para gráficos
     const rendimientoMaterias = useMemo(() => {
         if (data?.rendimientoMaterias && data.rendimientoMaterias.length > 0) {
             return data.rendimientoMaterias;
         }
-
-        // Sintetizar a partir de cuestionarios existentes si aún no han sido procesados por el backend
-        const mapa = {};
-        cuestionarios.forEach(c => {
-            const mat = c.materia || 'General';
-            if (!mapa[mat]) {
-                mapa[mat] = {
-                    materia: mat,
-                    totalCuestionarios: 0,
-                    totalPreguntas: 0,
-                    totalRespuestas: 0,
-                    respuestasCorrectas: 0,
-                    respuestasIncorrectas: 0,
-                    tasaAciertos: 0,
-                    promedioNota: 15.0
-                };
-            }
-            mapa[mat].totalCuestionarios++;
-            mapa[mat].totalPreguntas += (c.totalPreguntas || 5);
-            mapa[mat].totalRespuestas += (c.totalRespuestas || 0);
-        });
-
-        const list = Object.values(mapa);
-        if (list.length > 0 && list.some(m => m.totalRespuestas > 0)) {
-            return list.map(m => {
-                const resp = m.totalRespuestas || 1;
-                const tasa = Math.min(95, Math.max(50, Math.round(62 + (m.totalCuestionarios * 8) % 32)));
-                const correctas = Math.round((tasa / 100) * resp);
-                return {
-                    ...m,
-                    tasaAciertos: tasa,
-                    respuestasCorrectas: correctas,
-                    respuestasIncorrectas: Math.max(0, resp - correctas)
-                };
-            });
-        }
-
-        // Datos de muestra si la base de datos está recién inicializada sin evaluaciones
+        // Fallback sintetizado si aún no hay datos en la BD
         return [
-            { materia: 'Matemáticas', totalCuestionarios: 2, totalPreguntas: 12, totalRespuestas: 24, respuestasCorrectas: 20, respuestasIncorrectas: 4, tasaAciertos: 83.3, promedioNota: 16.5, color: '#3b82f6' },
-            { materia: 'Historia', totalCuestionarios: 1, totalPreguntas: 6, totalRespuestas: 18, respuestasCorrectas: 13, respuestasIncorrectas: 5, tasaAciertos: 72.2, promedioNota: 14.4, color: '#f59e0b' },
-            { materia: 'Biología', totalCuestionarios: 2, totalPreguntas: 8, totalRespuestas: 16, respuestasCorrectas: 12, respuestasIncorrectas: 4, tasaAciertos: 75.0, promedioNota: 15.0, color: '#10b981' },
-            { materia: 'Informática', totalCuestionarios: 1, totalPreguntas: 5, totalRespuestas: 20, respuestasCorrectas: 18, respuestasIncorrectas: 2, tasaAciertos: 90.0, promedioNota: 18.0, color: '#8b5cf6' }
+            { materia: 'Matemáticas', tasaAciertos: 78.3, totalRespuestas: 24, respuestasCorrectas: 19 },
+            { materia: 'Informática', tasaAciertos: 25.0, totalRespuestas: 8, respuestasCorrectas: 2 },
+            { materia: 'Biología', tasaAciertos: 85.0, totalRespuestas: 14, respuestasCorrectas: 12 },
+            { materia: 'Historia', tasaAciertos: 70.0, totalRespuestas: 10, respuestasCorrectas: 7 }
         ];
-    }, [data, cuestionarios]);
+    }, [data]);
 
-    // Garantizar datos de rendimiento por pregunta (reales del backend o calculados)
+    // Filtrar materias según selector
+    const materiasFiltradas = useMemo(() => {
+        if (materiaFiltro === 'TODAS') return rendimientoMaterias;
+        return rendimientoMaterias.filter(m => (m.materia || '').toLowerCase() === materiaFiltro.toLowerCase());
+    }, [rendimientoMaterias, materiaFiltro]);
+
+    // Preguntas procesadas para la tabla y diagnóstico
     const rendimientoPreguntas = useMemo(() => {
         if (data?.rendimientoPreguntas && data.rendimientoPreguntas.length > 0) {
             return data.rendimientoPreguntas;
         }
+        // Fallback de reactivos representativos
+        return [
+            { preguntaId: '1', enunciado: '¿Cuál es la capital del Perú?', materia: 'Historia', cuestionarioTitulo: 'Prueba de imágenes', tasaAciertos: 100, dificultad: 'Baja', totalRespuestas: 6, respuestasCorrectas: 6 },
+            { preguntaId: '2', enunciado: '¿El agua hierve a 100 grados Celsius a nivel del mar?', materia: 'Biología', cuestionarioTitulo: 'Prueba de imágenes', tasaAciertos: 100, dificultad: 'Baja', totalRespuestas: 6, respuestasCorrectas: 6 },
+            { preguntaId: '3', enunciado: '¿Cuánto es 15 x 6?', materia: 'Matemáticas', cuestionarioTitulo: 'Prueba de imágenes', tasaAciertos: 83.3, dificultad: 'Baja', totalRespuestas: 6, respuestasCorrectas: 5 },
+            { preguntaId: '4', enunciado: '¿Cuál es el planeta más grande del sistema solar?', materia: 'Matemáticas', cuestionarioTitulo: 'EXAMEN DE INFORMATICA', tasaAciertos: 0, dificultad: 'Alta', totalRespuestas: 5, respuestasCorrectas: 0 },
+            { preguntaId: '5', enunciado: '¿Qué componente ejecuta las instrucciones en una computadora?', materia: 'Informática', cuestionarioTitulo: 'EXAMEN DE INFORMATICA', tasaAciertos: 50, dificultad: 'Media', totalRespuestas: 4, respuestasCorrectas: 2 }
+        ];
+    }, [data]);
 
-        // Sintetizar a partir de cuestionarios existentes
-        if (cuestionarios.length > 0) {
-            const list = [];
-            cuestionarios.forEach((c, cIdx) => {
-                const pregs = Math.max(c.totalPreguntas || 0, 3);
-                for (let i = 1; i <= pregs; i++) {
-                    const tasa = Math.round(42 + ((i * 19 + cIdx * 11) % 54));
-                    const totalR = Math.max(c.totalRespuestas || 0, 8);
-                    const corr = Math.round((tasa / 100) * totalR);
-                    list.push({
-                        preguntaId: `p-${c.id || cIdx}-${i}`,
-                        cuestionarioId: c.id,
-                        cuestionarioTitulo: c.titulo,
-                        materia: c.materia || 'General',
-                        enunciado: `Pregunta reactiva #${i}: Evaluación de conceptos en ${c.materia || c.titulo}`,
-                        orden: i,
-                        tipo: i % 2 === 0 ? 'OPCION_MULTIPLE' : 'VERDADERO_FALSO',
-                        totalRespuestas: totalR,
-                        respuestasCorrectas: corr,
-                        respuestasIncorrectas: totalR - corr,
-                        tasaAciertos: tasa,
-                        dificultad: tasa >= 75 ? 'Baja' : tasa >= 50 ? 'Media' : 'Alta'
-                    });
-                }
-            });
-            if (list.length > 0) return list;
+    // Preguntas filtradas por cuestionario y búsqueda
+    const preguntasFiltradas = useMemo(() => {
+        return rendimientoPreguntas.filter(p => {
+            const matchCuestionario = cuestionarioFiltro === 'TODOS' ||
+                p.cuestionarioId === cuestionarioFiltro ||
+                (p.cuestionarioTitulo || '').toLowerCase() === cuestionarioFiltro.toLowerCase();
+            const matchMateria = materiaFiltro === 'TODAS' ||
+                (p.materia || '').toLowerCase() === materiaFiltro.toLowerCase();
+            const matchTexto = !busquedaPregunta.trim() ||
+                (p.enunciado || '').toLowerCase().includes(busquedaPregunta.toLowerCase()) ||
+                (p.cuestionarioTitulo || '').toLowerCase().includes(busquedaPregunta.toLowerCase());
+
+            return matchCuestionario && matchMateria && matchTexto;
+        });
+    }, [rendimientoPreguntas, cuestionarioFiltro, materiaFiltro, busquedaPregunta]);
+
+    // KPIs calculados
+    const kpis = useMemo(() => {
+        const sorted = [...rendimientoMaterias].sort((a, b) => b.tasaAciertos - a.tasaAciertos);
+        const lider = sorted[0] || null;
+        const rezagada = [...rendimientoMaterias].sort((a, b) => a.tasaAciertos - b.tasaAciertos)[0] || null;
+        const preguntaDificil = [...rendimientoPreguntas].sort((a, b) => a.tasaAciertos - b.tasaAciertos)[0] || null;
+
+        return {
+            lider,
+            rezagada,
+            preguntaDificil
+        };
+    }, [rendimientoMaterias, rendimientoPreguntas]);
+
+    // -------------------------------------------------------------------------
+    // GRÁFICO 1: Barras de Tasa de Aciertos por Materia
+    // -------------------------------------------------------------------------
+    useEffect(() => {
+        if (pestañaActiva !== 'resumen' || !canvasBarrasRef.current) return;
+
+        if (chartBarrasInstance.current) {
+            chartBarrasInstance.current.destroy();
         }
 
-        // Datos de muestra si no hay reactivos todavía
-        return [
-            { preguntaId: '1', cuestionarioTitulo: 'Álgebra y Ecuaciones Lineales', materia: 'Matemáticas', enunciado: '¿Cuál es la solución a la ecuación 2x + 6 = 14?', orden: 1, tipo: 'OPCION_MULTIPLE', totalRespuestas: 15, respuestasCorrectas: 14, respuestasIncorrectas: 1, tasaAciertos: 93.3, dificultad: 'Baja' },
-            { preguntaId: '2', cuestionarioTitulo: 'Álgebra y Ecuaciones Lineales', materia: 'Matemáticas', enunciado: 'Factorización de polinomios de segundo grado cuadráticos', orden: 2, tipo: 'OPCION_MULTIPLE', totalRespuestas: 15, respuestasCorrectas: 7, respuestasIncorrectas: 8, tasaAciertos: 46.7, dificultad: 'Alta' },
-            { preguntaId: '3', cuestionarioTitulo: 'Revolución Industrial', materia: 'Historia', enunciado: '¿En qué país comenzó la Primera Revolución Industrial británica?', orden: 1, tipo: 'OPCION_MULTIPLE', totalRespuestas: 12, respuestasCorrectas: 10, respuestasIncorrectas: 2, tasaAciertos: 83.3, dificultad: 'Baja' },
-            { preguntaId: '4', cuestionarioTitulo: 'Revolución Industrial', materia: 'Historia', enunciado: 'Consecuencias socioeconómicas del vapor y la urbanización', orden: 2, tipo: 'OPCION_MULTIPLE', totalRespuestas: 12, respuestasCorrectas: 6, respuestasIncorrectas: 6, tasaAciertos: 50.0, dificultad: 'Media' },
-            { preguntaId: '5', cuestionarioTitulo: 'Célula y Genética Básica', materia: 'Biología', enunciado: 'Identifica la función principal de las mitocondrias celulares', orden: 1, tipo: 'OPCION_MULTIPLE', totalRespuestas: 14, respuestasCorrectas: 12, respuestasIncorrectas: 2, tasaAciertos: 85.7, dificultad: 'Baja' },
-            { preguntaId: '6', cuestionarioTitulo: 'Célula y Genética Básica', materia: 'Biología', enunciado: 'Diferencias estructurales entre meiosis y mitosis celular', orden: 2, tipo: 'OPCION_MULTIPLE', totalRespuestas: 14, respuestasCorrectas: 5, respuestasIncorrectas: 9, tasaAciertos: 35.7, dificultad: 'Alta' },
-            { preguntaId: '7', cuestionarioTitulo: 'Algoritmos y Estructuras', materia: 'Informática', enunciado: 'Complejidad algorítmica temporal de búsqueda binaria O(log n)', orden: 1, tipo: 'OPCION_MULTIPLE', totalRespuestas: 18, respuestasCorrectas: 16, respuestasIncorrectas: 2, tasaAciertos: 88.9, dificultad: 'Baja' }
-        ];
-    }, [data, cuestionarios]);
+        const labels = materiasFiltradas.map(m => m.materia);
+        const values = materiasFiltradas.map(m => m.tasaAciertos);
+        const bgColors = materiasFiltradas.map(m => getColorMateria(m.materia));
 
-    const getMateriaStyle = (materia) => {
-        const mat = (materia || '').toLowerCase();
-        if (mat.includes('historia')) return { bg: '#fef3c7', color: '#b45309' };
-        if (mat.includes('biología') || mat.includes('biologia')) return { bg: '#dcfce7', color: '#15803d' };
-        if (mat.includes('informática') || mat.includes('informatica') || mat.includes('programación') || mat.includes('programacion')) return { bg: '#f3e8ff', color: '#7e22ce' };
-        if (mat.includes('mate')) return { bg: '#dbeafe', color: '#1e40af' };
-        if (mat.includes('química') || mat.includes('quimica')) return { bg: '#ffedd5', color: '#c2410c' };
-        if (mat.includes('física') || mat.includes('fisica')) return { bg: '#e0e7ff', color: '#4338ca' };
-        return { bg: '#f1f5f9', color: '#475569' };
-    };
+        const ctx = canvasBarrasRef.current.getContext('2d');
+        chartBarrasInstance.current = new ChartJS(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: '% de Aciertos',
+                    data: values,
+                    backgroundColor: bgColors,
+                    borderRadius: 8,
+                    maxBarThickness: 54
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        titleFont: { size: 13, family: 'Plus Jakarta Sans', weight: '700' },
+                        bodyFont: { size: 12, family: 'Plus Jakarta Sans' },
+                        padding: 10,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: (context) => ` ${context.parsed.y}% de respuestas correctas`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: value => `${value}%`,
+                            color: '#64748b',
+                            font: { size: 11, family: 'Plus Jakarta Sans' }
+                        },
+                        grid: { color: '#f1f5f9' }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#1e293b',
+                            font: { size: 12, weight: '700', family: 'Plus Jakarta Sans' }
+                        },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        return () => {
+            if (chartBarrasInstance.current) chartBarrasInstance.current.destroy();
+        };
+    }, [materiasFiltradas, pestañaActiva]);
+
+    // -------------------------------------------------------------------------
+    // GRÁFICO 2: Dona de Distribución de Calificaciones (Escala Vigesimal)
+    // -------------------------------------------------------------------------
+    useEffect(() => {
+        if (pestañaActiva !== 'resumen' || !canvasDonaRef.current) return;
+
+        if (chartDonaInstance.current) {
+            chartDonaInstance.current.destroy();
+        }
+
+        const c18_20 = distribucion.rango18_20 || 0;
+        const c15_17 = distribucion.rango15_17 || 0;
+        const c11_14 = distribucion.rango11_14 || 0;
+        const c0_10 = distribucion.rango0_10 || 0;
+
+        const totalD = c18_20 + c15_17 + c11_14 + c0_10;
+        const dataValues = totalD > 0 ? [c18_20, c15_17, c11_14, c0_10] : [1, 0, 0, 0];
+
+        const ctx = canvasDonaRef.current.getContext('2d');
+        chartDonaInstance.current = new ChartJS(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: [
+                    'Sobresaliente (18 - 20)',
+                    'Notable (15 - 17)',
+                    'Aprobado (11 - 14)',
+                    'Requiere Apoyo (0 - 10)'
+                ],
+                datasets: [{
+                    data: dataValues,
+                    backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'],
+                    borderColor: '#ffffff',
+                    borderWidth: 3,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '68%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 14,
+                            font: { size: 11, family: 'Plus Jakarta Sans', weight: '600' },
+                            color: '#475569'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#0f172a',
+                        padding: 10,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: (context) => ` ${context.label}: ${context.parsed} entregas`
+                        }
+                    }
+                }
+            }
+        });
+
+        return () => {
+            if (chartDonaInstance.current) chartDonaInstance.current.destroy();
+        };
+    }, [distribucion, pestañaActiva]);
 
     if (loading) {
         return (
             <div style={{ padding: '60px 0', textAlign: 'center', color: '#64748b', fontSize: '14px' }}>
-                Cargando análisis de participación y rendimiento...
+                Cargando métricas y análisis de rendimiento...
             </div>
         );
     }
@@ -167,26 +314,26 @@ export default function EstadisticasView() {
     }
 
     return (
-        <div>
-            {/* CABECERA PRINCIPAL Y SELECTOR DE VISTA */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+            {/* ENCABEZADO Y SELECTOR PRINCIPAL */}
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '26px',
-                flexWrap: 'wrap',
+                alignItems: isMobile ? 'flex-start' : 'center',
+                flexDirection: isMobile ? 'column' : 'row',
                 gap: '16px'
             }}>
                 <div>
-                    <h1 style={{ margin: '0 0 4px 0', fontSize: '26px', color: '#0f172a', fontWeight: '800', letterSpacing: '-0.02em' }}>
+                    <h1 style={{ margin: '0 0 4px 0', fontSize: isMobile ? '22px' : '26px', color: '#0f172a', fontWeight: '800', letterSpacing: '-0.02em' }}>
                         Estadísticas y Rendimiento
                     </h1>
-                    <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>
-                        Visualización analítica de tasa de aciertos por materia y por pregunta con gráficos interactivos
+                    <span style={{ fontSize: '13px', color: '#64748b' }}>
+                        Analítica académica simplificada para toma de decisiones pedagógicas
                     </span>
                 </div>
 
-                {/* SELECTOR DE PESTAÑAS PRINCIPALES */}
+                {/* SELECTOR DE PESTAÑAS (SOLO 2 VISTAS CLARAS) */}
                 <div style={{
                     display: 'flex',
                     background: '#f1f5f9',
@@ -195,7 +342,7 @@ export default function EstadisticasView() {
                 }}>
                     <button
                         type="button"
-                        onClick={() => setTabPrincipal('graficas')}
+                        onClick={() => setPestañaActiva('resumen')}
                         style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -206,18 +353,19 @@ export default function EstadisticasView() {
                             fontSize: '13px',
                             fontWeight: '700',
                             cursor: 'pointer',
-                            background: tabPrincipal === 'graficas' ? '#2563eb' : 'transparent',
-                            color: tabPrincipal === 'graficas' ? '#ffffff' : '#64748b',
-                            boxShadow: tabPrincipal === 'graficas' ? '0 2px 6px rgba(37, 99, 235, 0.3)' : 'none',
-                            transition: 'all 0.2s'
+                            background: pestañaActiva === 'resumen' ? '#2563eb' : 'transparent',
+                            color: pestañaActiva === 'resumen' ? '#ffffff' : '#64748b',
+                            boxShadow: pestañaActiva === 'resumen' ? '0 2px 6px rgba(37, 99, 235, 0.25)' : 'none',
+                            transition: 'all 0.2s ease'
                         }}
                     >
-                        <BarChart2 size={16} />
-                        Gráficas Avanzadas
+                        <BarChart3 size={16} />
+                        Resumen y Materias
                     </button>
+
                     <button
                         type="button"
-                        onClick={() => setTabPrincipal('general')}
+                        onClick={() => setPestañaActiva('preguntas')}
                         style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -228,290 +376,466 @@ export default function EstadisticasView() {
                             fontSize: '13px',
                             fontWeight: '700',
                             cursor: 'pointer',
-                            background: tabPrincipal === 'general' ? '#2563eb' : 'transparent',
-                            color: tabPrincipal === 'general' ? '#ffffff' : '#64748b',
-                            boxShadow: tabPrincipal === 'general' ? '0 2px 6px rgba(37, 99, 235, 0.3)' : 'none',
-                            transition: 'all 0.2s'
+                            background: pestañaActiva === 'preguntas' ? '#2563eb' : 'transparent',
+                            color: pestañaActiva === 'preguntas' ? '#ffffff' : '#64748b',
+                            boxShadow: pestañaActiva === 'preguntas' ? '0 2px 6px rgba(37, 99, 235, 0.25)' : 'none',
+                            transition: 'all 0.2s ease'
                         }}
                     >
-                        <Layers size={16} />
-                        Resumen y Distribución
+                        <HelpCircle size={16} />
+                        Diagnóstico por Pregunta
                     </button>
                 </div>
             </div>
 
-            {/* VISTA 1: GRÁFICAS AVANZADAS (BARRAS Y CIRCULARES POR PREGUNTA Y MATERIA) */}
-            {tabPrincipal === 'graficas' && (
-                <GraficasRendimientoAvanzadas
-                    rendimientoMaterias={rendimientoMaterias}
-                    rendimientoPreguntas={rendimientoPreguntas}
-                    cuestionarios={cuestionarios}
-                    tituloModulo="Gráficas de Tasa de Aciertos"
-                />
-            )}
-
-            {/* VISTA 2: RESUMEN Y DISTRIBUCIÓN CLÁSICA */}
-            {tabPrincipal === 'general' && (
+            {/* ========================================================================= */}
+            {/* PESTAÑA 1: RESUMEN GENERAL Y MATERIAS */}
+            {/* ========================================================================= */}
+            {pestañaActiva === 'resumen' && (
                 <>
-                    {/* TARJETAS MÉTRICAS SUPERIORES (3 COLUMNAS) */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '24px' }}>
-                        {/* 1. Total de respuestas */}
-                        <div className="interactive-card" style={{ background: '#ffffff', padding: '22px 24px', borderRadius: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', borderTop: '4px solid #2563eb', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <div style={{ width: '44px', height: '44px', borderRadius: '12px', backgroundColor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                <Edit3 size={20} color="#2563eb" />
+                    {/* BARRA DE FILTRO LIMPIA */}
+                    <div style={{
+                        background: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '14px',
+                        padding: '12px 18px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '12px',
+                        flexWrap: 'wrap'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <Filter size={16} color="#2563eb" />
+                            <span style={{ fontSize: '13px', fontWeight: '700', color: '#334155' }}>Filtrar por Materia:</span>
+                            <select
+                                value={materiaFiltro}
+                                onChange={(e) => setMateriaFiltro(e.target.value)}
+                                style={{
+                                    padding: '7px 14px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #cbd5e1',
+                                    backgroundColor: '#f8fafc',
+                                    color: '#0f172a',
+                                    fontSize: '13px',
+                                    fontWeight: '600',
+                                    outline: 'none',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <option value="TODAS">📚 Todas las Materias</option>
+                                {listaMaterias.map(mat => (
+                                    <option key={mat} value={mat}>{mat}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                            Mostrando datos consolidados de {cuestionarios.length} cuestionario{cuestionarios.length === 1 ? '' : 's'}
+                        </span>
+                    </div>
+
+                    {/* 4 TARJETAS DE INSIGHTS CLAVE */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '18px' }}>
+                        {/* 1. TASA DE APROBACIÓN */}
+                        <div className="interactive-card" style={{
+                            background: '#ffffff',
+                            padding: '22px',
+                            borderRadius: '16px',
+                            border: '1px solid #e2e8f0',
+                            borderTop: '3px solid #10b981',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                    Tasa de Aprobación
+                                </span>
+                                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <CheckCircle2 size={16} color="#059669" />
+                                </div>
                             </div>
-                            <div>
-                                <div style={{ fontSize: '30px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.5px', lineHeight: '1.1', marginBottom: '4px' }}>
-                                    {totalRespuestas}
-                                </div>
-                                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                                    Total de respuestas
-                                </div>
+                            <div style={{ fontSize: '28px', fontWeight: '800', color: '#059669' }}>
+                                {tasaAprobacion}%
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
+                                {totalRespuestas} evaluaciones recibidas
                             </div>
                         </div>
 
-                        {/* 2. Tasa de aprobación */}
-                        <div className="interactive-card" style={{ background: '#ffffff', padding: '22px 24px', borderRadius: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', borderTop: '4px solid #10b981', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <div style={{ width: '44px', height: '44px', borderRadius: '12px', backgroundColor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                <CheckSquare size={20} color="#059669" />
+                        {/* 2. PROMEDIO GENERAL */}
+                        <div className="interactive-card" style={{
+                            background: '#ffffff',
+                            padding: '22px',
+                            borderRadius: '16px',
+                            border: '1px solid #e2e8f0',
+                            borderTop: '3px solid #f59e0b',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                    Promedio General
+                                </span>
+                                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#fffbeb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Award size={16} color="#d97706" />
+                                </div>
                             </div>
-                            <div>
-                                <div style={{ fontSize: '30px', fontWeight: '800', color: '#059669', letterSpacing: '-0.5px', lineHeight: '1.1', marginBottom: '4px' }}>
-                                    {tasaAprobacion}%
-                                </div>
-                                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                                    Tasa de aprobación
-                                </div>
+                            <div style={{ fontSize: '28px', fontWeight: '800', color: '#d97706' }}>
+                                {promedioGeneral} <span style={{ fontSize: '16px', fontWeight: '600', color: '#94a3b8' }}>/ 20</span>
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
+                                Escala vigesimal
                             </div>
                         </div>
 
-                        {/* 3. Promedio general */}
-                        <div className="interactive-card" style={{ background: '#ffffff', padding: '22px 24px', borderRadius: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', borderTop: '4px solid #f59e0b', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <div style={{ width: '44px', height: '44px', borderRadius: '12px', backgroundColor: '#fffbeb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                <Star size={20} color="#d97706" />
+                        {/* 3. MATERIA LÍDER */}
+                        <div className="interactive-card" style={{
+                            background: '#ffffff',
+                            padding: '22px',
+                            borderRadius: '16px',
+                            border: '1px solid #e2e8f0',
+                            borderTop: '3px solid #2563eb',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                    Materia Líder
+                                </span>
+                                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <ArrowUpRight size={16} color="#2563eb" />
+                                </div>
                             </div>
-                            <div>
-                                <div style={{ fontSize: '30px', fontWeight: '800', color: '#d97706', letterSpacing: '-0.5px', lineHeight: '1.1', marginBottom: '4px' }}>
-                                    {promedioGeneral > 0 ? promedioGeneral.toFixed(1) : '0.0'}
-                                    <span style={{ fontSize: '16px', fontWeight: '600', color: '#94a3b8' }}> / 20</span>
+                            <div style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {kpis.lider?.materia || 'Sin datos'}
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#2563eb', fontWeight: '700', marginTop: '4px' }}>
+                                {kpis.lider ? `${kpis.lider.tasaAciertos}% de efectividad` : '—'}
+                            </div>
+                        </div>
+
+                        {/* 4. REQUIERE REFUERZO */}
+                        <div className="interactive-card" style={{
+                            background: '#ffffff',
+                            padding: '22px',
+                            borderRadius: '16px',
+                            border: '1px solid #e2e8f0',
+                            borderTop: '3px solid #ef4444',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                    Requiere Refuerzo
+                                </span>
+                                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <AlertTriangle size={16} color="#ef4444" />
                                 </div>
-                                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                                    Promedio general
-                                </div>
+                            </div>
+                            <div style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {kpis.rezagada?.materia || 'Todo al día'}
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#dc2626', fontWeight: '700', marginTop: '4px' }}>
+                                {kpis.rezagada ? `${kpis.rezagada.tasaAciertos}% de efectividad` : 'Rendimiento parejo'}
                             </div>
                         </div>
                     </div>
 
-                    {/* SECCIÓN INTERMEDIA (2 COLUMNAS) */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '24px', marginBottom: '24px' }}>
-                        
-                        {/* CARD IZQUIERDA: RESPUESTAS POR CUESTIONARIO */}
-                        <div style={{ background: '#ffffff', borderRadius: '18px', border: '1px solid #e2e8f0', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                            <h3 style={{ margin: '0 0 20px 0', fontSize: '17px', fontWeight: '800', color: '#0f172a' }}>
-                                Respuestas por cuestionario
-                            </h3>
-
-                            {cuestionarios.length > 0 ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                    {cuestionarios.map((c, idx) => {
-                                        const resp = c.totalRespuestas || 0;
-                                        const pct = Math.max(12, Math.round((resp / maxRespuestas) * 100));
-
-                                        return (
-                                            <div key={c.id || idx}>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                                                    <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a' }}>
-                                                        {c.titulo}
-                                                    </span>
-                                                    <span style={{ fontSize: '13px', fontWeight: '800', color: '#2563eb' }}>
-                                                        {resp} <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '500' }}>entregas</span>
-                                                    </span>
-                                                </div>
-                                                <div style={{ width: '100%', height: '22px', backgroundColor: '#f1f5f9', borderRadius: '9999px', overflow: 'hidden', position: 'relative' }}>
-                                                    <div style={{
-                                                        width: `${pct}%`,
-                                                        height: '100%',
-                                                        background: 'linear-gradient(90deg, #2563eb 0%, #3b82f6 100%)',
-                                                        borderRadius: '9999px',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        paddingLeft: '10px',
-                                                        boxSizing: 'border-box',
-                                                        transition: 'width 0.4s ease'
-                                                    }}>
-                                                        <span style={{ color: '#ffffff', fontSize: '10px', fontWeight: '800', whiteSpace: 'nowrap' }}>
-                                                            {resp}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
+                    {/* 2 GRÁFICOS GRANDES Y CLAROS (BARRAS DE MATERIA + DONA DE CALIFICACIONES) */}
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr', gap: '22px' }}>
+                        {/* GRÁFICO 1: BARRAS POR MATERIA */}
+                        <div style={{
+                            background: '#ffffff',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '18px',
+                            padding: '24px',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                <div>
+                                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#0f172a' }}>
+                                        Tasa de Aciertos por Materia
+                                    </h3>
+                                    <span style={{ fontSize: '12px', color: '#64748b' }}>
+                                        Porcentaje promedio de respuestas correctas
+                                    </span>
                                 </div>
-                            ) : (
-                                <div style={{ color: '#94a3b8', fontSize: '13px', padding: '30px 0', textAlign: 'center' }}>
-                                    No hay cuestionarios con respuestas registradas.
-                                </div>
-                            )}
+                                <span style={{ fontSize: '11px', fontWeight: '700', color: '#2563eb', backgroundColor: '#eff6ff', padding: '3px 9px', borderRadius: '12px' }}>
+                                    Comparativa
+                                </span>
+                            </div>
+                            <div style={{ height: '280px', position: 'relative' }}>
+                                <canvas ref={canvasBarrasRef} />
+                            </div>
                         </div>
 
-                        {/* CARD DERECHA: DISTRIBUCIÓN DE CALIFICACIONES */}
-                        <div style={{ background: '#ffffff', borderRadius: '18px', border: '1px solid #e2e8f0', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                            <div>
-                                <h3 style={{ margin: '0 0 20px 0', fontSize: '17px', fontWeight: '800', color: '#0f172a' }}>
-                                    Distribución de calificaciones
+                        {/* GRÁFICO 2: DONA DE CALIFICACIONES (ESCALA VIGESIMAL) */}
+                        <div style={{
+                            background: '#ffffff',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '18px',
+                            padding: '24px',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                        }}>
+                            <div style={{ marginBottom: '16px' }}>
+                                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#0f172a' }}>
+                                    Distribución de Calificaciones
                                 </h3>
-
-                                {/* GRÁFICO DE BARRAS */}
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', height: '140px', alignItems: 'end', marginBottom: '18px', padding: '0 10px' }}>
-                                    {/* Barra 18-20 pts */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
-                                        <span style={{ fontSize: '12px', fontWeight: '800', color: '#059669', marginBottom: '6px' }}>{c18_20}</span>
-                                        <div style={{
-                                            width: '100%',
-                                            height: `${Math.max(12, Math.round((c18_20 / maxAlumnosRango) * 85))}px`,
-                                            background: 'linear-gradient(180deg, #10b981 0%, #059669 100%)',
-                                            borderRadius: '8px',
-                                            transition: 'height 0.4s ease'
-                                        }} />
-                                        <div style={{ textAlign: 'center', marginTop: '8px' }}>
-                                            <div style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a' }}>18–20</div>
-                                            <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '600' }}>pts</div>
-                                        </div>
-                                    </div>
-
-                                    {/* Barra 15-17 pts */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
-                                        <span style={{ fontSize: '12px', fontWeight: '800', color: '#2563eb', marginBottom: '6px' }}>{c15_17}</span>
-                                        <div style={{
-                                            width: '100%',
-                                            height: `${Math.max(12, Math.round((c15_17 / maxAlumnosRango) * 85))}px`,
-                                            background: 'linear-gradient(180deg, #3b82f6 0%, #2563eb 100%)',
-                                            borderRadius: '8px',
-                                            transition: 'height 0.4s ease'
-                                        }} />
-                                        <div style={{ textAlign: 'center', marginTop: '8px' }}>
-                                            <div style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a' }}>15–17</div>
-                                            <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '600' }}>pts</div>
-                                        </div>
-                                    </div>
-
-                                    {/* Barra 11-14 pts */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
-                                        <span style={{ fontSize: '12px', fontWeight: '800', color: '#d97706', marginBottom: '6px' }}>{c11_14}</span>
-                                        <div style={{
-                                            width: '100%',
-                                            height: `${Math.max(12, Math.round((c11_14 / maxAlumnosRango) * 85))}px`,
-                                            background: 'linear-gradient(180deg, #f59e0b 0%, #d97706 100%)',
-                                            borderRadius: '8px',
-                                            transition: 'height 0.4s ease'
-                                        }} />
-                                        <div style={{ textAlign: 'center', marginTop: '8px' }}>
-                                            <div style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a' }}>11–14</div>
-                                            <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '600' }}>pts</div>
-                                        </div>
-                                    </div>
-
-                                    {/* Barra 0-10 pts */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
-                                        <span style={{ fontSize: '12px', fontWeight: '800', color: '#e11d48', marginBottom: '6px' }}>{c0_10}</span>
-                                        <div style={{
-                                            width: '100%',
-                                            height: `${Math.max(12, Math.round((c0_10 / maxAlumnosRango) * 85))}px`,
-                                            background: 'linear-gradient(180deg, #f43f5e 0%, #e11d48 100%)',
-                                            borderRadius: '8px',
-                                            transition: 'height 0.4s ease'
-                                        }} />
-                                        <div style={{ textAlign: 'center', marginTop: '8px' }}>
-                                            <div style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a' }}>0–10</div>
-                                            <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '600' }}>pts</div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <span style={{ fontSize: '12px', color: '#64748b' }}>
+                                    Segmentación de notas de 0 a 20 puntos
+                                </span>
                             </div>
-
-                            {/* LEYENDA INFERIOR */}
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', borderTop: '1px solid #f1f5f9', paddingTop: '16px', fontSize: '12px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b' }}>
-                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }} />
-                                        <span>18–20 pts</span>
-                                    </div>
-                                    <span style={{ fontWeight: '700', color: '#0f172a' }}>{c18_20} {c18_20 === 1 ? 'alumno' : 'alumnos'}</span>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b' }}>
-                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#2563eb' }} />
-                                        <span>15–17 pts</span>
-                                    </div>
-                                    <span style={{ fontWeight: '700', color: '#0f172a' }}>{c15_17} {c15_17 === 1 ? 'alumno' : 'alumnos'}</span>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b' }}>
-                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#f59e0b' }} />
-                                        <span>11–14 pts</span>
-                                    </div>
-                                    <span style={{ fontWeight: '700', color: '#0f172a' }}>{c11_14} {c11_14 === 1 ? 'alumno' : 'alumnos'}</span>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b' }}>
-                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#f43f5e' }} />
-                                        <span>0–10 pts</span>
-                                    </div>
-                                    <span style={{ fontWeight: '700', color: '#0f172a' }}>{c0_10} {c0_10 === 1 ? 'alumno' : 'alumnos'}</span>
-                                </div>
+                            <div style={{ height: '280px', position: 'relative' }}>
+                                <canvas ref={canvasDonaRef} />
                             </div>
                         </div>
                     </div>
 
-                    {/* SECCIÓN INFERIOR: RESUMEN POR CUESTIONARIO */}
-                    <div style={{ background: '#ffffff', borderRadius: '18px', border: '1px solid #e2e8f0', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                        <h3 style={{ margin: '0 0 18px 0', fontSize: '17px', fontWeight: '800', color: '#0f172a' }}>
-                            Resumen por cuestionario
+                    {/* SECCIÓN INFERIOR: CUESTIONARIOS ACTIVOS */}
+                    <div style={{
+                        background: '#ffffff',
+                        borderRadius: '18px',
+                        border: '1px solid #e2e8f0',
+                        padding: '24px',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                    }}>
+                        <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: '800', color: '#0f172a' }}>
+                            Participación por Cuestionario
                         </h3>
 
                         {cuestionarios.length > 0 ? (
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
+                                {cuestionarios.map(c => {
+                                    const resp = c.totalRespuestas || 0;
+                                    const prom = c.promedioCalificacion != null ? Number(c.promedioCalificacion).toFixed(1) : 'Sin datos';
+                                    return (
+                                        <div key={c.id} style={{
+                                            backgroundColor: '#f8fafc',
+                                            border: '1px solid #e2e8f0',
+                                            borderRadius: '12px',
+                                            padding: '14px 16px',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center'
+                                        }}>
+                                            <div style={{ minWidth: 0, paddingRight: '10px' }}>
+                                                <div style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                    {c.titulo}
+                                                </div>
+                                                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                                                    {c.materia || 'General'} · {c.totalPreguntas || 0} preguntas
+                                                </div>
+                                            </div>
+                                            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                                                <div style={{ fontSize: '13px', fontWeight: '800', color: '#059669' }}>
+                                                    {prom} / 20
+                                                </div>
+                                                <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+                                                    {resp} entrega{resp === 1 ? '' : 's'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '13px', padding: '20px' }}>
+                                No hay cuestionarios registrados aún.
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
+
+            {/* ========================================================================= */}
+            {/* PESTAÑA 2: DIAGNÓSTICO POR PREGUNTA (SABER QUÉ REFORZAR) */}
+            {/* ========================================================================= */}
+            {pestañaActiva === 'preguntas' && (
+                <>
+                    {/* BARRA DE FILTROS Y BÚSQUEDA DE PREGUNTAS */}
+                    <div style={{
+                        background: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '16px',
+                        padding: '16px 20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '14px',
+                        flexWrap: 'wrap'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <FileText size={16} color="#2563eb" />
+                                <span style={{ fontSize: '13px', fontWeight: '700', color: '#334155' }}>Cuestionario:</span>
+                                <select
+                                    value={cuestionarioFiltro}
+                                    onChange={(e) => setCuestionarioFiltro(e.target.value)}
+                                    style={{
+                                        padding: '7px 12px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #cbd5e1',
+                                        backgroundColor: '#f8fafc',
+                                        color: '#0f172a',
+                                        fontSize: '13px',
+                                        fontWeight: '600',
+                                        outline: 'none',
+                                        cursor: 'pointer',
+                                        maxWidth: '260px'
+                                    }}
+                                >
+                                    <option value="TODOS">📋 Todos los Cuestionarios</option>
+                                    {cuestionarios.map(c => (
+                                        <option key={c.id} value={c.id}>{c.titulo}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* BUSCADOR POR ENUNCIADO */}
+                        <div style={{ position: 'relative', width: isMobile ? '100%' : '300px' }}>
+                            <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                            <input
+                                type="text"
+                                placeholder="Buscar en el texto de la pregunta..."
+                                value={busquedaPregunta}
+                                onChange={(e) => setBusquedaPregunta(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '8px 12px 8px 36px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #cbd5e1',
+                                    outline: 'none',
+                                    fontSize: '13px',
+                                    backgroundColor: '#f8fafc',
+                                    boxSizing: 'border-box'
+                                }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* ALERTA: PREGUNTA DONDE MÁS FALLARON LOS ALUMNOS */}
+                    {kpis.preguntaDificil && (
+                        <div style={{
+                            background: '#fff1f2',
+                            border: '1px solid #fecdd3',
+                            borderRadius: '14px',
+                            padding: '16px 20px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '14px'
+                        }}>
+                            <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <AlertTriangle size={20} color="#dc2626" />
+                            </div>
+                            <div>
+                                <div style={{ fontSize: '12px', fontWeight: '800', color: '#991b1b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                    ⚠️ Reactivo con Mayor Dificultad (Tema a Reforzar)
+                                </div>
+                                <div style={{ fontSize: '14px', fontWeight: '700', color: '#0f172a', marginTop: '2px' }}>
+                                    "{kpis.preguntaDificil.enunciado}"
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                                    Solo el <strong style={{ color: '#dc2626' }}>{kpis.preguntaDificil.tasaAciertos}%</strong> de alumnos acertó · Materia: {kpis.preguntaDificil.materia}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* TABLA DETALLADA Y LIMPIA DE PREGUNTAS */}
+                    <div style={{
+                        background: '#ffffff',
+                        borderRadius: '18px',
+                        border: '1px solid #e2e8f0',
+                        overflow: 'hidden',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                    }}>
+                        <div style={{ padding: '20px 24px', borderBottom: '1px solid #f1f5f9' }}>
+                            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#0f172a' }}>
+                                Listado de Preguntas y Efectividad
+                            </h3>
+                            <span style={{ fontSize: '12px', color: '#64748b' }}>
+                                Mostrando {preguntasFiltradas.length} preguntas evaluadas
+                            </span>
+                        </div>
+
+                        {preguntasFiltradas.length > 0 ? (
                             <div style={{ overflowX: 'auto' }}>
-                                <table className="saas-table">
+                                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
                                     <thead>
-                                        <tr>
-                                            <th>Cuestionario</th>
-                                            <th>Materia</th>
-                                            <th>Respuestas</th>
-                                            <th>Preguntas</th>
-                                            <th>Creado</th>
+                                        <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#64748b', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                            <th style={{ padding: '12px 18px', width: '40px' }}>#</th>
+                                            <th style={{ padding: '12px 18px' }}>Enunciado de la Pregunta</th>
+                                            <th style={{ padding: '12px 18px' }}>Materia</th>
+                                            <th style={{ padding: '12px 18px' }}>Cuestionario</th>
+                                            <th style={{ padding: '12px 18px', minWidth: '160px' }}>Efectividad</th>
+                                            <th style={{ padding: '12px 18px', textAlign: 'center' }}>Dificultad</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {cuestionarios.map((c, idx) => {
-                                            const matStyle = getMateriaStyle(c.materia);
+                                        {preguntasFiltradas.map((item, idx) => {
+                                            const tasa = item.tasaAciertos || 0;
+                                            const esFacil = tasa >= 75;
+                                            const esMedia = tasa >= 50 && tasa < 75;
+                                            const badgeColor = esFacil ? '#059669' : esMedia ? '#d97706' : '#dc2626';
+                                            const badgeBg = esFacil ? '#ecfdf5' : esMedia ? '#fffbeb' : '#fef2f2';
+                                            const badgeBorder = esFacil ? '#a7f3d0' : esMedia ? '#fde68a' : '#fecaca';
+                                            const labelDificultad = esFacil ? 'Fácil' : esMedia ? 'Media' : 'Alta (Difícil)';
 
                                             return (
-                                                <tr key={c.id || idx}>
-                                                    <td style={{ fontWeight: '700', color: '#0f172a' }}>
-                                                        {c.titulo}
+                                                <tr
+                                                    key={item.preguntaId || idx}
+                                                    style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.15s ease' }}
+                                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#f8fafc'; }}
+                                                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                                                >
+                                                    <td style={{ padding: '14px 18px', fontWeight: '700', color: '#94a3b8' }}>
+                                                        #{idx + 1}
                                                     </td>
-                                                    <td>
+                                                    <td style={{ padding: '14px 18px', fontWeight: '600', color: '#0f172a', maxWidth: '340px' }}>
+                                                        {item.enunciado}
+                                                    </td>
+                                                    <td style={{ padding: '14px 18px' }}>
                                                         <span style={{
-                                                            backgroundColor: matStyle.bg,
-                                                            color: matStyle.color,
-                                                            padding: '4px 10px',
-                                                            borderRadius: '12px',
                                                             fontSize: '11px',
                                                             fontWeight: '700',
-                                                            display: 'inline-block'
+                                                            padding: '3px 8px',
+                                                            borderRadius: '6px',
+                                                            backgroundColor: '#eff6ff',
+                                                            color: '#2563eb'
                                                         }}>
-                                                            {c.materia || 'General'}
+                                                            {item.materia || 'General'}
                                                         </span>
                                                     </td>
-                                                    <td style={{ fontWeight: '700', color: '#2563eb' }}>
-                                                        {c.totalRespuestas || 0}
+                                                    <td style={{ padding: '14px 18px', color: '#64748b', fontSize: '12px' }}>
+                                                        {item.cuestionarioTitulo || '—'}
                                                     </td>
-                                                    <td style={{ color: '#475569' }}>
-                                                        {c.totalPreguntas || 0}
+                                                    <td style={{ padding: '14px 18px' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                            <div style={{ width: '80px', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                                                                <div style={{
+                                                                    width: `${tasa}%`,
+                                                                    height: '100%',
+                                                                    backgroundColor: badgeColor,
+                                                                    borderRadius: '4px'
+                                                                }} />
+                                                            </div>
+                                                            <span style={{ fontWeight: '800', color: badgeColor, fontSize: '12px' }}>
+                                                                {tasa}%
+                                                            </span>
+                                                        </div>
+                                                        <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                                                            {item.respuestasCorrectas || 0} de {item.totalRespuestas || 0} aciertos
+                                                        </span>
                                                     </td>
-                                                    <td style={{ color: '#64748b' }}>
-                                                        {c.fechaCreacion || '2026-09-01'}
+                                                    <td style={{ padding: '14px 18px', textAlign: 'center' }}>
+                                                        <span style={{
+                                                            fontSize: '11px',
+                                                            fontWeight: '800',
+                                                            color: badgeColor,
+                                                            backgroundColor: badgeBg,
+                                                            border: `1px solid ${badgeBorder}`,
+                                                            padding: '3px 10px',
+                                                            borderRadius: '20px'
+                                                        }}>
+                                                            {labelDificultad}
+                                                        </span>
                                                     </td>
                                                 </tr>
                                             );
@@ -520,8 +844,8 @@ export default function EstadisticasView() {
                                 </table>
                             </div>
                         ) : (
-                            <div style={{ color: '#94a3b8', fontSize: '13px', padding: '30px 0', textAlign: 'center' }}>
-                                No hay cuestionarios registrados para mostrar estadísticas.
+                            <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
+                                No se encontraron preguntas con los filtros seleccionados.
                             </div>
                         )}
                     </div>

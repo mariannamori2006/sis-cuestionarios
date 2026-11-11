@@ -42,10 +42,25 @@ public class BancoPreguntaService {
 
     @Transactional
     public BancoPregunta crearPregunta(BancoPregunta pregunta, UUID profesorId) {
+        String textoTrim = pregunta.getTextoPregunta() != null ? pregunta.getTextoPregunta().trim() : "";
+        String materiaTrim = pregunta.getMateria() != null && !pregunta.getMateria().trim().isEmpty() ? pregunta.getMateria().trim() : "General";
+
+        if (textoTrim.isEmpty()) {
+            throw new IllegalArgumentException("El texto del enunciado no puede estar vacío.");
+        }
+
+        // Validar que no se repita la misma pregunta en la misma materia
+        if (bancoRepository.existePreguntaDuplicada(profesorId, materiaTrim, textoTrim)) {
+            throw new IllegalArgumentException("Ya existe una pregunta idéntica en el banco para la materia '" + materiaTrim + "'.");
+        }
+
         if (profesorId != null) {
             Usuario profesor = usuarioRepository.findById(profesorId).orElse(null);
             pregunta.setCreadoPor(profesor);
         }
+
+        pregunta.setTextoPregunta(textoTrim);
+        pregunta.setMateria(materiaTrim);
 
         if (pregunta.getOpciones() != null) {
             for (BancoOpcionRespuesta opc : pregunta.getOpciones()) {
@@ -61,11 +76,23 @@ public class BancoPreguntaService {
         BancoPregunta existente = bancoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pregunta no encontrada en el banco con ID: " + id));
 
-        existente.setMateria(nuevosDatos.getMateria() != null && !nuevosDatos.getMateria().trim().isEmpty() ? nuevosDatos.getMateria().trim() : "General");
+        String textoTrim = nuevosDatos.getTextoPregunta() != null ? nuevosDatos.getTextoPregunta().trim() : "";
+        String materiaTrim = nuevosDatos.getMateria() != null && !nuevosDatos.getMateria().trim().isEmpty() ? nuevosDatos.getMateria().trim() : "General";
+
+        if (textoTrim.isEmpty()) {
+            throw new IllegalArgumentException("El texto del enunciado no puede estar vacío.");
+        }
+
+        // Validar que no choque con otra pregunta existente
+        if (bancoRepository.existePreguntaDuplicadaExcluyendoId(id, profesorId, materiaTrim, textoTrim)) {
+            throw new IllegalArgumentException("Ya existe otra pregunta idéntica en el banco para la materia '" + materiaTrim + "'.");
+        }
+
+        existente.setMateria(materiaTrim);
         existente.setTema(nuevosDatos.getTema());
         existente.setDificultad(nuevosDatos.getDificultad() != null ? nuevosDatos.getDificultad() : DificultadPregunta.MEDIA);
         existente.setTipo(nuevosDatos.getTipo() != null ? nuevosDatos.getTipo() : existente.getTipo());
-        existente.setTextoPregunta(nuevosDatos.getTextoPregunta());
+        existente.setTextoPregunta(textoTrim);
         existente.setPuntosDefecto(nuevosDatos.getPuntosDefecto() != null && nuevosDatos.getPuntosDefecto() > 0 ? nuevosDatos.getPuntosDefecto() : 4.0);
         existente.setImagenUrl(nuevosDatos.getImagenUrl());
         existente.setExplicacion(nuevosDatos.getExplicacion());

@@ -24,8 +24,10 @@ import {
     Award,
     Check,
     X,
-    Upload
+    Upload,
+    AlertTriangle
 } from 'lucide-react';
+import AlertaModal from '../components/modals/AlertaModal';
 
 const DIFICULTADES = [
     { key: 'TODAS', label: 'Todas las dificultades', color: '#64748b', bg: '#f1f5f9' },
@@ -61,6 +63,31 @@ export default function BancoPreguntasView() {
     const [guardando, setGuardando] = useState(false);
     const [errorModal, setErrorModal] = useState('');
 
+    // Estado para Alerta Modal estilizada
+    const [alerta, setAlerta] = useState({
+        isOpen: false,
+        tipo: 'warning',
+        titulo: '',
+        mensaje: '',
+        sugerencia: '',
+        textoBoton: 'Entendido'
+    });
+
+    const mostrarAlerta = (titulo, mensaje, tipo = 'warning', sugerencia = '', textoBoton = 'Entendido') => {
+        setAlerta({
+            isOpen: true,
+            tipo,
+            titulo,
+            mensaje,
+            sugerencia,
+            textoBoton
+        });
+    };
+
+    const cerrarAlerta = () => {
+        setAlerta(prev => ({ ...prev, isOpen: false }));
+    };
+
     // Formulario modal
     const [formMateria, setFormMateria] = useState('Informática');
     const [formTema, setFormTema] = useState('');
@@ -88,7 +115,15 @@ export default function BancoPreguntasView() {
                 }),
                 obtenerMateriasBanco()
             ]);
-            setPreguntas(lista);
+            // Deduplicar por materia y enunciado para garantizar que nunca se repitan en pantalla
+            const mapaUnicos = new Map();
+            (lista || []).forEach(item => {
+                const clave = `${(item.materia || '').trim().toLowerCase()}:::${(item.enunciado || item.textoPregunta || '').trim().toLowerCase()}`;
+                if (!mapaUnicos.has(clave)) {
+                    mapaUnicos.set(clave, item);
+                }
+            });
+            setPreguntas(Array.from(mapaUnicos.values()));
             setMaterias(mats || []);
         } catch (err) {
             console.error('Error al cargar preguntas del banco:', err);
@@ -214,7 +249,7 @@ export default function BancoPreguntasView() {
         const file = e.target.files?.[0];
         if (!file) return;
         if (file.size > 5 * 1024 * 1024) {
-            alert('La imagen no debe superar los 5 MB.');
+            setErrorModal('La imagen no debe superar los 5 MB de tamaño.');
             return;
         }
         const reader = new FileReader();
@@ -241,6 +276,21 @@ export default function BancoPreguntasView() {
                 setErrorModal('Debes marcar al menos una opción como respuesta correcta.');
                 return;
             }
+        }
+
+        // Validar que no se duplique localmente en el banco
+        const enunciadoNorm = formEnunciado.trim().toLowerCase();
+        const materiaNorm = (formMateria.trim() || 'General').toLowerCase();
+        const yaExiste = preguntas.some(p => {
+            if (preguntaEditando && (p.id === preguntaEditando.id)) return false;
+            const pTexto = (p.enunciado || p.textoPregunta || '').trim().toLowerCase();
+            const pMat = (p.materia || 'General').trim().toLowerCase();
+            return pTexto === enunciadoNorm && pMat === materiaNorm;
+        });
+
+        if (yaExiste) {
+            setErrorModal(`Ya existe una pregunta idéntica en el banco registrada para la materia "${formMateria.trim() || 'General'}".`);
+            return;
         }
 
         const payload = {
@@ -286,7 +336,11 @@ export default function BancoPreguntasView() {
             cargarDatos();
         } catch (err) {
             console.error('Error al eliminar pregunta:', err);
-            alert('No se pudo eliminar la pregunta.');
+            mostrarAlerta(
+                'No se pudo eliminar',
+                'Ocurrió un error al intentar eliminar la pregunta del banco. Por favor intenta de nuevo.',
+                'error'
+            );
         }
     };
 
@@ -723,8 +777,20 @@ export default function BancoPreguntasView() {
                         {/* BODY MODAL */}
                         <form onSubmit={handleGuardarPregunta} style={{ overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
                             {errorModal && (
-                                <div style={{ background: '#fee2e2', border: '1px solid #fecaca', color: '#dc2626', padding: '10px 14px', borderRadius: '8px', fontSize: '13px' }}>
-                                    {errorModal}
+                                <div style={{
+                                    background: '#fff1f2',
+                                    border: '1px solid #fecdd3',
+                                    color: '#be123c',
+                                    padding: '12px 16px',
+                                    borderRadius: '12px',
+                                    fontSize: '13px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px',
+                                    boxShadow: '0 2px 6px rgba(225, 29, 72, 0.06)'
+                                }}>
+                                    <AlertTriangle size={18} color="#e11d48" style={{ flexShrink: 0 }} />
+                                    <span>{errorModal}</span>
                                 </div>
                             )}
 
@@ -971,6 +1037,17 @@ export default function BancoPreguntasView() {
                     </div>
                 </div>
             )}
+
+            {/* Modal de Alerta Moderna */}
+            <AlertaModal
+                isOpen={alerta.isOpen}
+                onClose={cerrarAlerta}
+                tipo={alerta.tipo}
+                titulo={alerta.titulo}
+                mensaje={alerta.mensaje}
+                sugerencia={alerta.sugerencia}
+                textoBoton={alerta.textoBoton}
+            />
         </div>
     );
 }

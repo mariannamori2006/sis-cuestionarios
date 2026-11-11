@@ -30,5 +30,27 @@ public interface BancoPreguntaRepository extends JpaRepository<BancoPregunta, UU
 
     @Query("SELECT DISTINCT b.materia FROM BancoPregunta b WHERE (:profesorId IS NULL OR b.creadoPor.id = :profesorId) ORDER BY b.materia ASC")
     List<String> obtenerMateriasDisponibles(@Param("profesorId") UUID profesorId);
+
+    @Query("SELECT CASE WHEN COUNT(b) > 0 THEN true ELSE false END FROM BancoPregunta b WHERE " +
+           "(:profesorId IS NULL OR b.creadoPor.id = :profesorId) AND " +
+           "LOWER(TRIM(b.materia)) = LOWER(TRIM(:materia)) AND " +
+           "LOWER(TRIM(b.textoPregunta)) = LOWER(TRIM(:textoPregunta))")
+    boolean existePreguntaDuplicada(
+            @Param("profesorId") UUID profesorId,
+            @Param("materia") String materia,
+            @Param("textoPregunta") String textoPregunta
+    );
+
+    @Query("SELECT CASE WHEN COUNT(b) > 0 THEN true ELSE false END FROM BancoPregunta b WHERE " +
+           "b.id != :id AND " +
+           "(:profesorId IS NULL OR b.creadoPor.id = :profesorId) AND " +
+           "LOWER(TRIM(b.materia)) = LOWER(TRIM(:materia)) AND " +
+           "LOWER(TRIM(b.textoPregunta)) = LOWER(TRIM(:textoPregunta))")
+    boolean existePreguntaDuplicadaExcluyendoId(
+            @Param("id") UUID id,
+            @Param("profesorId") UUID profesorId,
+            @Param("materia") String materia,
+            @Param("textoPregunta") String textoPregunta
+    );
 }
 

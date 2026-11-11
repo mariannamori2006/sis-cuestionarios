@@ -3,6 +3,7 @@ import CrearCuestionarioModal from '../components/modals/CrearCuestionarioModal'
 import CompartirCuestionarioModal from '../components/modals/CompartirCuestionarioModal';
 import AuditoriaResultadosModal from '../components/modals/AuditoriaResultadosModal';
 import EliminarCuestionarioModal from '../components/modals/EliminarCuestionarioModal';
+import AlertaModal from '../components/modals/AlertaModal';
 import useResponsive from '../hooks/useResponsive';
 import { obtenerCuestionarioPorId, eliminarCuestionario, obtenerAuditoriaCuestionario } from '../services/cuestionarioService';
 import { exportarNotasExcel } from '../services/excelService';
@@ -85,6 +86,31 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
     const [cuestionarioParaEliminar, setCuestionarioParaEliminar] = useState(null);
     const [busqueda, setBusqueda] = useState('');
 
+    // Estado para Alerta Modal estilizada
+    const [alerta, setAlerta] = useState({
+        isOpen: false,
+        tipo: 'warning',
+        titulo: '',
+        mensaje: '',
+        sugerencia: '',
+        textoBoton: 'Entendido'
+    });
+
+    const mostrarAlerta = (titulo, mensaje, tipo = 'warning', sugerencia = '', textoBoton = 'Entendido') => {
+        setAlerta({
+            isOpen: true,
+            tipo,
+            titulo,
+            mensaje,
+            sugerencia,
+            textoBoton
+        });
+    };
+
+    const cerrarAlerta = () => {
+        setAlerta(prev => ({ ...prev, isOpen: false }));
+    };
+
     // Filtramos los cuestionarios según lo que escriban en el buscador
     const cuestionariosFiltrados = cuestionarios.filter(c =>
         c.titulo.toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -131,7 +157,11 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
             }
         } catch (err) {
             console.error('Error al eliminar el cuestionario:', err);
-            alert('No se pudo eliminar el cuestionario.');
+            mostrarAlerta(
+                'No se pudo eliminar',
+                'Ocurrió un problema al intentar eliminar este cuestionario. Por favor intenta de nuevo.',
+                'error'
+            );
             throw err;
         }
     };
@@ -143,7 +173,11 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
             exportarNotasExcel(cuestionario, dataAuditoria);
         } catch (err) {
             console.error('Error al descargar las notas en Excel:', err);
-            alert('No se pudieron exportar las notas del cuestionario. Asegúrate de que el servidor esté activo.');
+            mostrarAlerta(
+                'Exportación no disponible',
+                'No se pudieron exportar las notas del cuestionario. Asegúrate de que el servidor esté activo.',
+                'error'
+            );
         } finally {
             setDescargandoExcelId(null);
         }
@@ -166,7 +200,7 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                         Mis Cuestionarios
                     </h2>
                     <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>
-                        Gestión académica y control de evaluaciones · Ciclo 2026-B
+                        Gestión académica y control de evaluaciones
                     </span>
                 </div>
 
@@ -427,8 +461,8 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                                             alignItems: 'center',
                                             gap: '4px'
                                         }}>
-                                            <RotateCcw size={11} /> {cuestionario.limiteIntentos === 0 
-                                                ? 'Ilimitado' 
+                                            <RotateCcw size={11} /> {cuestionario.limiteIntentos === 0
+                                                ? 'Ilimitado'
                                                 : cuestionario.limiteIntentos ? `${cuestionario.limiteIntentos} intento${cuestionario.limiteIntentos > 1 ? 's' : ''}` : '1 intento'}
                                         </span>
 
@@ -737,6 +771,17 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                 onClose={() => setCuestionarioParaEliminar(null)}
                 cuestionario={cuestionarioParaEliminar}
                 onConfirmarEliminacion={handleConfirmarEliminacion}
+            />
+
+            {/* Modal de Alerta Moderna */}
+            <AlertaModal
+                isOpen={alerta.isOpen}
+                onClose={cerrarAlerta}
+                tipo={alerta.tipo}
+                titulo={alerta.titulo}
+                mensaje={alerta.mensaje}
+                sugerencia={alerta.sugerencia}
+                textoBoton={alerta.textoBoton}
             />
         </div>
     );

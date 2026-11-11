@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { login, register, googleLogin, verificarCodigo, reenviarCodigo } from '../services/authService';
 import GoogleAuthButton from '../components/common/GoogleAuthButton';
 import logoNativa from '../images/logoNativa.jpeg';
+import loginBg from '../images/login-bg.jpg';
 import useResponsive from '../hooks/useResponsive';
 import { Mail, Lock, User, LogIn, UserPlus, KeyRound, CheckCircle2, RotateCcw, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 
@@ -166,106 +167,66 @@ export default function LoginComponent() {
             width: '100vw',
             backgroundColor: '#f8fafc'
         }}>
-            {/* Panel lateral estético institucional (Oculto en celulares) */}
+            {/* Panel lateral con imagen de fondo y diseño minimalista (Oculto en móviles) */}
             <div style={{
-                flex: '1.1',
-                background: 'radial-gradient(circle at 10% 20%, #1e293b 0%, #0f172a 100%)',
+                flex: '1.15',
+                backgroundImage: `linear-gradient(145deg, rgba(15, 23, 42, 0.72) 0%, rgba(15, 23, 42, 0.93) 100%), url(${loginBg})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
                 color: '#ffffff',
                 padding: '60px 50px',
                 display: isMobile ? 'none' : 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                position: 'relative',
-                overflow: 'hidden'
+                position: 'relative'
             }}>
-                <div style={{ position: 'relative', zIndex: 1 }}>
-                    {/* Header con Logo y Badge */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '48px' }}>
-                        <div style={{ background: '#ffffff', padding: '6px 14px', borderRadius: '12px', display: 'flex', alignItems: 'center', boxShadow: '0 4px 14px rgba(0,0,0,0.2)' }}>
-                            <img src={logoNativa} alt="NativaTec" style={{ height: '34px', objectFit: 'contain' }} />
-                        </div>
-                        <span style={{
-                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                            border: '1px solid rgba(255, 255, 255, 0.15)',
-                            padding: '4px 12px',
-                            borderRadius: '20px',
-                            fontSize: '11px',
-                            fontWeight: '600',
-                            letterSpacing: '0.04em',
-                            color: '#93c5fd'
-                        }}>
-                            🎓 Ciclo Académico 2026-B
-                        </span>
-                    </div>
-
-                    <h1 style={{ fontSize: '36px', fontWeight: '800', lineHeight: '1.25', marginBottom: '18px', letterSpacing: '-0.02em' }}>
-                        Evaluaciones más ágiles,<br />
-                        <span style={{ color: '#38bdf8' }}>resultados inmediatos.</span>
-                    </h1>
-                    <p style={{ color: '#94a3b8', fontSize: '15px', lineHeight: '1.6', maxWidth: '480px', marginBottom: '40px' }}>
-                        Plataforma integral para profesores y administradores: diseña cuestionarios interactivos, audita respuestas al instante y genera reportes consolidados.
-                    </p>
-
-                    {/* Features destacados */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxWidth: '440px' }}>
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '14px',
-                            backgroundColor: 'rgba(255, 255, 255, 0.04)',
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
-                            padding: '12px 16px',
-                            borderRadius: '12px'
-                        }}>
-                            <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: 'rgba(56, 189, 248, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8', fontSize: '18px', flexShrink: 0 }}>
-                                ⚡
-                            </div>
-                            <div>
-                                <div style={{ fontSize: '13px', fontWeight: '700', color: '#f1f5f9' }}>Calificación y feedback automático</div>
-                                <div style={{ fontSize: '12px', color: '#94a3b8' }}>Estadísticas y promedios actualizados en vivo.</div>
-                            </div>
-                        </div>
-
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '14px',
-                            backgroundColor: 'rgba(255, 255, 255, 0.04)',
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
-                            padding: '12px 16px',
-                            borderRadius: '12px'
-                        }}>
-                            <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#34d399', fontSize: '18px', flexShrink: 0 }}>
-                                🛡️
-                            </div>
-                            <div>
-                                <div style={{ fontSize: '13px', fontWeight: '700', color: '#f1f5f9' }}>Modo seguro anti-fraude</div>
-                                <div style={{ fontSize: '12px', color: '#94a3b8' }}>Detección de cambio de pestaña y control estricto de intentos.</div>
-                            </div>
-                        </div>
-
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '14px',
-                            backgroundColor: 'rgba(255, 255, 255, 0.04)',
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
-                            padding: '12px 16px',
-                            borderRadius: '12px'
-                        }}>
-                            <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: 'rgba(139, 92, 246, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa', fontSize: '18px', flexShrink: 0 }}>
-                                📊
-                            </div>
-                            <div>
-                                <div style={{ fontSize: '13px', fontWeight: '700', color: '#f1f5f9' }}>Auditoría y exportación a Excel</div>
-                                <div style={{ fontSize: '12px', color: '#94a3b8' }}>Descarga actas oficiales de notas con un solo clic.</div>
-                            </div>
-                        </div>
+                {/* Logo institucional superior */}
+                <div>
+                    <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        background: 'rgba(255, 255, 255, 0.95)',
+                        backdropFilter: 'blur(10px)',
+                        padding: '8px 20px',
+                        borderRadius: '14px',
+                        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)'
+                    }}>
+                        <img src={logoNativa} alt="NativaTec" style={{ height: '36px', objectFit: 'contain' }} />
                     </div>
                 </div>
 
-                <div style={{ fontSize: '12px', color: '#64748b', position: 'relative', zIndex: 1, borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '16px' }}>
-                    © 2026 Nativatec Education · SENATI. Todos los derechos reservados.
+                {/* Mensaje de bienvenida minimalista y moderno */}
+                <div style={{ maxWidth: '460px' }}>
+                    <div style={{
+                        width: '36px',
+                        height: '4px',
+                        backgroundColor: '#38bdf8',
+                        borderRadius: '2px',
+                        marginBottom: '20px'
+                    }} />
+                    <h1 style={{
+                        fontSize: '34px',
+                        fontWeight: '800',
+                        lineHeight: '1.25',
+                        marginBottom: '14px',
+                        letterSpacing: '-0.02em',
+                        color: '#ffffff'
+                    }}>
+                        Evaluaciones inteligentes, resultados en tiempo real.
+                    </h1>
+                    <p style={{
+                        color: '#94a3b8',
+                        fontSize: '15px',
+                        lineHeight: '1.6',
+                        margin: 0
+                    }}>
+                        Diseña exámenes interactivos, audita respuestas y analiza el rendimiento académico de manera simple y precisa.
+                    </p>
+                </div>
+
+                {/* Pie minimalista */}
+                <div style={{ fontSize: '12px', color: '#64748b' }}>
+                    © 2026 Nativatec Education · Plataforma de Evaluación
                 </div>
             </div>
 

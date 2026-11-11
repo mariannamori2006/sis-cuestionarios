@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { crearCuestionario, actualizarCuestionario } from '../../services/cuestionarioService';
 import { descargarPlantillaExcel, procesarArchivoPreguntas } from '../../services/excelService';
 import { obtenerPreguntasBanco, crearPreguntaBanco } from '../../services/bancoPreguntaService';
-import { X, UploadCloud, Download, Plus, Trash2, CheckCircle2, Type, CheckSquare, Shuffle, AlertCircle, Image as ImageIcon, Link2, ShieldAlert, Calendar, RotateCcw, Lightbulb, Users, Sliders, ChevronDown, Award, BookOpen, Sparkles, Check, Search, Layers } from 'lucide-react';
+import AlertaModal from './AlertaModal';
+import { X, UploadCloud, Download, Plus, Trash2, CheckCircle2, Type, CheckSquare, Shuffle, AlertCircle, Image as ImageIcon, Link2, ShieldAlert, Calendar, RotateCcw, Lightbulb, Users, Sliders, ChevronDown, Award, BookOpen, Sparkles, Check, Search, Layers, Clock } from 'lucide-react';
 
 const ToggleSwitch = ({ checked, onChange, activeColor = '#2563eb' }) => (
     <div
@@ -105,6 +106,31 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
     // Estado para guardar pregunta en el banco
     const [guardandoEnBancoIndex, setGuardandoEnBancoIndex] = useState(null);
     const [mensajeBancoExito, setMensajeBancoExito] = useState('');
+
+    // Estado para Alerta Modal con diseño SaaS / EdTech moderno
+    const [alerta, setAlerta] = useState({
+        isOpen: false,
+        tipo: 'warning',
+        titulo: '',
+        mensaje: '',
+        sugerencia: '',
+        textoBoton: 'Entendido'
+    });
+
+    const mostrarAlerta = (titulo, mensaje, tipo = 'warning', sugerencia = '', textoBoton = 'Entendido') => {
+        setAlerta({
+            isOpen: true,
+            tipo,
+            titulo,
+            mensaje,
+            sugerencia,
+            textoBoton
+        });
+    };
+
+    const cerrarAlerta = () => {
+        setAlerta(prev => ({ ...prev, isOpen: false }));
+    };
 
     // Lista de preguntas para la creación/edición manual
     const [preguntas, setPreguntas] = useState([
@@ -375,6 +401,25 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
         setPreguntas(nuevasPreguntas);
     };
 
+    // Agregar opción a una pregunta de opción múltiple
+    const handleAgregarOpcion = (pIndex) => {
+        const nuevasPreguntas = [...preguntas];
+        if (nuevasPreguntas[pIndex].opciones.length >= 6) return;
+        nuevasPreguntas[pIndex].opciones.push({ texto: '', correcta: false });
+        setPreguntas(nuevasPreguntas);
+    };
+
+    // Eliminar opción de una pregunta de opción múltiple
+    const handleEliminarOpcion = (pIndex, oIndex) => {
+        const nuevasPreguntas = [...preguntas];
+        if (nuevasPreguntas[pIndex].opciones.length <= 2) return;
+        nuevasPreguntas[pIndex].opciones = nuevasPreguntas[pIndex].opciones.filter((_, idx) => idx !== oIndex);
+        if (!nuevasPreguntas[pIndex].opciones.some(o => o.correcta) && nuevasPreguntas[pIndex].opciones.length > 0) {
+            nuevasPreguntas[pIndex].opciones[0].correcta = true;
+        }
+        setPreguntas(nuevasPreguntas);
+    };
+
     // Actualizar imagenUrl de una pregunta (por URL directa o Base64)
     const handleImagenChange = (pIndex, url) => {
         const nuevasPreguntas = [...preguntas];
@@ -386,11 +431,20 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
     const handleSubirImagenLocal = (pIndex, file) => {
         if (!file) return;
         if (!file.type.startsWith('image/')) {
-            alert('Por favor selecciona un archivo de imagen válido (PNG, JPG, JPEG, WEBP, GIF, SVG).');
+            mostrarAlerta(
+                'Formato no compatible',
+                'Por favor selecciona un archivo de imagen válido (PNG, JPG, JPEG, WEBP, GIF o SVG).',
+                'warning'
+            );
             return;
         }
         if (file.size > 5 * 1024 * 1024) {
-            alert('La imagen no debe superar los 5 MB de tamaño.');
+            mostrarAlerta(
+                'Archivo demasiado pesado',
+                'La imagen seleccionada supera el límite máximo permitido de 5 MB.',
+                'warning',
+                'Puedes reducir su resolución o comprimirla antes de subirla.'
+            );
             return;
         }
         const reader = new FileReader();
@@ -437,6 +491,20 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
     const sumaPuntos = preguntas.reduce((acc, p) => acc + (parseFloat(p.puntos) || 0), 0);
     const sumaPuntosRedondeada = Math.round(sumaPuntos * 10) / 10;
 
+    // Helper para deduplicar preguntas del banco por materia y enunciado
+    const deduplicarBanco = (lista) => {
+        if (!Array.isArray(lista)) return [];
+        const vistos = new Set();
+        return lista.filter(item => {
+            const texto = (item.enunciado || item.textoPregunta || '').trim().toLowerCase();
+            const mat = (item.materia || '').trim().toLowerCase();
+            const clave = `${mat}:::${texto}`;
+            if (!texto || vistos.has(clave)) return false;
+            vistos.add(clave);
+            return true;
+        });
+    };
+
     // Funciones de integración con el Banco Centralizado de Preguntas
     const abrirModalBanco = async () => {
         setModalBancoAbierto(true);
@@ -448,7 +516,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                 dificultad: null,
                 buscar: ''
             });
-            setPreguntasBanco(data || []);
+            setPreguntasBanco(deduplicarBanco(data));
             setFiltroBancoMateria(materia || '');
             setFiltroBancoDificultad('TODAS');
             setBusquedaBanco('');
@@ -467,7 +535,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                 dificultad: d === 'TODAS' ? null : d,
                 buscar: b || null
             });
-            setPreguntasBanco(data || []);
+            setPreguntasBanco(deduplicarBanco(data));
         } catch (err) {
             console.error(err);
         } finally {
@@ -486,7 +554,24 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
         const seleccionadas = preguntasBanco.filter(p => seleccionadasBanco[p.id]);
         if (seleccionadas.length === 0) return;
 
-        const mapeadas = seleccionadas.map(b => {
+        // Filtrar preguntas que ya se encuentren en el examen actual para no duplicar
+        const yaExistentesSet = new Set(
+            preguntas
+                .map(p => (p.enunciado || '').trim().toLowerCase())
+                .filter(Boolean)
+        );
+
+        const nuevasParaAgregar = seleccionadas.filter(b => {
+            const txt = (b.enunciado || b.textoPregunta || '').trim().toLowerCase();
+            return !yaExistentesSet.has(txt);
+        });
+
+        if (nuevasParaAgregar.length === 0) {
+            setModalBancoAbierto(false);
+            return;
+        }
+
+        const mapeadas = nuevasParaAgregar.map(b => {
             let tipoFormateado = 'Opción múltiple';
             if (b.tipo === 'VERDADERO_FALSO') tipoFormateado = 'Verdadero/Falso';
             else if (b.tipo === 'RESPUESTA_CORTA') tipoFormateado = 'Respuesta escrita';
@@ -512,7 +597,11 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
 
     const handleGuardarPreguntaEnBanco = async (pregunta, index) => {
         if (!pregunta.enunciado || !pregunta.enunciado.trim()) {
-            alert('La pregunta debe tener un enunciado para guardarse en el banco.');
+            mostrarAlerta(
+                'Pregunta incompleta',
+                'La pregunta debe tener un texto o enunciado antes de guardarla en el Banco Centralizado.',
+                'info'
+            );
             return;
         }
 
@@ -557,7 +646,17 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
             setTimeout(() => setMensajeBancoExito(''), 3500);
         } catch (err) {
             console.error('Error al guardar en el banco:', err);
-            alert('No se pudo guardar la pregunta en el banco.');
+            const msgError = err.response?.data?.message || 'No se pudo guardar la pregunta en el banco.';
+            const esDuplicada = msgError.toLowerCase().includes('ya existe');
+            mostrarAlerta(
+                esDuplicada ? 'Pregunta ya registrada' : 'Aviso al guardar',
+                msgError,
+                esDuplicada ? 'warning' : 'error',
+                esDuplicada
+                    ? 'Esta pregunta ya se encuentra guardada en el Banco Centralizado para esta disciplina. Puedes reutilizarla e importarla en cualquier examen sin necesidad de duplicarla.'
+                    : '',
+                'Entendido'
+            );
         } finally {
             setGuardandoEnBancoIndex(null);
         }
@@ -718,39 +817,74 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
             >
 
                 {/* ENCABEZADO DEL MODAL */}
-                <div style={{ backgroundColor: '#0f172a', color: '#ffffff', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ backgroundColor: '#0f172a', color: '#ffffff', padding: '22px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                        <h2 style={{ margin: '0 0 4px 0', fontSize: '18px' }}>
-                            {esModoEdicion ? 'Editar cuestionario' : 'Nuevo cuestionario'}
-                        </h2>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+                            <h2 style={{ margin: 0, fontSize: '19px', fontWeight: '800', letterSpacing: '-0.02em', color: '#ffffff' }}>
+                                {esModoEdicion ? 'Editar cuestionario' : 'Nuevo cuestionario'}
+                            </h2>
+                            <span style={{
+                                fontSize: '11px',
+                                fontWeight: '700',
+                                padding: '2px 8px',
+                                borderRadius: '6px',
+                                backgroundColor: esModoEdicion ? 'rgba(59, 130, 246, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                                color: esModoEdicion ? '#93c5fd' : '#6ee7b7',
+                                border: `1px solid ${esModoEdicion ? 'rgba(59, 130, 246, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`
+                            }}>
+                                {esModoEdicion ? 'Modo edición' : 'Borrador'}
+                            </span>
+                        </div>
                         <span style={{ fontSize: '13px', color: '#94a3b8' }}>
                             {esModoEdicion
-                                ? 'Modifica y actualiza las preguntas y configuración de tu examen'
-                                : 'Crea y configura tu examen con preguntas personalizadas'}
+                                ? 'Modifica el contenido, preguntas y parámetros de seguridad de tu examen'
+                                : 'Diseña y programa tu evaluación académica con parámetros personalizados'}
                         </span>
                     </div>
                     <button
                         onClick={onClose}
-                        style={{ background: 'transparent', border: 'none', color: '#ffffff', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
+                        title="Cerrar ventana"
+                        type="button"
+                        style={{
+                            background: 'rgba(255, 255, 255, 0.08)',
+                            border: 'none',
+                            color: '#cbd5e1',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '8px',
+                            borderRadius: '10px',
+                            transition: 'all 0.15s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.18)';
+                            e.currentTarget.style.color = '#ffffff';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                            e.currentTarget.style.color = '#cbd5e1';
+                        }}
                     >
-                        <X size={20} />
+                        <X size={18} />
                     </button>
                 </div>
 
                 {/* PESTAÑAS (Creación manual / Importar archivo) */}
-                <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', padding: '0 24px', backgroundColor: '#f8fafc' }}>
+                <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', padding: '0 28px', backgroundColor: '#f8fafc' }}>
                     <button
                         type="button"
                         onClick={() => setTabActiva('manual')}
                         style={{
-                            padding: '14px 20px',
+                            padding: '13px 18px',
                             background: 'transparent',
                             border: 'none',
-                            borderBottom: tabActiva === 'manual' ? '2px solid #0f172a' : '2px solid transparent',
-                            fontWeight: '600',
-                            fontSize: '14px',
-                            color: tabActiva === 'manual' ? '#0f172a' : '#64748b',
-                            cursor: 'pointer'
+                            borderBottom: tabActiva === 'manual' ? '2.5px solid #2563eb' : '2.5px solid transparent',
+                            fontWeight: tabActiva === 'manual' ? '700' : '600',
+                            fontSize: '13.5px',
+                            color: tabActiva === 'manual' ? '#1d4ed8' : '#64748b',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
                         }}
                     >
                         Creación manual
@@ -759,17 +893,18 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                         type="button"
                         onClick={() => setTabActiva('importar')}
                         style={{
-                            padding: '14px 20px',
+                            padding: '13px 18px',
                             background: 'transparent',
                             border: 'none',
-                            borderBottom: tabActiva === 'importar' ? '2px solid #0f172a' : '2px solid transparent',
-                            fontWeight: '600',
-                            fontSize: '14px',
-                            color: tabActiva === 'importar' ? '#0f172a' : '#64748b',
-                            cursor: 'pointer'
+                            borderBottom: tabActiva === 'importar' ? '2.5px solid #2563eb' : '2.5px solid transparent',
+                            fontWeight: tabActiva === 'importar' ? '700' : '600',
+                            fontSize: '13.5px',
+                            color: tabActiva === 'importar' ? '#1d4ed8' : '#64748b',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
                         }}
                     >
-                        Importar archivo
+                        Importar archivo Excel / CSV
                     </button>
                 </div>
 
@@ -784,102 +919,173 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
 
                     {tabActiva === 'manual' ? (
                         <>
-                            {/* TÍTULO */}
-                            <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#475569', marginBottom: '6px', letterSpacing: '0.5px' }}>
-                                    TÍTULO DEL CUESTIONARIO *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={titulo}
-                                    onChange={(e) => setTitulo(e.target.value)}
-                                    placeholder="Ej: Álgebra Lineal — Unidad 3"
-                                    required
-                                    style={{
-                                        width: '100%',
-                                        padding: '12px',
-                                        borderRadius: '8px',
-                                        border: '1px solid #cbd5e1',
-                                        outline: 'none',
-                                        fontSize: '14px',
-                                        boxSizing: 'border-box'
-                                    }}
-                                />
-                            </div>
-
-                            {/* MATERIA Y TEMPORIZADOR */}
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                            {/* BLOQUE PRINCIPAL: INFORMACIÓN GENERAL DEL CUESTIONARIO */}
+                            <div style={{
+                                backgroundColor: '#ffffff',
+                                borderRadius: '16px',
+                                border: '1px solid #e2e8f0',
+                                padding: '22px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '16px',
+                                boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)'
+                            }}>
+                                {/* TÍTULO */}
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#475569', marginBottom: '6px', letterSpacing: '0.5px' }}>
-                                        MATERIA
-                                    </label>
-                                    <select
-                                        value={materia}
-                                        onChange={(e) => setMateria(e.target.value)}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                        <label style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a' }}>
+                                            Título del cuestionario <span style={{ color: '#ef4444' }}>*</span>
+                                        </label>
+                                        <span style={{ fontSize: '11px', fontWeight: '500', color: '#64748b' }}>Requerido</span>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={titulo}
+                                        onChange={(e) => setTitulo(e.target.value)}
+                                        placeholder="Ej: Álgebra Lineal — Evaluación de Unidad 3"
+                                        required
                                         style={{
                                             width: '100%',
-                                            padding: '12px',
-                                            borderRadius: '8px',
-                                            border: '1px solid #cbd5e1',
+                                            padding: '12px 16px',
+                                            borderRadius: '10px',
+                                            border: '1.5px solid #cbd5e1',
                                             outline: 'none',
-                                            fontSize: '14px',
-                                            backgroundColor: '#fff',
+                                            fontSize: '15px',
+                                            fontWeight: '600',
+                                            color: '#0f172a',
+                                            backgroundColor: '#f8fafc',
+                                            transition: 'all 0.15s ease',
                                             boxSizing: 'border-box'
                                         }}
-                                    >
-                                        <option value="Matemáticas">Matemáticas</option>
-                                        <option value="Historia">Historia</option>
-                                        <option value="Biología">Biología</option>
-                                        <option value="Informática">Informática</option>
-                                        <option value="Física">Física</option>
-                                        <option value="Química">Química</option>
-                                        <option value="Comunicación">Comunicación</option>
-                                    </select>
+                                        onFocus={(e) => {
+                                            e.target.style.backgroundColor = '#ffffff';
+                                            e.target.style.borderColor = '#2563eb';
+                                            e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.12)';
+                                        }}
+                                        onBlur={(e) => {
+                                            e.target.style.backgroundColor = '#f8fafc';
+                                            e.target.style.borderColor = '#cbd5e1';
+                                            e.target.style.boxShadow = 'none';
+                                        }}
+                                    />
                                 </div>
+
+                                {/* DESCRIPCIÓN E INSTRUCCIONES (POSICIONADA INMEDIATAMENTE DESPUÉS DEL TÍTULO) */}
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#475569', marginBottom: '6px', letterSpacing: '0.5px' }}>
-                                        ⏱️ LÍMITE DE TIEMPO (TEMPORIZADOR)
+                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#0f172a', marginBottom: '8px' }}>
+                                        Descripción o instrucciones para el alumno
                                     </label>
-                                    <select
-                                        value={tiempoLimiteMinutos}
-                                        onChange={(e) => setTiempoLimiteMinutos(Number(e.target.value))}
+                                    <textarea
+                                        value={descripcion}
+                                        onChange={(e) => setDescripcion(e.target.value)}
+                                        placeholder="Indicaciones para el estudiante (ej: Lee atentamente cada enunciado antes de contestar. Cada respuesta correcta sumará puntos al puntaje final)..."
+                                        rows={2}
                                         style={{
                                             width: '100%',
-                                            padding: '12px',
-                                            borderRadius: '8px',
-                                            border: '1px solid #cbd5e1',
+                                            padding: '10px 14px',
+                                            borderRadius: '10px',
+                                            border: '1.5px solid #cbd5e1',
                                             outline: 'none',
-                                            fontSize: '14px',
-                                            backgroundColor: '#fff',
-                                            boxSizing: 'border-box',
-                                            fontWeight: tiempoLimiteMinutos > 0 ? '600' : 'normal',
-                                            color: tiempoLimiteMinutos > 0 ? '#1d4ed8' : '#0f172a'
+                                            fontSize: '13.5px',
+                                            color: '#334155',
+                                            backgroundColor: '#f8fafc',
+                                            resize: 'vertical',
+                                            fontFamily: 'inherit',
+                                            lineHeight: '1.45',
+                                            transition: 'all 0.15s ease',
+                                            boxSizing: 'border-box'
                                         }}
-                                    >
-                                        <option value={0}>Sin límite de tiempo</option>
-                                        <option value={5}>5 minutos (Evaluación rápida)</option>
-                                        <option value={10}>10 minutos</option>
-                                        <option value={15}>15 minutos</option>
-                                        <option value={20}>20 minutos</option>
-                                        <option value={30}>30 minutos</option>
-                                        <option value={45}>45 minutos</option>
-                                        <option value={60}>60 minutos (1 hora)</option>
-                                        <option value={90}>90 minutos (1h 30m)</option>
-                                        <option value={120}>120 minutos (2 horas)</option>
-                                    </select>
+                                        onFocus={(e) => {
+                                            e.target.style.backgroundColor = '#ffffff';
+                                            e.target.style.borderColor = '#2563eb';
+                                            e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.12)';
+                                        }}
+                                        onBlur={(e) => {
+                                            e.target.style.backgroundColor = '#f8fafc';
+                                            e.target.style.borderColor = '#cbd5e1';
+                                            e.target.style.boxShadow = 'none';
+                                        }}
+                                    />
+                                </div>
+
+                                {/* MATERIA Y TEMPORIZADOR */}
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
+                                    <div>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>
+                                            <BookOpen size={15} color="#2563eb" /> Materia o disciplina
+                                        </label>
+                                        <select
+                                            value={materia}
+                                            onChange={(e) => setMateria(e.target.value)}
+                                            style={{
+                                                width: '100%',
+                                                padding: '11px 14px',
+                                                borderRadius: '10px',
+                                                border: '1.5px solid #cbd5e1',
+                                                outline: 'none',
+                                                fontSize: '13.5px',
+                                                fontWeight: '600',
+                                                color: '#0f172a',
+                                                backgroundColor: '#fff',
+                                                cursor: 'pointer',
+                                                boxSizing: 'border-box'
+                                            }}
+                                        >
+                                            <option value="Matemáticas">Matemáticas</option>
+                                            <option value="Historia">Historia</option>
+                                            <option value="Biología">Biología</option>
+                                            <option value="Informática">Informática</option>
+                                            <option value="Física">Física</option>
+                                            <option value="Química">Química</option>
+                                            <option value="Comunicación">Comunicación</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>
+                                            <Clock size={15} color="#2563eb" /> Límite de tiempo (Temporizador)
+                                        </label>
+                                        <select
+                                            value={tiempoLimiteMinutos}
+                                            onChange={(e) => setTiempoLimiteMinutos(Number(e.target.value))}
+                                            style={{
+                                                width: '100%',
+                                                padding: '11px 14px',
+                                                borderRadius: '10px',
+                                                border: '1.5px solid #cbd5e1',
+                                                outline: 'none',
+                                                fontSize: '13.5px',
+                                                fontWeight: '600',
+                                                backgroundColor: '#fff',
+                                                cursor: 'pointer',
+                                                boxSizing: 'border-box',
+                                                color: tiempoLimiteMinutos > 0 ? '#1d4ed8' : '#0f172a'
+                                            }}
+                                        >
+                                            <option value={0}>Sin límite de tiempo</option>
+                                            <option value={5}>5 minutos (Evaluación rápida)</option>
+                                            <option value={10}>10 minutos</option>
+                                            <option value={15}>15 minutos</option>
+                                            <option value={20}>20 minutos</option>
+                                            <option value={30}>30 minutos</option>
+                                            <option value={45}>45 minutos</option>
+                                            <option value={60}>60 minutos (1 hora)</option>
+                                            <option value={90}>90 minutos (1h 30m)</option>
+                                            <option value={120}>120 minutos (2 horas)</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* SECCIÓN DESPLEGABLE: REGLAS Y CONFIGURACIÓN DEL EXAMEN */}
+                            {/* SECCIÓN DESPLEGABLE: PARÁMETROS Y REGLAS DE EVALUACIÓN (DISEÑO SAAS NEUTRO Y EQUILIBRADO) */}
                             <div style={{
-                                backgroundColor: expandirConfiguracion ? '#f8fafc' : '#ffffff',
-                                border: expandirConfiguracion ? '1px solid #cbd5e1' : '1px solid #e2e8f0',
-                                borderRadius: '12px',
+                                backgroundColor: '#ffffff',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '14px',
                                 overflow: 'hidden',
-                                transition: 'all 0.25s ease',
-                                boxShadow: expandirConfiguracion ? '0 4px 12px rgba(0, 0, 0, 0.04)' : 'none'
+                                transition: 'all 0.2s ease',
+                                boxShadow: expandirConfiguracion ? '0 4px 12px rgba(15, 23, 42, 0.04)' : 'none'
                             }}>
-                                {/* CABECERA INTERACTIVA CLICABLE (DESPLEGABLE / ACCORDION) */}
+                                {/* CABECERA INTERACTIVA CLICABLE */}
                                 <div
                                     onClick={() => setExpandirConfiguracion(!expandirConfiguracion)}
                                     role="button"
@@ -888,41 +1094,41 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'space-between',
-                                        padding: '14px 18px',
+                                        padding: '13px 18px',
                                         cursor: 'pointer',
                                         userSelect: 'none',
-                                        backgroundColor: expandirConfiguracion ? '#f1f5f9' : '#ffffff',
+                                        backgroundColor: expandirConfiguracion ? '#f8fafc' : '#ffffff',
                                         borderBottom: expandirConfiguracion ? '1px solid #e2e8f0' : 'none',
-                                        transition: 'background-color 0.2s ease'
+                                        transition: 'background-color 0.15s ease'
                                     }}
                                 >
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                         <div style={{
-                                            width: '34px',
-                                            height: '34px',
+                                            width: '32px',
+                                            height: '32px',
                                             borderRadius: '8px',
-                                            backgroundColor: expandirConfiguracion ? '#dbeafe' : '#f1f5f9',
+                                            backgroundColor: '#f1f5f9',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            transition: 'background-color 0.2s ease'
+                                            border: '1px solid #e2e8f0'
                                         }}>
-                                            <Sliders size={17} color={expandirConfiguracion ? '#2563eb' : '#475569'} />
+                                            <Sliders size={16} color="#334155" />
                                         </div>
                                         <div>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <span style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                                    Reglas y Configuración del Examen
+                                                <span style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
+                                                    Reglas y Parámetros del Examen
                                                 </span>
                                                 <span style={{
                                                     fontSize: '11px',
                                                     fontWeight: '600',
                                                     padding: '2px 8px',
-                                                    borderRadius: '12px',
-                                                    backgroundColor: (ordenAleatorio || modoSeguro || programarFechas || limiteIntentos !== 1 || (gruposPermitidos && gruposPermitidos.trim())) ? '#dcfce7' : '#f1f5f9',
-                                                    color: (ordenAleatorio || modoSeguro || programarFechas || limiteIntentos !== 1 || (gruposPermitidos && gruposPermitidos.trim())) ? '#15803d' : '#64748b',
+                                                    borderRadius: '10px',
+                                                    backgroundColor: (ordenAleatorio || modoSeguro || programarFechas || limiteIntentos !== 1 || (gruposPermitidos && gruposPermitidos.trim())) ? '#eff6ff' : '#f1f5f9',
+                                                    color: (ordenAleatorio || modoSeguro || programarFechas || limiteIntentos !== 1 || (gruposPermitidos && gruposPermitidos.trim())) ? '#1d4ed8' : '#64748b',
                                                     border: '1px solid',
-                                                    borderColor: (ordenAleatorio || modoSeguro || programarFechas || limiteIntentos !== 1 || (gruposPermitidos && gruposPermitidos.trim())) ? '#86efac' : '#e2e8f0'
+                                                    borderColor: (ordenAleatorio || modoSeguro || programarFechas || limiteIntentos !== 1 || (gruposPermitidos && gruposPermitidos.trim())) ? '#bfdbfe' : '#e2e8f0'
                                                 }}>
                                                     {[ordenAleatorio, modoSeguro, programarFechas, limiteIntentos !== 1, Boolean(gruposPermitidos && gruposPermitidos.trim())].filter(Boolean).length > 0
                                                         ? `${[ordenAleatorio, modoSeguro, programarFechas, limiteIntentos !== 1, Boolean(gruposPermitidos && gruposPermitidos.trim())].filter(Boolean).length} personalizada(s)`
@@ -931,488 +1137,457 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                             </div>
                                             <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
                                                 {expandirConfiguracion
-                                                    ? 'Haz clic aquí para contraer las configuraciones'
+                                                    ? 'Haz clic para contraer las configuraciones adicionales'
                                                     : 'Aleatorio, Modo Seguro Anti-Copia, Intentos, Ventana de Fechas y Grupos'}
                                             </div>
                                         </div>
                                     </div>
 
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <span style={{ fontSize: '12px', fontWeight: '600', color: '#2563eb' }}>
-                                            {expandirConfiguracion ? 'Contraer' : 'Desplegar opciones'}
+                                        <span style={{ fontSize: '12px', fontWeight: '600', color: '#475569' }}>
+                                            {expandirConfiguracion ? 'Contraer' : 'Configurar'}
                                         </span>
                                         <div style={{
                                             transform: expandirConfiguracion ? 'rotate(180deg)' : 'rotate(0deg)',
-                                            transition: 'transform 0.25s ease',
+                                            transition: 'transform 0.2s ease',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center'
                                         }}>
-                                            <ChevronDown size={18} color="#2563eb" />
+                                            <ChevronDown size={16} color="#475569" />
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* CONTENIDO DEL DESPLEGABLE */}
+                                {/* CONTENIDO DEL DESPLEGABLE CON DISEÑO PROFESIONAL Y SUTIL */}
                                 {expandirConfiguracion && (
-                                    <div style={{ padding: '16px' }}>
+                                    <div style={{ padding: '16px', backgroundColor: '#fafafa', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                         <div style={{
                                             display: 'grid',
-                                            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                                            gap: '10px'
+                                            gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))',
+                                            gap: '12px'
                                         }}>
-                                    {/* 1. PREGUNTAS EN ORDEN ALEATORIO */}
-                                    <div
-                                        onClick={() => setOrdenAleatorio(!ordenAleatorio)}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'space-between',
-                                            padding: '12px 14px',
-                                            backgroundColor: ordenAleatorio ? '#eff6ff' : '#ffffff',
-                                            border: ordenAleatorio ? '1px solid #93c5fd' : '1px solid #e2e8f0',
-                                            borderRadius: '10px',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s',
-                                            boxSizing: 'border-box'
-                                        }}
-                                    >
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1, paddingRight: '8px' }}>
-                                            <div style={{
-                                                width: '34px',
-                                                height: '34px',
-                                                borderRadius: '8px',
-                                                backgroundColor: ordenAleatorio ? '#dbeafe' : '#f1f5f9',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                flexShrink: 0
-                                            }}>
-                                                <Shuffle size={17} color={ordenAleatorio ? '#1d4ed8' : '#64748b'} />
-                                            </div>
-                                            <div style={{ minWidth: 0 }}>
-                                                <div style={{ fontSize: '13px', fontWeight: '700', color: ordenAleatorio ? '#1e40af' : '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                    Preguntas aleatorias
-                                                </div>
-                                                <div style={{ fontSize: '11px', color: '#64748b', lineHeight: '1.2' }}>
-                                                    Orden distinto por alumno
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <ToggleSwitch
-                                            checked={ordenAleatorio}
-                                            onChange={setOrdenAleatorio}
-                                            activeColor="#2563eb"
-                                        />
-                                    </div>
-
-                                    {/* 2. RETROALIMENTACIÓN PEDAGÓGICA INMEDIATA */}
-                                    <div
-                                        onClick={() => setMostrarRetroalimentacion(!mostrarRetroalimentacion)}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'space-between',
-                                            padding: '12px 14px',
-                                            backgroundColor: mostrarRetroalimentacion ? '#f0fdf4' : '#ffffff',
-                                            border: mostrarRetroalimentacion ? '1px solid #86efac' : '1px solid #e2e8f0',
-                                            borderRadius: '10px',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s',
-                                            boxSizing: 'border-box'
-                                        }}
-                                    >
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1, paddingRight: '8px' }}>
-                                            <div style={{
-                                                width: '34px',
-                                                height: '34px',
-                                                borderRadius: '8px',
-                                                backgroundColor: mostrarRetroalimentacion ? '#dcfce7' : '#f1f5f9',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                flexShrink: 0
-                                            }}>
-                                                <Lightbulb size={17} color={mostrarRetroalimentacion ? '#15803d' : '#64748b'} />
-                                            </div>
-                                            <div style={{ minWidth: 0 }}>
-                                                <div style={{ fontSize: '13px', fontWeight: '700', color: mostrarRetroalimentacion ? '#166534' : '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                    Retroalimentación
-                                                </div>
-                                                <div style={{ fontSize: '11px', color: '#64748b', lineHeight: '1.2' }}>
-                                                    Ver explicaciones al final
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <ToggleSwitch
-                                            checked={mostrarRetroalimentacion}
-                                            onChange={setMostrarRetroalimentacion}
-                                            activeColor="#16a34a"
-                                        />
-                                    </div>
-
-                                    {/* 3. MODO SEGURO / DETECCIÓN DE CAMBIO DE PESTAÑA */}
-                                    <div
-                                        onClick={() => setModoSeguro(!modoSeguro)}
-                                        style={{
-                                            backgroundColor: modoSeguro ? '#fef2f2' : '#ffffff',
-                                            border: modoSeguro ? '1px solid #fca5a5' : '1px solid #e2e8f0',
-                                            borderRadius: '10px',
-                                            padding: '12px 14px',
-                                            transition: 'all 0.2s',
-                                            boxSizing: 'border-box',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            justifyContent: 'center'
-                                        }}
-                                    >
-                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1, paddingRight: '8px' }}>
-                                                <div style={{
-                                                    width: '34px',
-                                                    height: '34px',
-                                                    borderRadius: '8px',
-                                                    backgroundColor: modoSeguro ? '#fee2e2' : '#f1f5f9',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    flexShrink: 0
-                                                }}>
-                                                    <ShieldAlert size={17} color={modoSeguro ? '#dc2626' : '#64748b'} />
-                                                </div>
-                                                <div style={{ minWidth: 0 }}>
-                                                    <div style={{ fontSize: '13px', fontWeight: '700', color: modoSeguro ? '#991b1b' : '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                        Modo seguro (Anti-copia)
-                                                    </div>
-                                                    <div style={{ fontSize: '11px', color: '#64748b', lineHeight: '1.2' }}>
-                                                        Detecta cambio de pestaña
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <ToggleSwitch
-                                                checked={modoSeguro}
-                                                onChange={setModoSeguro}
-                                                activeColor="#dc2626"
-                                            />
-                                        </div>
-
-                                        {modoSeguro && (
+                                            {/* 1. PREGUNTAS EN ORDEN ALEATORIO */}
                                             <div
-                                                onClick={(e) => e.stopPropagation()}
+                                                onClick={() => setOrdenAleatorio(!ordenAleatorio)}
                                                 style={{
-                                                    marginTop: '10px',
-                                                    paddingTop: '8px',
-                                                    borderTop: '1px dashed #fca5a5',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'space-between',
-                                                    gap: '8px'
+                                                    padding: '12px 14px',
+                                                    backgroundColor: '#ffffff',
+                                                    border: ordenAleatorio ? '1.5px solid #93c5fd' : '1px solid #e2e8f0',
+                                                    borderRadius: '10px',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.15s ease',
+                                                    boxSizing: 'border-box'
                                                 }}
                                             >
-                                                <span style={{ fontSize: '11px', fontWeight: '600', color: '#7f1d1d' }}>
-                                                    ⚠️ Tolerancia:
-                                                </span>
-                                                <select
-                                                    value={limiteAdvertencias}
-                                                    onChange={(e) => setLimiteAdvertencias(Number(e.target.value))}
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1, paddingRight: '8px' }}>
+                                                    <div style={{
+                                                        width: '32px',
+                                                        height: '32px',
+                                                        borderRadius: '8px',
+                                                        backgroundColor: ordenAleatorio ? '#eff6ff' : '#f1f5f9',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        flexShrink: 0
+                                                    }}>
+                                                        <Shuffle size={16} color={ordenAleatorio ? '#2563eb' : '#64748b'} />
+                                                    </div>
+                                                    <div style={{ minWidth: 0 }}>
+                                                        <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
+                                                            Preguntas aleatorias
+                                                        </div>
+                                                        <div style={{ fontSize: '11px', color: '#64748b' }}>
+                                                            Orden distinto para cada alumno
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <ToggleSwitch
+                                                    checked={ordenAleatorio}
+                                                    onChange={setOrdenAleatorio}
+                                                    activeColor="#2563eb"
+                                                />
+                                            </div>
+
+                                            {/* 2. RETROALIMENTACIÓN PEDAGÓGICA */}
+                                            <div
+                                                onClick={() => setMostrarRetroalimentacion(!mostrarRetroalimentacion)}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'space-between',
+                                                    padding: '12px 14px',
+                                                    backgroundColor: '#ffffff',
+                                                    border: mostrarRetroalimentacion ? '1.5px solid #93c5fd' : '1px solid #e2e8f0',
+                                                    borderRadius: '10px',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.15s ease',
+                                                    boxSizing: 'border-box'
+                                                }}
+                                            >
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1, paddingRight: '8px' }}>
+                                                    <div style={{
+                                                        width: '32px',
+                                                        height: '32px',
+                                                        borderRadius: '8px',
+                                                        backgroundColor: mostrarRetroalimentacion ? '#eff6ff' : '#f1f5f9',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        flexShrink: 0
+                                                    }}>
+                                                        <Lightbulb size={16} color={mostrarRetroalimentacion ? '#2563eb' : '#64748b'} />
+                                                    </div>
+                                                    <div style={{ minWidth: 0 }}>
+                                                        <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
+                                                            Retroalimentación
+                                                        </div>
+                                                        <div style={{ fontSize: '11px', color: '#64748b' }}>
+                                                            Muestra explicaciones al finalizar
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <ToggleSwitch
+                                                    checked={mostrarRetroalimentacion}
+                                                    onChange={setMostrarRetroalimentacion}
+                                                    activeColor="#2563eb"
+                                                />
+                                            </div>
+
+                                            {/* 3. MODO SEGURO / ANTI-COPIA */}
+                                            <div
+                                                onClick={() => setModoSeguro(!modoSeguro)}
+                                                style={{
+                                                    backgroundColor: '#ffffff',
+                                                    border: modoSeguro ? '1.5px solid #93c5fd' : '1px solid #e2e8f0',
+                                                    borderRadius: '10px',
+                                                    padding: '12px 14px',
+                                                    transition: 'all 0.15s ease',
+                                                    boxSizing: 'border-box',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    justifyContent: 'center'
+                                                }}
+                                            >
+                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1, paddingRight: '8px' }}>
+                                                        <div style={{
+                                                            width: '32px',
+                                                            height: '32px',
+                                                            borderRadius: '8px',
+                                                            backgroundColor: modoSeguro ? '#eff6ff' : '#f1f5f9',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            flexShrink: 0
+                                                        }}>
+                                                            <ShieldAlert size={16} color={modoSeguro ? '#2563eb' : '#64748b'} />
+                                                        </div>
+                                                        <div style={{ minWidth: 0 }}>
+                                                            <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
+                                                                Modo seguro (Anti-copia)
+                                                            </div>
+                                                            <div style={{ fontSize: '11px', color: '#64748b' }}>
+                                                                Supervisa cambio de pestaña
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <ToggleSwitch
+                                                        checked={modoSeguro}
+                                                        onChange={setModoSeguro}
+                                                        activeColor="#2563eb"
+                                                    />
+                                                </div>
+
+                                                {modoSeguro && (
+                                                    <div
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        style={{
+                                                            marginTop: '10px',
+                                                            paddingTop: '8px',
+                                                            borderTop: '1px solid #e2e8f0',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'space-between',
+                                                            gap: '8px'
+                                                        }}
+                                                    >
+                                                        <span style={{ fontSize: '11px', fontWeight: '600', color: '#475569' }}>
+                                                            Tolerancia de avisos:
+                                                        </span>
+                                                        <select
+                                                            value={limiteAdvertencias}
+                                                            onChange={(e) => setLimiteAdvertencias(Number(e.target.value))}
+                                                            style={{
+                                                                padding: '4px 8px',
+                                                                borderRadius: '6px',
+                                                                border: '1px solid #cbd5e1',
+                                                                fontSize: '11px',
+                                                                fontWeight: '600',
+                                                                backgroundColor: '#f8fafc',
+                                                                color: '#0f172a',
+                                                                outline: 'none',
+                                                                cursor: 'pointer'
+                                                            }}
+                                                        >
+                                                            <option value={1}>1 advertencia (Estricto)</option>
+                                                            <option value={2}>2 advertencias</option>
+                                                            <option value={3}>3 advertencias (Recomendado)</option>
+                                                            <option value={5}>5 advertencias (Flexible)</option>
+                                                        </select>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* 4. LÍMITE DE INTENTOS */}
+                                            <div style={{
+                                                backgroundColor: '#ffffff',
+                                                border: limiteIntentos !== 1 ? '1.5px solid #93c5fd' : '1px solid #e2e8f0',
+                                                borderRadius: '10px',
+                                                padding: '12px 14px',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                justifyContent: 'center',
+                                                gap: '8px',
+                                                boxSizing: 'border-box'
+                                            }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                                                        <div style={{
+                                                            width: '32px',
+                                                            height: '32px',
+                                                            borderRadius: '8px',
+                                                            backgroundColor: '#f1f5f9',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            flexShrink: 0
+                                                        }}>
+                                                            <RotateCcw size={16} color="#64748b" />
+                                                        </div>
+                                                        <div style={{ minWidth: 0 }}>
+                                                            <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
+                                                                Límite de intentos
+                                                            </div>
+                                                            <div style={{ fontSize: '11px', color: '#64748b' }}>
+                                                                Evaluación o práctica
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <select
+                                                        value={limiteIntentos}
+                                                        onChange={(e) => setLimiteIntentos(Number(e.target.value))}
+                                                        style={{
+                                                            padding: '5px 8px',
+                                                            borderRadius: '6px',
+                                                            border: '1px solid #cbd5e1',
+                                                            fontSize: '12px',
+                                                            fontWeight: '600',
+                                                            backgroundColor: '#f8fafc',
+                                                            color: '#1e293b',
+                                                            outline: 'none',
+                                                            cursor: 'pointer',
+                                                            maxWidth: '120px'
+                                                        }}
+                                                    >
+                                                        <option value={1}>1 intento</option>
+                                                        <option value={2}>2 intentos</option>
+                                                        <option value={3}>3 intentos</option>
+                                                        <option value={5}>5 intentos</option>
+                                                        <option value={0}>Ilimitados</option>
+                                                    </select>
+                                                </div>
+
+                                                {limiteIntentos !== 1 && (
+                                                    <div style={{
+                                                        paddingTop: '6px',
+                                                        borderTop: '1px solid #e2e8f0',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'space-between',
+                                                        gap: '8px'
+                                                    }}>
+                                                        <span style={{ fontSize: '11px', fontWeight: '600', color: '#475569' }}>
+                                                            Criterio de nota:
+                                                        </span>
+                                                        <select
+                                                            value={tipoCalificacionIntentos}
+                                                            onChange={(e) => setTipoCalificacionIntentos(e.target.value)}
+                                                            style={{
+                                                                padding: '4px 8px',
+                                                                borderRadius: '6px',
+                                                                border: '1px solid #cbd5e1',
+                                                                fontSize: '11px',
+                                                                fontWeight: '600',
+                                                                backgroundColor: '#fff',
+                                                                color: '#0f172a',
+                                                                outline: 'none',
+                                                                cursor: 'pointer'
+                                                            }}
+                                                        >
+                                                            <option value="MEJOR_NOTA">Nota más alta</option>
+                                                            <option value="ULTIMO_INTENTO">Último intento</option>
+                                                        </select>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* 5. VENTANA DE DISPONIBILIDAD - OCUPA TODA LA FILA */}
+                                            <div style={{
+                                                gridColumn: '1 / -1',
+                                                backgroundColor: '#ffffff',
+                                                border: programarFechas ? '1.5px solid #93c5fd' : '1px solid #e2e8f0',
+                                                borderRadius: '10px',
+                                                padding: '12px 14px',
+                                                transition: 'all 0.15s ease',
+                                                boxSizing: 'border-box'
+                                            }}>
+                                                <div
+                                                    onClick={() => setProgramarFechas(!programarFechas)}
                                                     style={{
-                                                        padding: '4px 8px',
-                                                        borderRadius: '6px',
-                                                        border: '1px solid #f87171',
-                                                        fontSize: '11px',
-                                                        fontWeight: '600',
-                                                        backgroundColor: '#fff',
-                                                        color: '#991b1b',
-                                                        outline: 'none',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'space-between',
                                                         cursor: 'pointer'
                                                     }}
                                                 >
-                                                    <option value={1}>1 advertencia (Estricto)</option>
-                                                    <option value={2}>2 advertencias</option>
-                                                    <option value={3}>3 advertencias (Recomendado)</option>
-                                                    <option value={5}>5 advertencias (Flexible)</option>
-                                                </select>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* 4. LÍMITE DE INTENTOS */}
-                                    <div style={{
-                                        backgroundColor: '#ffffff',
-                                        border: '1px solid #e2e8f0',
-                                        borderRadius: '10px',
-                                        padding: '12px 14px',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        justifyContent: 'center',
-                                        gap: '8px',
-                                        boxSizing: 'border-box'
-                                    }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-                                                <div style={{
-                                                    width: '34px',
-                                                    height: '34px',
-                                                    borderRadius: '8px',
-                                                    backgroundColor: '#ede9fe',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    flexShrink: 0
-                                                }}>
-                                                    <RotateCcw size={17} color="#6d28d9" />
-                                                </div>
-                                                <div style={{ minWidth: 0 }}>
-                                                    <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                        Límite de intentos
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                        <div style={{
+                                                            width: '32px',
+                                                            height: '32px',
+                                                            borderRadius: '8px',
+                                                            backgroundColor: programarFechas ? '#eff6ff' : '#f1f5f9',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            flexShrink: 0
+                                                        }}>
+                                                            <Calendar size={16} color={programarFechas ? '#2563eb' : '#64748b'} />
+                                                        </div>
+                                                        <div>
+                                                            <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
+                                                                Programar ventana de disponibilidad
+                                                            </div>
+                                                            <div style={{ fontSize: '11px', color: '#64748b' }}>
+                                                                Apertura y cierre automático según fecha y hora
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div style={{ fontSize: '11px', color: '#64748b', lineHeight: '1.2' }}>
-                                                        Evaluación o práctica
-                                                    </div>
+                                                    <ToggleSwitch
+                                                        checked={programarFechas}
+                                                        onChange={setProgramarFechas}
+                                                        activeColor="#2563eb"
+                                                    />
                                                 </div>
-                                            </div>
-                                            <select
-                                                value={limiteIntentos}
-                                                onChange={(e) => setLimiteIntentos(Number(e.target.value))}
-                                                style={{
-                                                    padding: '5px 8px',
-                                                    borderRadius: '6px',
-                                                    border: '1px solid #cbd5e1',
-                                                    fontSize: '12px',
-                                                    fontWeight: '600',
-                                                    backgroundColor: '#f8fafc',
-                                                    color: '#1e293b',
-                                                    outline: 'none',
-                                                    cursor: 'pointer',
-                                                    maxWidth: '120px'
-                                                }}
-                                            >
-                                                <option value={1}>1 intento</option>
-                                                <option value={2}>2 intentos</option>
-                                                <option value={3}>3 intentos</option>
-                                                <option value={5}>5 intentos</option>
-                                                <option value={0}>Ilimitados</option>
-                                            </select>
-                                        </div>
 
-                                        {limiteIntentos !== 1 && (
+                                                {programarFechas && (
+                                                    <div style={{
+                                                        marginTop: '12px',
+                                                        paddingTop: '10px',
+                                                        borderTop: '1px solid #e2e8f0',
+                                                        display: 'grid',
+                                                        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                                                        gap: '12px'
+                                                    }}>
+                                                        <div>
+                                                            <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#334155', marginBottom: '4px' }}>
+                                                                Fecha y hora de inicio:
+                                                            </label>
+                                                            <input
+                                                                type="datetime-local"
+                                                                value={fechaInicio}
+                                                                onChange={(e) => setFechaInicio(e.target.value)}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    padding: '8px 10px',
+                                                                    borderRadius: '6px',
+                                                                    border: '1px solid #cbd5e1',
+                                                                    backgroundColor: '#fff',
+                                                                    fontSize: '12px',
+                                                                    outline: 'none',
+                                                                    boxSizing: 'border-box'
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#334155', marginBottom: '4px' }}>
+                                                                Fecha y hora de cierre:
+                                                            </label>
+                                                            <input
+                                                                type="datetime-local"
+                                                                value={fechaFin}
+                                                                onChange={(e) => setFechaFin(e.target.value)}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    padding: '8px 10px',
+                                                                    borderRadius: '6px',
+                                                                    border: '1px solid #cbd5e1',
+                                                                    backgroundColor: '#fff',
+                                                                    fontSize: '12px',
+                                                                    outline: 'none',
+                                                                    boxSizing: 'border-box'
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* 6. GRUPOS / SECCIONES ACADÉMICAS */}
                                             <div style={{
-                                                paddingTop: '6px',
-                                                borderTop: '1px dashed #cbd5e1',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'space-between',
-                                                gap: '8px'
+                                                gridColumn: '1 / -1',
+                                                backgroundColor: '#ffffff',
+                                                border: '1px solid #e2e8f0',
+                                                borderRadius: '10px',
+                                                padding: '12px 14px',
+                                                boxSizing: 'border-box'
                                             }}>
-                                                <span style={{ fontSize: '11px', fontWeight: '600', color: '#475569' }}>
-                                                    ⭐ Calificación:
-                                                </span>
-                                                <select
-                                                    value={tipoCalificacionIntentos}
-                                                    onChange={(e) => setTipoCalificacionIntentos(e.target.value)}
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                                                    <div style={{
+                                                        width: '32px',
+                                                        height: '32px',
+                                                        borderRadius: '8px',
+                                                        backgroundColor: '#f1f5f9',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        flexShrink: 0
+                                                    }}>
+                                                        <Users size={16} color="#64748b" />
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
+                                                            Grupos o secciones permitidas (Opcional)
+                                                        </div>
+                                                        <div style={{ fontSize: '11px', color: '#64748b' }}>
+                                                            Separa por comas las secciones para segmentar las notas (ej: 5to A, 5to B, Aula 102)
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    value={gruposPermitidos}
+                                                    onChange={(e) => setGruposPermitidos(e.target.value)}
+                                                    placeholder="Ej: 5to A, 5to B, Sección 1"
                                                     style={{
-                                                        padding: '4px 8px',
+                                                        width: '100%',
+                                                        padding: '8px 12px',
                                                         borderRadius: '6px',
                                                         border: '1px solid #cbd5e1',
-                                                        fontSize: '11px',
-                                                        fontWeight: '600',
                                                         backgroundColor: '#fff',
-                                                        color: '#0f172a',
+                                                        fontSize: '13px',
                                                         outline: 'none',
-                                                        cursor: 'pointer'
+                                                        boxSizing: 'border-box'
                                                     }}
-                                                >
-                                                    <option value="MEJOR_NOTA">Nota más alta</option>
-                                                    <option value="ULTIMO_INTENTO">Último intento</option>
-                                                </select>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* 5. PROGRAMAR FECHA Y HORA (VENTANA DE DISPONIBILIDAD) - OCUPA TODA LA FILA */}
-                                    <div style={{
-                                        gridColumn: '1 / -1',
-                                        backgroundColor: programarFechas ? '#f0fdf4' : '#ffffff',
-                                        border: programarFechas ? '1px solid #86efac' : '1px solid #e2e8f0',
-                                        borderRadius: '10px',
-                                        padding: '12px 14px',
-                                        transition: 'all 0.2s',
-                                        boxSizing: 'border-box'
-                                    }}>
-                                        <div
-                                            onClick={() => setProgramarFechas(!programarFechas)}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'space-between',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                <div style={{
-                                                    width: '34px',
-                                                    height: '34px',
-                                                    borderRadius: '8px',
-                                                    backgroundColor: programarFechas ? '#dcfce7' : '#f1f5f9',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    flexShrink: 0
-                                                }}>
-                                                    <Calendar size={17} color={programarFechas ? '#15803d' : '#64748b'} />
-                                                </div>
-                                                <div>
-                                                    <div style={{ fontSize: '13px', fontWeight: '700', color: programarFechas ? '#166534' : '#1e293b' }}>
-                                                        Programar fecha y hora de disponibilidad
-                                                    </div>
-                                                    <div style={{ fontSize: '11px', color: '#64748b' }}>
-                                                        Ventana de tiempo para habilitar y cerrar el cuestionario automáticamente
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <ToggleSwitch
-                                                checked={programarFechas}
-                                                onChange={setProgramarFechas}
-                                                activeColor="#16a34a"
-                                            />
-                                        </div>
-
-                                        {programarFechas && (
-                                            <div style={{
-                                                marginTop: '12px',
-                                                paddingTop: '10px',
-                                                borderTop: '1px dashed #86efac',
-                                                display: 'grid',
-                                                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                                                gap: '12px'
-                                            }}>
-                                                <div>
-                                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', color: '#166534', marginBottom: '4px' }}>
-                                                        🟢 FECHA Y HORA DE APERTURA:
-                                                    </label>
-                                                    <input
-                                                        type="datetime-local"
-                                                        value={fechaInicio}
-                                                        onChange={(e) => setFechaInicio(e.target.value)}
-                                                        style={{
-                                                            width: '100%',
-                                                            padding: '8px 10px',
-                                                            borderRadius: '6px',
-                                                            border: '1px solid #86efac',
-                                                            backgroundColor: '#fff',
-                                                            fontSize: '12px',
-                                                            outline: 'none',
-                                                            boxSizing: 'border-box'
-                                                        }}
-                                                    />
-                                                    <span style={{ fontSize: '10px', color: '#15803d', marginTop: '2px', display: 'block' }}>
-                                                        Bloqueado antes de esta hora.
-                                                    </span>
-                                                </div>
-                                                <div>
-                                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', color: '#991b1b', marginBottom: '4px' }}>
-                                                        🔴 FECHA Y HORA DE CIERRE:
-                                                    </label>
-                                                    <input
-                                                        type="datetime-local"
-                                                        value={fechaFin}
-                                                        onChange={(e) => setFechaFin(e.target.value)}
-                                                        style={{
-                                                            width: '100%',
-                                                            padding: '8px 10px',
-                                                            borderRadius: '6px',
-                                                            border: '1px solid #fca5a5',
-                                                            backgroundColor: '#fff',
-                                                            fontSize: '12px',
-                                                            outline: 'none',
-                                                            boxSizing: 'border-box'
-                                                        }}
-                                                    />
-                                                    <span style={{ fontSize: '10px', color: '#b91c1c', marginTop: '2px', display: 'block' }}>
-                                                        Cierre automático estricto.
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* 6. GRUPOS / SECCIONES ACADÉMICAS - OCUPA TODA LA FILA */}
-                                    <div style={{
-                                        gridColumn: '1 / -1',
-                                        backgroundColor: '#ffffff',
-                                        border: '1px solid #e2e8f0',
-                                        borderRadius: '10px',
-                                        padding: '12px 14px',
-                                        boxSizing: 'border-box'
-                                    }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                                            <div style={{
-                                                width: '34px',
-                                                height: '34px',
-                                                borderRadius: '8px',
-                                                backgroundColor: '#e0e7ff',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                flexShrink: 0
-                                            }}>
-                                                <Users size={17} color="#4338ca" />
-                                            </div>
-                                            <div>
-                                                <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
-                                                    Grupos / Secciones Académicas (Opcional)
-                                                </div>
-                                                <div style={{ fontSize: '11px', color: '#64748b' }}>
-                                                    Separa por comas las aulas o secciones para filtrar y segmentar el registro de notas
-                                                </div>
+                                                />
                                             </div>
                                         </div>
-                                        <input
-                                            type="text"
-                                            value={gruposPermitidos}
-                                            onChange={(e) => setGruposPermitidos(e.target.value)}
-                                            placeholder="Ej. 5to A, 5to B, 5to C, Sección 1"
-                                            style={{
-                                                width: '100%',
-                                                padding: '8px 12px',
-                                                borderRadius: '6px',
-                                                border: '1px solid #cbd5e1',
-                                                backgroundColor: '#fff',
-                                                fontSize: '13px',
-                                                outline: 'none',
-                                                boxSizing: 'border-box'
-                                            }}
-                                        />
-                                        <span style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', display: 'block' }}>
-                                            💡 Los alumnos verán un selector para elegir su grupo/sección al iniciar el examen.
-                                        </span>
                                     </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                            {/* DESCRIPCIÓN */}
-                            <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#475569', marginBottom: '6px', letterSpacing: '0.5px' }}>
-                                    DESCRIPCIÓN O INDICACIONES
-                                </label>
-                                <input
-                                    type="text"
-                                    value={descripcion}
-                                    onChange={(e) => setDescripcion(e.target.value)}
-                                    placeholder="Breve descripción o indicaciones para el alumno..."
-                                    style={{
-                                        width: '100%',
-                                        padding: '12px',
-                                        borderRadius: '8px',
-                                        border: '1px solid #cbd5e1',
-                                        outline: 'none',
-                                        fontSize: '14px',
-                                        boxSizing: 'border-box'
-                                    }}
-                                />
+                                )}
                             </div>
 
                             {/* PREGUNTAS */}
@@ -1449,46 +1624,55 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                 <div style={{
                                     backgroundColor: '#ffffff',
                                     border: '1px solid #e2e8f0',
-                                    borderRadius: '12px',
-                                    padding: '12px 16px',
+                                    borderRadius: '14px',
+                                    padding: '14px 18px',
                                     marginBottom: '16px',
                                     display: 'flex',
                                     justifyContent: 'space-between',
                                     alignItems: 'center',
                                     flexWrap: 'wrap',
                                     gap: '12px',
-                                    boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                                    boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)'
                                 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <div style={{ backgroundColor: sumaPuntosRedondeada === 20.0 ? '#dcfce7' : '#fef3c7', color: sumaPuntosRedondeada === 20.0 ? '#15803d' : '#b45309', padding: '7px', borderRadius: '8px' }}>
-                                            <Award size={18} />
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        <div style={{
+                                            width: '36px',
+                                            height: '36px',
+                                            borderRadius: '10px',
+                                            backgroundColor: sumaPuntosRedondeada === 20.0 ? '#ecfdf5' : '#f8fafc',
+                                            border: `1px solid ${sumaPuntosRedondeada === 20.0 ? '#a7f3d0' : '#e2e8f0'}`,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}>
+                                            <Award size={18} color={sumaPuntosRedondeada === 20.0 ? '#10b981' : '#64748b'} />
                                         </div>
                                         <div>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                                                 <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a' }}>
-                                                    Puntaje Total Ponderado:
+                                                    Puntaje ponderado:
                                                 </span>
                                                 <span style={{
                                                     fontSize: '13px',
                                                     fontWeight: '800',
-                                                    color: sumaPuntosRedondeada === 20.0 ? '#15803d' : '#d97706',
+                                                    color: sumaPuntosRedondeada === 20.0 ? '#15803d' : '#b45309',
                                                     backgroundColor: sumaPuntosRedondeada === 20.0 ? '#f0fdf4' : '#fffbeb',
                                                     padding: '2px 8px',
                                                     borderRadius: '6px',
-                                                    border: `1px solid ${sumaPuntosRedondeada === 20.0 ? '#86efac' : '#fde68a'}`
+                                                    border: `1px solid ${sumaPuntosRedondeada === 20.0 ? '#bbf7d0' : '#fde68a'}`
                                                 }}>
                                                     {sumaPuntosRedondeada.toFixed(1)} / 20.0 pts
                                                 </span>
                                                 {sumaPuntosRedondeada === 20.0 ? (
                                                     <span style={{ fontSize: '11px', color: '#16a34a', fontWeight: '600' }}>✓ Balanceado exacto</span>
                                                 ) : (
-                                                    <span style={{ fontSize: '11px', color: '#d97706', fontWeight: '500' }}>
-                                                        (Cálculo normalizado automático sobre 20 pts)
+                                                    <span style={{ fontSize: '11px', color: '#64748b' }}>
+                                                        (Escala normalizada sobre 20 pts)
                                                     </span>
                                                 )}
                                             </div>
                                             <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
-                                                Personaliza el peso de cada pregunta o distribuye los 20 puntos equitativamente.
+                                                Ajusta los puntos de cada pregunta o distribuye los 20 pts automáticamente.
                                             </div>
                                         </div>
                                     </div>
@@ -1508,8 +1692,11 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                                 fontSize: '12px',
                                                 fontWeight: '600',
                                                 color: '#334155',
-                                                cursor: 'pointer'
+                                                cursor: 'pointer',
+                                                transition: 'all 0.15s ease'
                                             }}
+                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f1f5f9'}
+                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
                                             title="Dividir 20 puntos de manera equilibrada entre todas las preguntas"
                                         >
                                             <Sparkles size={14} color="#f59e0b" /> Distribuir 20 pts equitativamente
@@ -1529,61 +1716,79 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                                 fontSize: '12px',
                                                 fontWeight: '600',
                                                 color: '#1d4ed8',
-                                                cursor: 'pointer'
+                                                cursor: 'pointer',
+                                                transition: 'all 0.15s ease'
                                             }}
+                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#dbeafe'}
+                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#eff6ff'}
                                             title="Importar preguntas ya guardadas en el Banco Centralizado"
                                         >
-                                            <BookOpen size={14} /> Importar del Banco de Preguntas
+                                            <BookOpen size={14} /> Importar del Banco
                                         </button>
                                     </div>
                                 </div>
 
                                 {preguntas.map((pregunta, pIndex) => (
                                     <div key={pIndex} style={{
-                                        border: '1px solid #e2e8f0',
-                                        borderRadius: '12px',
-                                        padding: '20px',
-                                        backgroundColor: '#f8fafc',
-                                        marginBottom: '16px',
-                                        position: 'relative'
+                                        border: '1.5px solid #e2e8f0',
+                                        borderRadius: '16px',
+                                        padding: '20px 22px',
+                                        backgroundColor: '#ffffff',
+                                        marginBottom: '18px',
+                                        boxShadow: '0 2px 6px rgba(15, 23, 42, 0.03)',
+                                        position: 'relative',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '14px'
                                     }}>
                                         {/* Barra superior de la pregunta */}
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                                             <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                                                <div style={{ backgroundColor: '#0f172a', color: '#fff', width: '28px', height: '28px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold' }}>
-                                                    {pIndex + 1}
+                                                <div style={{
+                                                    backgroundColor: '#0f172a',
+                                                    color: '#ffffff',
+                                                    fontSize: '12px',
+                                                    fontWeight: '800',
+                                                    padding: '4px 10px',
+                                                    borderRadius: '8px',
+                                                    letterSpacing: '0.02em'
+                                                }}>
+                                                    Pregunta {pIndex + 1}
                                                 </div>
                                                 <select
                                                     value={pregunta.tipo}
                                                     onChange={(e) => handleTipoPreguntaChange(pIndex, e.target.value)}
                                                     style={{
-                                                        padding: '7px 12px',
+                                                        padding: '6px 12px',
                                                         borderRadius: '8px',
-                                                        border: '1px solid #cbd5e1',
+                                                        border: '1.5px solid #cbd5e1',
                                                         fontSize: '13px',
                                                         fontWeight: '600',
-                                                        backgroundColor: '#fff',
+                                                        backgroundColor: '#f8fafc',
                                                         color: '#0f172a',
-                                                        cursor: 'pointer'
+                                                        cursor: 'pointer',
+                                                        outline: 'none'
                                                     }}
                                                 >
                                                     <option value="Opción múltiple">Opción múltiple</option>
                                                     <option value="Verdadero/Falso">Verdadero / Falso</option>
                                                     <option value="Respuesta escrita">Respuesta escrita</option>
                                                 </select>
+                                            </div>
 
-                                                {/* ASIGNACIÓN DE PUNTOS POR PREGUNTA */}
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                {/* ASIGNACIÓN DE PUNTOS */}
                                                 <div style={{
                                                     display: 'flex',
                                                     alignItems: 'center',
-                                                    gap: '6px',
-                                                    backgroundColor: '#ffffff',
+                                                    gap: '5px',
+                                                    backgroundColor: '#f8fafc',
                                                     border: '1px solid #cbd5e1',
                                                     borderRadius: '8px',
                                                     padding: '4px 10px'
                                                 }}>
-                                                    <Award size={14} color="#047857" />
-                                                    <span style={{ fontSize: '12px', fontWeight: '600', color: '#475569' }}>Valor:</span>
+                                                    <Award size={14} color="#059669" />
+                                                    <span style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Puntos:</span>
                                                     <input
                                                         type="number"
                                                         min="0.5"
@@ -1592,21 +1797,19 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                                         value={pregunta.puntos !== undefined && pregunta.puntos !== null ? pregunta.puntos : 4.0}
                                                         onChange={(e) => handlePuntosPreguntaChange(pIndex, e.target.value)}
                                                         style={{
-                                                            width: '48px',
+                                                            width: '42px',
                                                             border: 'none',
                                                             outline: 'none',
                                                             fontSize: '13px',
-                                                            fontWeight: '700',
-                                                            color: '#047857',
+                                                            fontWeight: '800',
+                                                            color: '#0f172a',
                                                             textAlign: 'center',
                                                             background: 'transparent'
                                                         }}
                                                     />
-                                                    <span style={{ fontSize: '12px', fontWeight: '700', color: '#047857' }}>pts</span>
+                                                    <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b' }}>pts</span>
                                                 </div>
-                                            </div>
 
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 {/* BOTÓN PARA GUARDAR EN EL BANCO */}
                                                 <button
                                                     type="button"
@@ -1616,16 +1819,19 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         gap: '5px',
-                                                        backgroundColor: '#ffffff',
+                                                        backgroundColor: '#f8fafc',
                                                         border: '1px solid #cbd5e1',
-                                                        borderRadius: '6px',
-                                                        padding: '5px 10px',
-                                                        fontSize: '11px',
+                                                        borderRadius: '8px',
+                                                        padding: '6px 11px',
+                                                        fontSize: '12px',
                                                         fontWeight: '600',
                                                         color: '#334155',
-                                                        cursor: 'pointer'
+                                                        cursor: 'pointer',
+                                                        transition: 'all 0.15s ease'
                                                     }}
-                                                    title="Guardar una copia de esta pregunta en tu Banco Centralizado"
+                                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f1f5f9'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                                                    title="Guardar copia en el Banco Centralizado"
                                                 >
                                                     <BookOpen size={13} color="#2563eb" />
                                                     {guardandoEnBancoIndex === pIndex ? 'Guardando...' : 'Guardar en Banco'}
@@ -1637,48 +1843,68 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                                         onClick={() => eliminarPregunta(pIndex)}
                                                         title="Eliminar pregunta"
                                                         style={{
-                                                            background: 'transparent',
-                                                            border: 'none',
-                                                            color: '#ef4444',
+                                                            background: '#fef2f2',
+                                                            border: '1px solid #fecaca',
+                                                            color: '#dc2626',
                                                             cursor: 'pointer',
-                                                            padding: '4px',
+                                                            padding: '6px 9px',
                                                             display: 'flex',
                                                             alignItems: 'center',
-                                                            borderRadius: '6px'
+                                                            borderRadius: '8px',
+                                                            transition: 'all 0.15s ease'
                                                         }}
+                                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fee2e2'}
+                                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fef2f2'}
                                                     >
-                                                        <Trash2 size={16} />
+                                                        <Trash2 size={15} />
                                                     </button>
                                                 )}
                                             </div>
                                         </div>
 
-                                        {/* ENUNCIADO DE LA PREGUNTA */}
-                                        <input
-                                            type="text"
-                                            value={pregunta.enunciado}
-                                            onChange={(e) => handlePreguntaChange(pIndex, e.target.value)}
-                                            placeholder={`Escribe el enunciado de la pregunta ${pIndex + 1}...`}
-                                            required
-                                            style={{
-                                                width: '100%',
-                                                padding: '11px 14px',
-                                                borderRadius: '8px',
-                                                border: '1px solid #cbd5e1',
-                                                fontSize: '14px',
-                                                backgroundColor: '#fff',
-                                                marginBottom: '10px',
-                                                boxSizing: 'border-box'
-                                            }}
-                                        />
+                                        {/* ENUNCIADO DE LA PREGUNTA (TEXTAREA CÓMODA EN LUGAR DE INPUT PLANO) */}
+                                        <div>
+                                            <textarea
+                                                value={pregunta.enunciado}
+                                                onChange={(e) => handlePreguntaChange(pIndex, e.target.value)}
+                                                placeholder={`Escribe aquí el enunciado completo de la pregunta #${pIndex + 1}...`}
+                                                required
+                                                rows={2}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px 14px',
+                                                    borderRadius: '10px',
+                                                    border: '1.5px solid #cbd5e1',
+                                                    fontSize: '14px',
+                                                    fontWeight: '600',
+                                                    color: '#0f172a',
+                                                    backgroundColor: '#f8fafc',
+                                                    outline: 'none',
+                                                    resize: 'vertical',
+                                                    lineHeight: '1.45',
+                                                    fontFamily: 'inherit',
+                                                    boxSizing: 'border-box',
+                                                    transition: 'all 0.15s ease'
+                                                }}
+                                                onFocus={(e) => {
+                                                    e.target.style.backgroundColor = '#ffffff';
+                                                    e.target.style.borderColor = '#2563eb';
+                                                    e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)';
+                                                }}
+                                                onBlur={(e) => {
+                                                    e.target.style.backgroundColor = '#f8fafc';
+                                                    e.target.style.borderColor = '#cbd5e1';
+                                                    e.target.style.boxShadow = 'none';
+                                                }}
+                                            />
+                                        </div>
 
                                         {/* SECCIÓN DE IMAGEN / DIAGRAMA DE LA PREGUNTA */}
                                         <div style={{
-                                            backgroundColor: '#ffffff',
+                                            backgroundColor: '#f8fafc',
                                             border: '1px solid #e2e8f0',
                                             borderRadius: '8px',
-                                            padding: '10px 14px',
-                                            marginBottom: '14px'
+                                            padding: '8px 12px'
                                         }}>
                                             {pregunta.imagenUrl ? (
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -1704,7 +1930,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                                             <Trash2 size={13} /> Quitar imagen
                                                         </button>
                                                     </div>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', backgroundColor: '#f8fafc', padding: '8px', borderRadius: '6px', border: '1px dashed #cbd5e1' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', backgroundColor: '#ffffff', padding: '8px', borderRadius: '6px', border: '1px dashed #cbd5e1' }}>
                                                         <img
                                                             src={pregunta.imagenUrl}
                                                             alt="Vista previa"
@@ -1743,21 +1969,21 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#64748b' }}>
                                                         <ImageIcon size={15} color="#94a3b8" />
-                                                        <span>¿Adjuntar imagen, gráfico o diagrama a este enunciado?</span>
+                                                        <span>Imagen o recurso ilustrativo (Opcional):</span>
                                                     </div>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                         <label style={{
                                                             display: 'inline-flex',
                                                             alignItems: 'center',
                                                             gap: '5px',
-                                                            fontSize: '12px',
+                                                            fontSize: '11.5px',
                                                             fontWeight: '600',
                                                             color: '#2563eb',
-                                                            backgroundColor: '#eff6ff',
-                                                            padding: '5px 10px',
+                                                            backgroundColor: '#ffffff',
+                                                            padding: '4px 10px',
                                                             borderRadius: '6px',
                                                             cursor: 'pointer',
-                                                            border: '1px solid #bfdbfe'
+                                                            border: '1px solid #cbd5e1'
                                                         }}>
                                                             📁 Subir imagen
                                                             <input
@@ -1782,11 +2008,11 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                                                 display: 'inline-flex',
                                                                 alignItems: 'center',
                                                                 gap: '5px',
-                                                                fontSize: '12px',
+                                                                fontSize: '11.5px',
                                                                 fontWeight: '600',
                                                                 color: '#475569',
-                                                                backgroundColor: '#f1f5f9',
-                                                                padding: '5px 10px',
+                                                                backgroundColor: '#ffffff',
+                                                                padding: '4px 10px',
                                                                 borderRadius: '6px',
                                                                 cursor: 'pointer',
                                                                 border: '1px solid #cbd5e1'
@@ -1801,50 +2027,114 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
 
                                         {/* TIPO 1: OPCIÓN MÚLTIPLE */}
                                         {pregunta.tipo === 'Opción múltiple' && (
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                                    Marca el radio verde en la respuesta correcta:
-                                                </span>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                                                    <span style={{ fontSize: '12px', fontWeight: '700', color: '#334155' }}>
+                                                        Opciones de respuesta
+                                                    </span>
+                                                    <span style={{ fontSize: '11px', color: '#64748b' }}>
+                                                        Marca el círculo en la opción correcta
+                                                    </span>
+                                                </div>
                                                 {pregunta.opciones.map((opcion, oIndex) => {
-                                                    const letra = String.fromCharCode(65 + oIndex); // A, B, C, D
+                                                    const letra = String.fromCharCode(65 + oIndex); // A, B, C, D...
+                                                    const esCorr = Boolean(opcion.correcta);
                                                     return (
-                                                        <div key={oIndex} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                        <div key={oIndex} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                             <input
                                                                 type="radio"
                                                                 name={`correcta_${pIndex}`}
-                                                                checked={opcion.correcta}
+                                                                checked={esCorr}
                                                                 onChange={() => handleSeleccionarCorrecta(pIndex, oIndex)}
                                                                 title="Marcar como respuesta correcta"
-                                                                style={{ cursor: 'pointer', accentColor: '#059669', width: '18px', height: '18px' }}
+                                                                style={{ cursor: 'pointer', accentColor: '#10b981', width: '18px', height: '18px' }}
                                                             />
-                                                            <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#64748b', width: '15px' }}>{letra}</span>
+                                                            <div style={{
+                                                                width: '26px',
+                                                                height: '26px',
+                                                                borderRadius: '6px',
+                                                                backgroundColor: esCorr ? '#dcfce7' : '#f1f5f9',
+                                                                color: esCorr ? '#15803d' : '#64748b',
+                                                                fontSize: '12px',
+                                                                fontWeight: '800',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                flexShrink: 0
+                                                            }}>
+                                                                {letra}
+                                                            </div>
                                                             <input
                                                                 type="text"
                                                                 value={opcion.texto}
                                                                 onChange={(e) => handleOpcionChange(pIndex, oIndex, e.target.value)}
-                                                                placeholder={`Opción ${letra}...`}
+                                                                placeholder={`Texto de la opción ${letra}...`}
                                                                 required
                                                                 style={{
                                                                     flex: 1,
                                                                     padding: '8px 12px',
-                                                                    borderRadius: '6px',
-                                                                    border: opcion.correcta ? '1px solid #10b981' : '1px solid #cbd5e1',
-                                                                    backgroundColor: opcion.correcta ? '#f0fdf4' : '#fff',
+                                                                    borderRadius: '8px',
+                                                                    border: esCorr ? '1.5px solid #10b981' : '1px solid #cbd5e1',
+                                                                    backgroundColor: esCorr ? '#f0fdf4' : '#ffffff',
                                                                     fontSize: '13px',
+                                                                    fontWeight: esCorr ? '600' : 'normal',
+                                                                    color: '#0f172a',
+                                                                    outline: 'none',
                                                                     boxSizing: 'border-box'
                                                                 }}
                                                             />
+                                                            {pregunta.opciones.length > 2 && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleEliminarOpcion(pIndex, oIndex)}
+                                                                    title="Eliminar esta opción"
+                                                                    style={{
+                                                                        background: 'transparent',
+                                                                        border: 'none',
+                                                                        color: '#94a3b8',
+                                                                        cursor: 'pointer',
+                                                                        padding: '4px',
+                                                                        borderRadius: '4px'
+                                                                    }}
+                                                                    onMouseEnter={(e) => e.currentTarget.style.color = '#ef4444'}
+                                                                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
+                                                                >
+                                                                    <X size={15} />
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     );
                                                 })}
+                                                {pregunta.opciones.length < 6 && (
+                                                    <div style={{ marginTop: '2px' }}>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleAgregarOpcion(pIndex)}
+                                                            style={{
+                                                                background: 'transparent',
+                                                                border: 'none',
+                                                                color: '#2563eb',
+                                                                fontSize: '12px',
+                                                                fontWeight: '600',
+                                                                cursor: 'pointer',
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: '4px',
+                                                                padding: '4px 6px'
+                                                            }}
+                                                        >
+                                                            <Plus size={14} /> Añadir otra opción
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
 
                                         {/* TIPO 2: VERDADERO / FALSO */}
                                         {pregunta.tipo === 'Verdadero/Falso' && (
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                                    Selecciona cuál es la respuesta correcta:
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                <span style={{ fontSize: '12px', fontWeight: '700', color: '#334155' }}>
+                                                    Selecciona la respuesta correcta:
                                                 </span>
                                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                                                     <div
@@ -1858,7 +2148,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                                             display: 'flex',
                                                             alignItems: 'center',
                                                             justifyContent: 'space-between',
-                                                            transition: 'all 0.2s'
+                                                            transition: 'all 0.15s ease'
                                                         }}
                                                     >
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -1889,7 +2179,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                                             display: 'flex',
                                                             alignItems: 'center',
                                                             justifyContent: 'space-between',
-                                                            transition: 'all 0.2s'
+                                                            transition: 'all 0.15s ease'
                                                         }}
                                                     >
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -1916,9 +2206,9 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                         {pregunta.tipo === 'Respuesta escrita' && (
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                    <Type size={15} color="#3b82f6" />
+                                                    <Type size={14} color="#2563eb" />
                                                     <label style={{ fontSize: '12px', fontWeight: '700', color: '#334155' }}>
-                                                        PAUTA O CRITERIOS DE CALIFICACIÓN (OPCIONAL)
+                                                        Pauta o criterios orientativos de calificación (Opcional)
                                                     </label>
                                                 </div>
                                                 <input
@@ -1928,7 +2218,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                                     placeholder="Ej: Criterios clave: justificación clara, conceptos principales..."
                                                     style={{
                                                         width: '100%',
-                                                        padding: '10px 14px',
+                                                        padding: '9px 12px',
                                                         borderRadius: '8px',
                                                         border: '1px solid #cbd5e1',
                                                         backgroundColor: '#ffffff',
@@ -1936,48 +2226,45 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                                         boxSizing: 'border-box'
                                                     }}
                                                 />
-                                                <div style={{ backgroundColor: '#eff6ff', border: '1px solid #dbeafe', padding: '10px 12px', borderRadius: '8px', fontSize: '12px', color: '#1e40af', lineHeight: '1.4' }}>
-                                                    ℹ️ <strong>Revisión manual por el profesor:</strong> El alumno escribirá su respuesta en un campo de texto libre. La calificación no se asigna de forma automática, sino que podrás leer la respuesta del alumno y asignarle su nota correspondiente.
+                                                <div style={{ backgroundColor: '#eff6ff', border: '1px solid #dbeafe', padding: '8px 12px', borderRadius: '8px', fontSize: '11.5px', color: '#1e40af', lineHeight: '1.4' }}>
+                                                    ℹ️ <strong>Revisión manual:</strong> El alumno escribirá su respuesta libremente. Podrás revisar y asignar su nota en la auditoría docente.
                                                 </div>
                                             </div>
                                         )}
 
-                                        {/* EXPLICACIÓN PEDAGÓGICA DE LA PREGUNTA */}
+                                        {/* EXPLICACIÓN FORMATIVA (DISEÑO SUTIL, EQUILIBRADO Y NEUTRO - SIN AMARILLO ESTRIDENTE) */}
                                         <div style={{
-                                            marginTop: '16px',
-                                            padding: '12px 14px',
-                                            backgroundColor: '#fffbeb',
-                                            border: '1px solid #fef3c7',
-                                            borderRadius: '10px'
+                                            backgroundColor: '#f8fafc',
+                                            border: '1px solid #e2e8f0',
+                                            borderRadius: '10px',
+                                            padding: '10px 14px'
                                         }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                                                <Lightbulb size={16} color="#d97706" />
-                                                <label style={{ fontSize: '12px', fontWeight: '700', color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                                                    Explicación pedagógica / Justificación de la respuesta (Opcional)
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                                                <Lightbulb size={14} color="#64748b" />
+                                                <label style={{ fontSize: '12px', fontWeight: '600', color: '#475569' }}>
+                                                    Explicación o retroalimentación formativa (Opcional)
                                                 </label>
                                             </div>
                                             <textarea
                                                 value={pregunta.explicacion || ''}
                                                 onChange={(e) => handleExplicacionChange(pIndex, e.target.value)}
                                                 rows={2}
-                                                placeholder="Explica el razonamiento pedagógico, pasos de solución o conceptos clave para que el alumno aprenda al terminar..."
+                                                placeholder="Justificación pedagógica o resolución paso a paso que el alumno verá al terminar su evaluación..."
                                                 style={{
                                                     width: '100%',
                                                     padding: '8px 12px',
-                                                    borderRadius: '6px',
-                                                    border: '1px solid #fde68a',
-                                                    fontSize: '13px',
-                                                    color: '#1e293b',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #cbd5e1',
+                                                    fontSize: '12.5px',
+                                                    color: '#334155',
                                                     backgroundColor: '#ffffff',
                                                     boxSizing: 'border-box',
                                                     resize: 'vertical',
                                                     outline: 'none',
-                                                    fontFamily: 'inherit'
+                                                    fontFamily: 'inherit',
+                                                    lineHeight: '1.45'
                                                 }}
                                             />
-                                            <div style={{ fontSize: '11px', color: '#b45309', marginTop: '4px' }}>
-                                                💡 Esta explicación se mostrará inmediatamente al alumno al enviar su evaluación para enriquecer su proceso formativo.
-                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -2369,30 +2656,37 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                 </div>
                             ) : (
                                 preguntasBanco.map((b) => {
+                                    const textoB = (b.enunciado || b.textoPregunta || '').trim().toLowerCase();
+                                    const yaEnExamen = preguntas.some(p => (p.enunciado || '').trim().toLowerCase() === textoB && textoB !== '');
                                     const seleccionada = Boolean(seleccionadasBanco[b.id]);
                                     const puntosVal = b.puntos !== undefined && b.puntos !== null ? b.puntos : (b.puntosDefecto || 4.0);
 
                                     return (
                                         <div
                                             key={b.id}
-                                            onClick={() => toggleSeleccionBanco(b.id)}
+                                            onClick={() => {
+                                                if (yaEnExamen) return;
+                                                toggleSeleccionBanco(b.id);
+                                            }}
                                             style={{
-                                                backgroundColor: seleccionada ? '#f0fdf4' : '#ffffff',
-                                                border: `2px solid ${seleccionada ? '#10b981' : '#e2e8f0'}`,
+                                                backgroundColor: yaEnExamen ? '#f8fafc' : (seleccionada ? '#f0fdf4' : '#ffffff'),
+                                                border: `2px solid ${yaEnExamen ? '#e2e8f0' : (seleccionada ? '#10b981' : '#e2e8f0')}`,
                                                 borderRadius: '10px',
                                                 padding: '14px 16px',
-                                                cursor: 'pointer',
+                                                cursor: yaEnExamen ? 'not-allowed' : 'pointer',
                                                 display: 'flex',
                                                 gap: '12px',
                                                 alignItems: 'flex-start',
+                                                opacity: yaEnExamen ? 0.75 : 1,
                                                 transition: 'all 0.15s'
                                             }}
                                         >
                                             <input
                                                 type="checkbox"
-                                                checked={seleccionada}
+                                                checked={seleccionada && !yaEnExamen}
+                                                disabled={yaEnExamen}
                                                 onChange={() => {}} // handled by div onClick
-                                                style={{ marginTop: '3px', width: '18px', height: '18px', cursor: 'pointer', accentColor: '#10b981' }}
+                                                style={{ marginTop: '3px', width: '18px', height: '18px', cursor: yaEnExamen ? 'not-allowed' : 'pointer', accentColor: '#10b981' }}
                                             />
                                             <div style={{ flex: 1 }}>
                                                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap' }}>
@@ -2417,6 +2711,11 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                                     <span style={{ fontSize: '11px', fontWeight: '600', color: '#047857', background: '#ecfdf5', padding: '2px 8px', borderRadius: '6px' }}>
                                                         {puntosVal.toFixed(1)} pts
                                                     </span>
+                                                    {yaEnExamen && (
+                                                        <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '2px 8px', borderRadius: '10px', marginLeft: 'auto' }}>
+                                                            ✓ Ya en este examen
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <div style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a', lineHeight: '1.4' }}>
                                                     {b.enunciado || b.textoPregunta}
@@ -2485,6 +2784,17 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                     </div>
                 </div>
             )}
+
+            {/* MODAL DE ALERTA MODERNA */}
+            <AlertaModal
+                isOpen={alerta.isOpen}
+                onClose={cerrarAlerta}
+                tipo={alerta.tipo}
+                titulo={alerta.titulo}
+                mensaje={alerta.mensaje}
+                sugerencia={alerta.sugerencia}
+                textoBoton={alerta.textoBoton}
+            />
         </div>
     );
 }
