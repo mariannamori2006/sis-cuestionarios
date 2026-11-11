@@ -94,7 +94,7 @@ export default function DashboardComponent() {
     };
 
     return (
-        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100vh', width: '100vw', backgroundColor: '#f8fafc', fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100vh', width: '100vw', backgroundColor: '#f8fafc', overflow: 'hidden' }}>
 
             {/* FONDO OSCURO PARA CERRAR EL MENÚ EN CELULARES */}
             {isMobile && menuAbierto && (

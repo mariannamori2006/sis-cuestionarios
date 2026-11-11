@@ -214,7 +214,7 @@ export default function GraficasRendimientoAvanzadas({
                         ticks: {
                             callback: value => `${value}%`,
                             color: '#64748b',
-                            font: { size: 11, family: 'Segoe UI' }
+                            font: { size: 11, family: 'Plus Jakarta Sans' }
                         },
                         grid: {
                             color: '#f1f5f9'
@@ -223,7 +223,7 @@ export default function GraficasRendimientoAvanzadas({
                     x: {
                         ticks: {
                             color: '#334155',
-                            font: { size: 12, weight: '600', family: 'Segoe UI' }
+                            font: { size: 12, weight: '600', family: 'Plus Jakarta Sans' }
                         },
                         grid: {
                             display: false
@@ -285,7 +285,7 @@ export default function GraficasRendimientoAvanzadas({
                             boxHeight: 12,
                             borderRadius: 3,
                             useBorderRadius: true,
-                            font: { size: 11, family: 'Segoe UI', weight: '500' },
+                            font: { size: 11, family: 'Plus Jakarta Sans', weight: '500' },
                             color: '#475569',
                             padding: 12
                         }
@@ -408,14 +408,14 @@ export default function GraficasRendimientoAvanzadas({
                         ticks: {
                             callback: value => `${value}%`,
                             color: '#64748b',
-                            font: { size: 11, family: 'Segoe UI' }
+                            font: { size: 11, family: 'Plus Jakarta Sans' }
                         },
                         grid: { color: '#f1f5f9' }
                     },
                     x: {
                         ticks: {
                             color: '#334155',
-                            font: { size: 12, weight: '600', family: 'Segoe UI' }
+                            font: { size: 12, weight: '600', family: 'Plus Jakarta Sans' }
                         },
                         grid: { display: false }
                     }
@@ -487,7 +487,7 @@ export default function GraficasRendimientoAvanzadas({
                             boxHeight: 12,
                             borderRadius: 3,
                             useBorderRadius: true,
-                            font: { size: 11, family: 'Segoe UI', weight: '500' },
+                            font: { size: 11, family: 'Plus Jakarta Sans', weight: '500' },
                             color: '#475569',
                             padding: 10
                         }

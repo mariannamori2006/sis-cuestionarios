@@ -697,21 +697,23 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                 zIndex: 1000,
                 padding: '20px',
                 boxSizing: 'border-box',
-                fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
+                backdropFilter: 'blur(6px)'
             }}
         >
             <div 
                 onClick={(e) => e.stopPropagation()}
+                className="animate-scale-up"
                 style={{
                     backgroundColor: '#ffffff',
-                    borderRadius: '16px',
+                    borderRadius: '24px',
                     width: '100%',
                     maxWidth: '740px',
                     maxHeight: '90vh',
                     overflowY: 'auto',
                     boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
                     display: 'flex',
-                    flexDirection: 'column'
+                    flexDirection: 'column',
+                    border: '1px solid #e2e8f0'
                 }}
             >
 

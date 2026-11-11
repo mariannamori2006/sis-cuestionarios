@@ -167,21 +167,21 @@ export default function EstadisticasView() {
     }
 
     return (
-        <div style={{ fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif' }}>
+        <div>
             {/* CABECERA PRINCIPAL Y SELECTOR DE VISTA */}
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: '24px',
+                marginBottom: '26px',
                 flexWrap: 'wrap',
                 gap: '16px'
             }}>
                 <div>
-                    <h1 style={{ margin: '0 0 4px 0', fontSize: '26px', color: '#0f172a', fontWeight: '800' }}>
+                    <h1 style={{ margin: '0 0 4px 0', fontSize: '26px', color: '#0f172a', fontWeight: '800', letterSpacing: '-0.02em' }}>
                         Estadísticas y Rendimiento
                     </h1>
-                    <span style={{ fontSize: '13px', color: '#64748b' }}>
+                    <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>
                         Visualización analítica de tasa de aciertos por materia y por pregunta con gráficos interactivos
                     </span>
                 </div>
@@ -189,7 +189,7 @@ export default function EstadisticasView() {
                 {/* SELECTOR DE PESTAÑAS PRINCIPALES */}
                 <div style={{
                     display: 'flex',
-                    background: '#e2e8f0',
+                    background: '#f1f5f9',
                     padding: '4px',
                     borderRadius: '12px'
                 }}>
@@ -207,7 +207,7 @@ export default function EstadisticasView() {
                             fontWeight: '700',
                             cursor: 'pointer',
                             background: tabPrincipal === 'graficas' ? '#2563eb' : 'transparent',
-                            color: tabPrincipal === 'graficas' ? '#ffffff' : '#475569',
+                            color: tabPrincipal === 'graficas' ? '#ffffff' : '#64748b',
                             boxShadow: tabPrincipal === 'graficas' ? '0 2px 6px rgba(37, 99, 235, 0.3)' : 'none',
                             transition: 'all 0.2s'
                         }}
@@ -229,7 +229,7 @@ export default function EstadisticasView() {
                             fontWeight: '700',
                             cursor: 'pointer',
                             background: tabPrincipal === 'general' ? '#2563eb' : 'transparent',
-                            color: tabPrincipal === 'general' ? '#ffffff' : '#475569',
+                            color: tabPrincipal === 'general' ? '#ffffff' : '#64748b',
                             boxShadow: tabPrincipal === 'general' ? '0 2px 6px rgba(37, 99, 235, 0.3)' : 'none',
                             transition: 'all 0.2s'
                         }}
@@ -254,47 +254,48 @@ export default function EstadisticasView() {
             {tabPrincipal === 'general' && (
                 <>
                     {/* TARJETAS MÉTRICAS SUPERIORES (3 COLUMNAS) */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '24px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '24px' }}>
                         {/* 1. Total de respuestas */}
-                        <div style={{ background: '#fff', padding: '20px 24px', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#e6f7f0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                <Edit3 size={18} color="#ea580c" />
+                        <div className="interactive-card" style={{ background: '#ffffff', padding: '22px 24px', borderRadius: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', borderTop: '4px solid #2563eb', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <div style={{ width: '44px', height: '44px', borderRadius: '12px', backgroundColor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <Edit3 size={20} color="#2563eb" />
                             </div>
                             <div>
-                                <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#10b981', lineHeight: '1.1', marginBottom: '4px' }}>
+                                <div style={{ fontSize: '30px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.5px', lineHeight: '1.1', marginBottom: '4px' }}>
                                     {totalRespuestas}
                                 </div>
-                                <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                                     Total de respuestas
                                 </div>
                             </div>
                         </div>
 
                         {/* 2. Tasa de aprobación */}
-                        <div style={{ background: '#fff', padding: '20px 24px', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#e6f7f0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                <CheckSquare size={18} color="#10b981" />
+                        <div className="interactive-card" style={{ background: '#ffffff', padding: '22px 24px', borderRadius: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', borderTop: '4px solid #10b981', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <div style={{ width: '44px', height: '44px', borderRadius: '12px', backgroundColor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <CheckSquare size={20} color="#059669" />
                             </div>
                             <div>
-                                <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#0f172a', lineHeight: '1.1', marginBottom: '4px' }}>
+                                <div style={{ fontSize: '30px', fontWeight: '800', color: '#059669', letterSpacing: '-0.5px', lineHeight: '1.1', marginBottom: '4px' }}>
                                     {tasaAprobacion}%
                                 </div>
-                                <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                                     Tasa de aprobación
                                 </div>
                             </div>
                         </div>
 
                         {/* 3. Promedio general */}
-                        <div style={{ background: '#fff', padding: '20px 24px', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                <Star size={18} color="#eab308" fill="#eab308" />
+                        <div className="interactive-card" style={{ background: '#ffffff', padding: '22px 24px', borderRadius: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', borderTop: '4px solid #f59e0b', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <div style={{ width: '44px', height: '44px', borderRadius: '12px', backgroundColor: '#fffbeb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <Star size={20} color="#d97706" />
                             </div>
                             <div>
-                                <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#6366f1', lineHeight: '1.1', marginBottom: '4px' }}>
-                                    {promedioGeneral > 0 ? promedioGeneral.toFixed(1) : '0.0'}/20
+                                <div style={{ fontSize: '30px', fontWeight: '800', color: '#d97706', letterSpacing: '-0.5px', lineHeight: '1.1', marginBottom: '4px' }}>
+                                    {promedioGeneral > 0 ? promedioGeneral.toFixed(1) : '0.0'}
+                                    <span style={{ fontSize: '16px', fontWeight: '600', color: '#94a3b8' }}> / 20</span>
                                 </div>
-                                <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                                     Promedio general
                                 </div>
                             </div>
@@ -302,11 +303,11 @@ export default function EstadisticasView() {
                     </div>
 
                     {/* SECCIÓN INTERMEDIA (2 COLUMNAS) */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '24px', marginBottom: '24px' }}>
                         
                         {/* CARD IZQUIERDA: RESPUESTAS POR CUESTIONARIO */}
-                        <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                            <h3 style={{ margin: '0 0 22px 0', fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>
+                        <div style={{ background: '#ffffff', borderRadius: '18px', border: '1px solid #e2e8f0', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                            <h3 style={{ margin: '0 0 20px 0', fontSize: '17px', fontWeight: '800', color: '#0f172a' }}>
                                 Respuestas por cuestionario
                             </h3>
 
@@ -319,27 +320,27 @@ export default function EstadisticasView() {
                                         return (
                                             <div key={c.id || idx}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                                                    <span style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a' }}>
+                                                    <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a' }}>
                                                         {c.titulo}
                                                     </span>
-                                                    <span style={{ fontSize: '13px', fontWeight: '700', color: '#64748b' }}>
-                                                        {resp}
+                                                    <span style={{ fontSize: '13px', fontWeight: '800', color: '#2563eb' }}>
+                                                        {resp} <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '500' }}>entregas</span>
                                                     </span>
                                                 </div>
-                                                <div style={{ width: '100%', height: '26px', backgroundColor: '#f1f5f9', borderRadius: '14px', overflow: 'hidden', position: 'relative' }}>
+                                                <div style={{ width: '100%', height: '22px', backgroundColor: '#f1f5f9', borderRadius: '9999px', overflow: 'hidden', position: 'relative' }}>
                                                     <div style={{
                                                         width: `${pct}%`,
                                                         height: '100%',
-                                                        backgroundColor: '#1e3a8a',
-                                                        borderRadius: '14px',
+                                                        background: 'linear-gradient(90deg, #2563eb 0%, #3b82f6 100%)',
+                                                        borderRadius: '9999px',
                                                         display: 'flex',
                                                         alignItems: 'center',
-                                                        paddingLeft: '12px',
+                                                        paddingLeft: '10px',
                                                         boxSizing: 'border-box',
                                                         transition: 'width 0.4s ease'
                                                     }}>
-                                                        <span style={{ color: '#ffffff', fontSize: '11px', fontWeight: '700', whiteSpace: 'nowrap' }}>
-                                                            {resp} resp.
+                                                        <span style={{ color: '#ffffff', fontSize: '10px', fontWeight: '800', whiteSpace: 'nowrap' }}>
+                                                            {resp}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -348,82 +349,82 @@ export default function EstadisticasView() {
                                     })}
                                 </div>
                             ) : (
-                                <div style={{ color: '#94a3b8', fontSize: '13px', padding: '20px 0', textAlign: 'center' }}>
+                                <div style={{ color: '#94a3b8', fontSize: '13px', padding: '30px 0', textAlign: 'center' }}>
                                     No hay cuestionarios con respuestas registradas.
                                 </div>
                             )}
                         </div>
 
                         {/* CARD DERECHA: DISTRIBUCIÓN DE CALIFICACIONES */}
-                        <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                        <div style={{ background: '#ffffff', borderRadius: '18px', border: '1px solid #e2e8f0', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                             <div>
-                                <h3 style={{ margin: '0 0 22px 0', fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>
+                                <h3 style={{ margin: '0 0 20px 0', fontSize: '17px', fontWeight: '800', color: '#0f172a' }}>
                                     Distribución de calificaciones
                                 </h3>
 
                                 {/* GRÁFICO DE BARRAS */}
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', height: '140px', alignItems: 'end', marginBottom: '18px', padding: '0 10px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', height: '140px', alignItems: 'end', marginBottom: '18px', padding: '0 10px' }}>
                                     {/* Barra 18-20 pts */}
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
-                                        <span style={{ fontSize: '12px', fontWeight: '700', color: '#10b981', marginBottom: '6px' }}>{c18_20}</span>
+                                        <span style={{ fontSize: '12px', fontWeight: '800', color: '#059669', marginBottom: '6px' }}>{c18_20}</span>
                                         <div style={{
                                             width: '100%',
                                             height: `${Math.max(12, Math.round((c18_20 / maxAlumnosRango) * 85))}px`,
-                                            backgroundColor: '#22c55e',
-                                            borderRadius: '6px',
+                                            background: 'linear-gradient(180deg, #10b981 0%, #059669 100%)',
+                                            borderRadius: '8px',
                                             transition: 'height 0.4s ease'
                                         }} />
                                         <div style={{ textAlign: 'center', marginTop: '8px' }}>
-                                            <div style={{ fontSize: '12px', fontWeight: '700', color: '#0f172a' }}>18–20</div>
-                                            <div style={{ fontSize: '10px', color: '#94a3b8' }}>pts</div>
+                                            <div style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a' }}>18–20</div>
+                                            <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '600' }}>pts</div>
                                         </div>
                                     </div>
 
                                     {/* Barra 15-17 pts */}
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
-                                        <span style={{ fontSize: '12px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>{c15_17}</span>
+                                        <span style={{ fontSize: '12px', fontWeight: '800', color: '#2563eb', marginBottom: '6px' }}>{c15_17}</span>
                                         <div style={{
                                             width: '100%',
                                             height: `${Math.max(12, Math.round((c15_17 / maxAlumnosRango) * 85))}px`,
-                                            backgroundColor: '#3b516b',
-                                            borderRadius: '6px',
+                                            background: 'linear-gradient(180deg, #3b82f6 0%, #2563eb 100%)',
+                                            borderRadius: '8px',
                                             transition: 'height 0.4s ease'
                                         }} />
                                         <div style={{ textAlign: 'center', marginTop: '8px' }}>
-                                            <div style={{ fontSize: '12px', fontWeight: '700', color: '#0f172a' }}>15–17</div>
-                                            <div style={{ fontSize: '10px', color: '#94a3b8' }}>pts</div>
+                                            <div style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a' }}>15–17</div>
+                                            <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '600' }}>pts</div>
                                         </div>
                                     </div>
 
                                     {/* Barra 11-14 pts */}
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
-                                        <span style={{ fontSize: '12px', fontWeight: '700', color: '#d97706', marginBottom: '6px' }}>{c11_14}</span>
+                                        <span style={{ fontSize: '12px', fontWeight: '800', color: '#d97706', marginBottom: '6px' }}>{c11_14}</span>
                                         <div style={{
                                             width: '100%',
                                             height: `${Math.max(12, Math.round((c11_14 / maxAlumnosRango) * 85))}px`,
-                                            backgroundColor: '#e68a1d',
-                                            borderRadius: '6px',
+                                            background: 'linear-gradient(180deg, #f59e0b 0%, #d97706 100%)',
+                                            borderRadius: '8px',
                                             transition: 'height 0.4s ease'
                                         }} />
                                         <div style={{ textAlign: 'center', marginTop: '8px' }}>
-                                            <div style={{ fontSize: '12px', fontWeight: '700', color: '#0f172a' }}>11–14</div>
-                                            <div style={{ fontSize: '10px', color: '#94a3b8' }}>pts</div>
+                                            <div style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a' }}>11–14</div>
+                                            <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '600' }}>pts</div>
                                         </div>
                                     </div>
 
                                     {/* Barra 0-10 pts */}
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
-                                        <span style={{ fontSize: '12px', fontWeight: '700', color: '#dc2626', marginBottom: '6px' }}>{c0_10}</span>
+                                        <span style={{ fontSize: '12px', fontWeight: '800', color: '#e11d48', marginBottom: '6px' }}>{c0_10}</span>
                                         <div style={{
                                             width: '100%',
                                             height: `${Math.max(12, Math.round((c0_10 / maxAlumnosRango) * 85))}px`,
-                                            backgroundColor: '#ef4444',
-                                            borderRadius: '6px',
+                                            background: 'linear-gradient(180deg, #f43f5e 0%, #e11d48 100%)',
+                                            borderRadius: '8px',
                                             transition: 'height 0.4s ease'
                                         }} />
                                         <div style={{ textAlign: 'center', marginTop: '8px' }}>
-                                            <div style={{ fontSize: '12px', fontWeight: '700', color: '#0f172a' }}>0–10</div>
-                                            <div style={{ fontSize: '10px', color: '#94a3b8' }}>pts</div>
+                                            <div style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a' }}>0–10</div>
+                                            <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '600' }}>pts</div>
                                         </div>
                                     </div>
                                 </div>
@@ -433,107 +434,90 @@ export default function EstadisticasView() {
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', borderTop: '1px solid #f1f5f9', paddingTop: '16px', fontSize: '12px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b' }}>
-                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e' }} />
+                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }} />
                                         <span>18–20 pts</span>
                                     </div>
-                                    <span style={{ fontWeight: '600', color: '#0f172a' }}>{c18_20} {c18_20 === 1 ? 'alumno' : 'alumnos'}</span>
+                                    <span style={{ fontWeight: '700', color: '#0f172a' }}>{c18_20} {c18_20 === 1 ? 'alumno' : 'alumnos'}</span>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b' }}>
-                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#3b516b' }} />
+                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#2563eb' }} />
                                         <span>15–17 pts</span>
                                     </div>
-                                    <span style={{ fontWeight: '600', color: '#0f172a' }}>{c15_17} {c15_17 === 1 ? 'alumno' : 'alumnos'}</span>
+                                    <span style={{ fontWeight: '700', color: '#0f172a' }}>{c15_17} {c15_17 === 1 ? 'alumno' : 'alumnos'}</span>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b' }}>
-                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#e68a1d' }} />
+                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#f59e0b' }} />
                                         <span>11–14 pts</span>
                                     </div>
-                                    <span style={{ fontWeight: '600', color: '#0f172a' }}>{c11_14} {c11_14 === 1 ? 'alumno' : 'alumnos'}</span>
+                                    <span style={{ fontWeight: '700', color: '#0f172a' }}>{c11_14} {c11_14 === 1 ? 'alumno' : 'alumnos'}</span>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b' }}>
-                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ef4444' }} />
+                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#f43f5e' }} />
                                         <span>0–10 pts</span>
                                     </div>
-                                    <span style={{ fontWeight: '600', color: '#0f172a' }}>{c0_10} {c0_10 === 1 ? 'alumno' : 'alumnos'}</span>
+                                    <span style={{ fontWeight: '700', color: '#0f172a' }}>{c0_10} {c0_10 === 1 ? 'alumno' : 'alumnos'}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* SECCIÓN INFERIOR: RESUMEN POR CUESTIONARIO */}
-                    <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                        <h3 style={{ margin: '0 0 20px 0', fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>
+                    <div style={{ background: '#ffffff', borderRadius: '18px', border: '1px solid #e2e8f0', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                        <h3 style={{ margin: '0 0 18px 0', fontSize: '17px', fontWeight: '800', color: '#0f172a' }}>
                             Resumen por cuestionario
                         </h3>
 
                         {cuestionarios.length > 0 ? (
-                            <div>
-                                <div style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
-                                    padding: '10px 8px',
-                                    borderBottom: '1px solid #e2e8f0',
-                                    fontSize: '11px',
-                                    fontWeight: '700',
-                                    color: '#94a3b8',
-                                    letterSpacing: '0.6px',
-                                    textTransform: 'uppercase',
-                                    alignItems: 'center'
-                                }}>
-                                    <div>CUESTIONARIO</div>
-                                    <div>MATERIA</div>
-                                    <div>RESPUESTAS</div>
-                                    <div>PREGUNTAS</div>
-                                    <div>CREADO</div>
-                                </div>
+                            <div style={{ overflowX: 'auto' }}>
+                                <table className="saas-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Cuestionario</th>
+                                            <th>Materia</th>
+                                            <th>Respuestas</th>
+                                            <th>Preguntas</th>
+                                            <th>Creado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {cuestionarios.map((c, idx) => {
+                                            const matStyle = getMateriaStyle(c.materia);
 
-                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                    {cuestionarios.map((c, idx) => {
-                                        const matStyle = getMateriaStyle(c.materia);
-
-                                        return (
-                                            <div
-                                                key={c.id || idx}
-                                                style={{
-                                                    display: 'grid',
-                                                    gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
-                                                    padding: '16px 8px',
-                                                    alignItems: 'center',
-                                                    borderBottom: idx < cuestionarios.length - 1 ? '1px solid #f8fafc' : 'none'
-                                                }}
-                                            >
-                                                <div style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a' }}>
-                                                    {c.titulo}
-                                                </div>
-                                                <div>
-                                                    <span style={{
-                                                        backgroundColor: matStyle.bg,
-                                                        color: matStyle.color,
-                                                        padding: '4px 10px',
-                                                        borderRadius: '12px',
-                                                        fontSize: '11px',
-                                                        fontWeight: '700',
-                                                        display: 'inline-block'
-                                                    }}>
-                                                        {c.materia || 'General'}
-                                                    </span>
-                                                </div>
-                                                <div style={{ fontSize: '14px', color: '#0f172a', fontWeight: '500' }}>
-                                                    {c.totalRespuestas || 0}
-                                                </div>
-                                                <div style={{ fontSize: '14px', color: '#0f172a', fontWeight: '500' }}>
-                                                    {c.totalPreguntas || 0}
-                                                </div>
-                                                <div style={{ fontSize: '13px', color: '#64748b' }}>
-                                                    {c.fechaCreacion || '2026-09-01'}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+                                            return (
+                                                <tr key={c.id || idx}>
+                                                    <td style={{ fontWeight: '700', color: '#0f172a' }}>
+                                                        {c.titulo}
+                                                    </td>
+                                                    <td>
+                                                        <span style={{
+                                                            backgroundColor: matStyle.bg,
+                                                            color: matStyle.color,
+                                                            padding: '4px 10px',
+                                                            borderRadius: '12px',
+                                                            fontSize: '11px',
+                                                            fontWeight: '700',
+                                                            display: 'inline-block'
+                                                        }}>
+                                                            {c.materia || 'General'}
+                                                        </span>
+                                                    </td>
+                                                    <td style={{ fontWeight: '700', color: '#2563eb' }}>
+                                                        {c.totalRespuestas || 0}
+                                                    </td>
+                                                    <td style={{ color: '#475569' }}>
+                                                        {c.totalPreguntas || 0}
+                                                    </td>
+                                                    <td style={{ color: '#64748b' }}>
+                                                        {c.fechaCreacion || '2026-09-01'}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
                             </div>
                         ) : (
                             <div style={{ color: '#94a3b8', fontSize: '13px', padding: '30px 0', textAlign: 'center' }}>

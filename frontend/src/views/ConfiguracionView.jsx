@@ -127,14 +127,14 @@ export default function ConfiguracionView({ onUserUpdated }) {
     };
 
     return (
-        <div style={{ fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', maxWidth: '880px' }}>
+        <div style={{ maxWidth: '880px' }}>
             {/* CABECERA */}
-            <div style={{ marginBottom: '24px' }}>
-                <h1 style={{ margin: '0 0 4px 0', fontSize: '24px', color: '#0f172a', fontWeight: '700' }}>
+            <div style={{ marginBottom: '26px' }}>
+                <h1 style={{ margin: '0 0 4px 0', fontSize: '26px', color: '#0f172a', fontWeight: '800', letterSpacing: '-0.02em' }}>
                     Configuración
                 </h1>
-                <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
-                    Gestiona tu perfil y preferencias de la plataforma
+                <p style={{ margin: 0, fontSize: '13px', color: '#64748b', fontWeight: '500' }}>
+                    Gestiona tu perfil institucional y preferencias de la plataforma
                 </p>
             </div>
 
@@ -541,27 +541,21 @@ export default function ConfiguracionView({ onUserUpdated }) {
                     type="button"
                     onClick={handleGuardarCambios}
                     disabled={guardando}
+                    className="interactive-card"
                     style={{
-                        backgroundColor: '#1e3a8a',
+                        background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
                         color: '#ffffff',
                         border: 'none',
-                        padding: '12px 28px',
-                        borderRadius: '8px',
+                        padding: '13px 30px',
+                        borderRadius: '12px',
                         fontSize: '14px',
-                        fontWeight: '600',
+                        fontWeight: '700',
                         cursor: guardando ? 'not-allowed' : 'pointer',
-                        transition: 'background-color 0.2s, transform 0.1s',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                        boxShadow: '0 4px 14px rgba(37,99,235,0.35)',
                         opacity: guardando ? 0.7 : 1
                     }}
-                    onMouseOver={(e) => {
-                        if (!guardando) e.currentTarget.style.backgroundColor = '#1e293b';
-                    }}
-                    onMouseOut={(e) => {
-                        if (!guardando) e.currentTarget.style.backgroundColor = '#1e3a8a';
-                    }}
                 >
-                    {guardando ? 'Guardando...' : 'Guardar cambios'}
+                    {guardando ? 'Guardando...' : 'Guardar Cambios'}
                 </button>
             </div>
         </div>

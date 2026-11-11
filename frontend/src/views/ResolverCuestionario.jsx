@@ -567,12 +567,12 @@ export default function ResolverCuestionario() {
     };
 
     if (loading) {
-        return <div style={{ textAlign: 'center', padding: '50px', fontFamily: 'Segoe UI' }}>Cargando evaluación...</div>;
+        return <div style={{ textAlign: 'center', padding: '50px', color: '#64748b' }}>Cargando evaluación...</div>;
     }
 
     if (!cuestionario) {
         return (
-            <div style={{ textAlign: 'center', padding: '50px', fontFamily: 'Segoe UI' }}>
+            <div style={{ textAlign: 'center', padding: '50px' }}>
                 <h3 style={{ color: '#0f172a' }}>Cuestionario no encontrado</h3>
                 <p style={{ color: '#64748b' }}>No se encontró ningún cuestionario activo con el código o ID: <strong>{id}</strong>.</p>
                 <button
@@ -592,7 +592,7 @@ export default function ResolverCuestionario() {
         const esLimiteIntentos = estadoDisponibilidad.codigoEstado === 'LIMITE_INTENTOS_ALCANZADO';
 
         return (
-            <div style={{ backgroundColor: '#0f172a', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif' }}>
+            <div style={{ backgroundColor: '#0f172a', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
                 <div style={{ backgroundColor: '#ffffff', padding: '36px', borderRadius: '20px', width: '100%', maxWidth: '480px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)', textAlign: 'center' }}>
                     <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
                         <img src={logoNativa} alt="NativaTec" style={{ height: '42px', objectFit: 'contain' }} />
@@ -667,7 +667,7 @@ export default function ResolverCuestionario() {
     // Pantalla de ingreso antes de comenzar
     if (!comenzado) {
         return (
-            <div style={{ backgroundColor: '#0f172a', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif' }}>
+            <div style={{ backgroundColor: '#0f172a', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
                 <div style={{ backgroundColor: '#ffffff', padding: '36px', borderRadius: '20px', width: '100%', maxWidth: '440px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)' }}>
                     <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                         <div style={{ marginBottom: '14px', display: 'flex', justifyContent: 'center' }}>
@@ -819,7 +819,7 @@ export default function ResolverCuestionario() {
     const esTiempoPoco = tieneTemporizador && tiempoRestanteSegundos !== null && porcentajeTiempo <= 25 && !esTiempoCritico;
 
     return (
-        <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh', padding: isMobile ? '16px 10px' : '40px 20px', fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif' }}>
+        <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh', padding: isMobile ? '16px 10px' : '40px 20px' }}>
             
             {/* BARRA FLOTANTE DE TEMPORIZADOR */}
             {tieneTemporizador && !resultado && (

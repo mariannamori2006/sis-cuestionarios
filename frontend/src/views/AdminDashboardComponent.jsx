@@ -310,7 +310,7 @@ export default function AdminDashboardComponent() {
     };
 
     return (
-        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100vh', width: '100vw', backgroundColor: '#f8fafc', fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100vh', width: '100vw', backgroundColor: '#f8fafc', overflow: 'hidden' }}>
 
             {/* FONDO OSCURO PARA CERRAR EL MENÚ EN CELULARES */}
             {isMobile && menuAbierto && (
@@ -324,7 +324,7 @@ export default function AdminDashboardComponent() {
                         height: '100vh',
                         backgroundColor: 'rgba(15, 23, 42, 0.65)',
                         zIndex: 1100,
-                        backdropFilter: 'blur(3px)'
+                        backdropFilter: 'blur(4px)'
                     }}
                 />
             )}
@@ -365,21 +365,21 @@ export default function AdminDashboardComponent() {
 
             {/* TOAST FLOTANTE */}
             {toastMessage && (
-                <div style={{
+                <div className="animate-fade-in" style={{
                     position: 'fixed',
                     bottom: '24px',
                     right: '24px',
                     backgroundColor: '#0f172a',
                     color: '#ffffff',
                     padding: '12px 20px',
-                    borderRadius: '10px',
-                    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)',
+                    borderRadius: '12px',
+                    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '10px',
                     zIndex: 9999,
                     fontSize: '13px',
-                    fontWeight: '500'
+                    fontWeight: '600'
                 }}>
                     <CheckCircle2 size={18} color="#10b981" />
                     <span>{toastMessage}</span>
@@ -407,7 +407,7 @@ export default function AdminDashboardComponent() {
             }}>
                 <div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '32px', padding: '4px' }}>
-                        <div style={{ background: '#ffffff', padding: '6px 10px', borderRadius: '8px', display: 'flex', alignItems: 'center', flex: 1 }}>
+                        <div style={{ background: '#ffffff', padding: '6px 12px', borderRadius: '10px', display: 'flex', alignItems: 'center', flex: 1, boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }}>
                             <img src={logoNativa} alt="NativaTec" style={{ height: '26px', maxWidth: '100%', objectFit: 'contain' }} />
                         </div>
                         {isMobile && (
@@ -420,7 +420,7 @@ export default function AdminDashboardComponent() {
                         )}
                     </div>
 
-                    <div style={{ padding: '0 8px 12px 8px', fontSize: '11px', fontWeight: '700', color: '#64748b', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                    <div style={{ padding: '0 8px 12px 8px', fontSize: '11px', fontWeight: '700', color: '#64748b', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                         Módulo de Administración
                     </div>
 
@@ -433,18 +433,19 @@ export default function AdminDashboardComponent() {
                                 gap: '12px',
                                 width: '100%',
                                 padding: '12px 14px',
-                                background: vistaActiva === 'panel' ? '#1e293b' : 'transparent',
-                                color: vistaActiva === 'panel' ? '#ffffff' : '#94a3b8',
+                                background: vistaActiva === 'panel' ? 'linear-gradient(90deg, rgba(37, 99, 235, 0.18) 0%, rgba(37, 99, 235, 0.05) 100%)' : 'transparent',
+                                color: vistaActiva === 'panel' ? '#60a5fa' : '#94a3b8',
                                 border: 'none',
+                                borderLeft: vistaActiva === 'panel' ? '3px solid #3b82f6' : '3px solid transparent',
                                 borderRadius: '8px',
                                 cursor: 'pointer',
                                 fontSize: '14px',
-                                fontWeight: '500',
+                                fontWeight: vistaActiva === 'panel' ? '600' : '500',
                                 textAlign: 'left',
-                                transition: 'all 0.2s'
+                                transition: 'all 0.2s ease'
                             }}
                         >
-                            <LayoutDashboard size={18} /> Panel Principal
+                            <LayoutDashboard size={18} /> <span>Panel Principal</span>
                         </button>
                         <button
                             onClick={() => cambiarVista('usuarios')}
@@ -454,18 +455,24 @@ export default function AdminDashboardComponent() {
                                 gap: '12px',
                                 width: '100%',
                                 padding: '12px 14px',
-                                background: vistaActiva === 'usuarios' ? '#1e293b' : 'transparent',
-                                color: vistaActiva === 'usuarios' ? '#ffffff' : '#94a3b8',
+                                background: vistaActiva === 'usuarios' ? 'linear-gradient(90deg, rgba(37, 99, 235, 0.18) 0%, rgba(37, 99, 235, 0.05) 100%)' : 'transparent',
+                                color: vistaActiva === 'usuarios' ? '#60a5fa' : '#94a3b8',
                                 border: 'none',
+                                borderLeft: vistaActiva === 'usuarios' ? '3px solid #3b82f6' : '3px solid transparent',
                                 borderRadius: '8px',
                                 cursor: 'pointer',
                                 fontSize: '14px',
-                                fontWeight: '500',
+                                fontWeight: vistaActiva === 'usuarios' ? '600' : '500',
                                 textAlign: 'left',
-                                transition: 'all 0.2s'
+                                transition: 'all 0.2s ease'
                             }}
                         >
-                            <Users size={18} /> Gestión de Usuarios
+                            <Users size={18} /> <span>Gestión de Usuarios</span>
+                            {usuarios.length > 0 && (
+                                <span style={{ marginLeft: 'auto', backgroundColor: vistaActiva === 'usuarios' ? '#2563eb' : '#1e293b', color: '#ffffff', fontSize: '11px', fontWeight: '700', padding: '2px 8px', borderRadius: '12px' }}>
+                                    {usuarios.length}
+                                </span>
+                            )}
                         </button>
                         <button
                             onClick={() => cambiarVista('cuestionarios')}
@@ -475,18 +482,24 @@ export default function AdminDashboardComponent() {
                                 gap: '12px',
                                 width: '100%',
                                 padding: '12px 14px',
-                                background: vistaActiva === 'cuestionarios' ? '#1e293b' : 'transparent',
-                                color: vistaActiva === 'cuestionarios' ? '#ffffff' : '#94a3b8',
+                                background: vistaActiva === 'cuestionarios' ? 'linear-gradient(90deg, rgba(37, 99, 235, 0.18) 0%, rgba(37, 99, 235, 0.05) 100%)' : 'transparent',
+                                color: vistaActiva === 'cuestionarios' ? '#60a5fa' : '#94a3b8',
                                 border: 'none',
+                                borderLeft: vistaActiva === 'cuestionarios' ? '3px solid #3b82f6' : '3px solid transparent',
                                 borderRadius: '8px',
                                 cursor: 'pointer',
                                 fontSize: '14px',
-                                fontWeight: '500',
+                                fontWeight: vistaActiva === 'cuestionarios' ? '600' : '500',
                                 textAlign: 'left',
-                                transition: 'all 0.2s'
+                                transition: 'all 0.2s ease'
                             }}
                         >
-                            <FileText size={18} /> Cuestionarios Globales
+                            <FileText size={18} /> <span>Cuestionarios Globales</span>
+                            {cuestionarios.length > 0 && (
+                                <span style={{ marginLeft: 'auto', backgroundColor: vistaActiva === 'cuestionarios' ? '#2563eb' : '#1e293b', color: '#ffffff', fontSize: '11px', fontWeight: '700', padding: '2px 8px', borderRadius: '12px' }}>
+                                    {cuestionarios.length}
+                                </span>
+                            )}
                         </button>
                         <button
                             onClick={() => cambiarVista('estadisticas')}
@@ -496,18 +509,19 @@ export default function AdminDashboardComponent() {
                                 gap: '12px',
                                 width: '100%',
                                 padding: '12px 14px',
-                                background: vistaActiva === 'estadisticas' ? '#1e293b' : 'transparent',
-                                color: vistaActiva === 'estadisticas' ? '#ffffff' : '#94a3b8',
+                                background: vistaActiva === 'estadisticas' ? 'linear-gradient(90deg, rgba(37, 99, 235, 0.18) 0%, rgba(37, 99, 235, 0.05) 100%)' : 'transparent',
+                                color: vistaActiva === 'estadisticas' ? '#60a5fa' : '#94a3b8',
                                 border: 'none',
+                                borderLeft: vistaActiva === 'estadisticas' ? '3px solid #3b82f6' : '3px solid transparent',
                                 borderRadius: '8px',
                                 cursor: 'pointer',
                                 fontSize: '14px',
-                                fontWeight: '500',
+                                fontWeight: vistaActiva === 'estadisticas' ? '600' : '500',
                                 textAlign: 'left',
-                                transition: 'all 0.2s'
+                                transition: 'all 0.2s ease'
                             }}
                         >
-                            <BarChart3 size={18} /> Estadísticas y Rendimiento
+                            <BarChart3 size={18} /> <span>Estadísticas y Rendimiento</span>
                         </button>
                         <button
                             onClick={() => cambiarVista('configuracion')}
@@ -517,18 +531,19 @@ export default function AdminDashboardComponent() {
                                 gap: '12px',
                                 width: '100%',
                                 padding: '12px 14px',
-                                background: vistaActiva === 'configuracion' ? '#1e293b' : 'transparent',
-                                color: vistaActiva === 'configuracion' ? '#ffffff' : '#94a3b8',
+                                background: vistaActiva === 'configuracion' ? 'linear-gradient(90deg, rgba(37, 99, 235, 0.18) 0%, rgba(37, 99, 235, 0.05) 100%)' : 'transparent',
+                                color: vistaActiva === 'configuracion' ? '#60a5fa' : '#94a3b8',
                                 border: 'none',
+                                borderLeft: vistaActiva === 'configuracion' ? '3px solid #3b82f6' : '3px solid transparent',
                                 borderRadius: '8px',
                                 cursor: 'pointer',
                                 fontSize: '14px',
-                                fontWeight: '500',
+                                fontWeight: vistaActiva === 'configuracion' ? '600' : '500',
                                 textAlign: 'left',
-                                transition: 'all 0.2s'
+                                transition: 'all 0.2s ease'
                             }}
                         >
-                            <Server size={18} /> Estado del Servidor y BD
+                            <Server size={18} /> <span>Estado del Servidor y BD</span>
                         </button>
                     </nav>
                 </div>
@@ -536,7 +551,7 @@ export default function AdminDashboardComponent() {
                 {/* Perfil Admin en Sidebar */}
                 <div style={{ borderTop: '1px solid #1e293b', paddingTop: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
-                        <div style={{ background: '#2563eb', color: '#fff', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 'bold', flexShrink: '0' }}>
+                        <div style={{ background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', color: '#fff', width: '38px', height: '38px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 'bold', flexShrink: '0', boxShadow: '0 2px 8px rgba(37,99,235,0.3)' }}>
                             {userInitials}
                         </div>
                         <div style={{ overflow: 'hidden' }}>
@@ -583,40 +598,45 @@ export default function AdminDashboardComponent() {
 
                         {/* BANNER PRINCIPAL DE CONTROL */}
                         <div style={{
-                            backgroundColor: '#0f172a',
+                            background: 'linear-gradient(135deg, #090d16 0%, #1e293b 100%)',
                             color: '#ffffff',
-                            borderRadius: '16px',
-                            padding: isMobile ? '20px 18px' : '30px',
+                            borderRadius: '18px',
+                            padding: isMobile ? '22px 18px' : '28px 32px',
                             display: 'flex',
                             flexDirection: isMobile ? 'column' : 'row',
                             justifyContent: 'space-between',
                             alignItems: isMobile ? 'flex-start' : 'center',
-                            gap: isMobile ? '16px' : '0',
+                            gap: isMobile ? '18px' : '0',
                             marginBottom: '28px',
-                            boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.2)'
+                            border: '1px solid #1e293b',
+                            boxShadow: '0 12px 30px -10px rgba(15, 23, 42, 0.25)'
                         }}>
                             <div>
-                                <span style={{ fontSize: '14px', color: '#94a3b8' }}>Bienvenido al centro de control institucional,</span>
-                                <h2 style={{ margin: '4px 0 8px 0', fontSize: isMobile ? '20px' : '24px' }}>{userName}</h2>
-                                <span style={{ fontSize: '13px', color: '#94a3b8' }}>
-                                    Gestiona cuentas de docentes y alumnos, audita evaluaciones y supervisa la base de datos PostgreSQL local.
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }}></span>
+                                    <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: '600', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Consola de Administración Activa</span>
+                                </div>
+                                <h2 style={{ margin: '0 0 6px 0', fontSize: isMobile ? '22px' : '26px', fontWeight: '800', letterSpacing: '-0.02em' }}>{userName}</h2>
+                                <span style={{ fontSize: '13px', color: '#94a3b8', fontWeight: '500' }}>
+                                    Supervisión institucional de docentes, alumnos, evaluaciones en tiempo real y persistencia PostgreSQL.
                                 </span>
                             </div>
                             <button
                                 onClick={() => setModalCrearOpen(true)}
+                                className="interactive-card"
                                 style={{
-                                    backgroundColor: '#2563eb',
+                                    background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
                                     color: '#ffffff',
                                     border: 'none',
-                                    padding: '12px 20px',
-                                    borderRadius: '8px',
-                                    fontWeight: '600',
+                                    padding: '12px 22px',
+                                    borderRadius: '12px',
+                                    fontWeight: '700',
                                     cursor: 'pointer',
                                     fontSize: '14px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '8px',
-                                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+                                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
                                     width: isMobile ? '100%' : 'auto',
                                     justifyContent: isMobile ? 'center' : 'flex-start'
                                 }}
@@ -628,108 +648,116 @@ export default function AdminDashboardComponent() {
                         {/* TARJETAS DE MÉTRICAS GLOBALES */}
                         <div style={{
                             display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                            gap: '16px',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+                            gap: '18px',
                             marginBottom: '32px'
                         }}>
-                            <div style={{ background: '#fff', padding: '22px', borderRadius: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '700', letterSpacing: '0.05em' }}>TOTAL USUARIOS</span>
-                                    <Users size={18} color="#2563eb" />
+                            {/* Tarjeta 1: Total Usuarios */}
+                            <div className="interactive-card" style={{ background: '#ffffff', padding: '22px', borderRadius: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', borderTop: '4px solid #2563eb', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '700', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Total Usuarios</span>
+                                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Users size={19} color="#2563eb" />
+                                    </div>
                                 </div>
-                                <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#0f172a' }}>{usuarios.length}</div>
-                                <div style={{ fontSize: '12px', color: '#10b981', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <span>●</span> {totalUsuariosActivos} cuentas activas
+                                <div>
+                                    <div style={{ fontSize: '30px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.5px', marginBottom: '4px' }}>{usuarios.length}</div>
+                                    <div style={{ fontSize: '12px', color: '#10b981', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }}></span>
+                                        {totalUsuariosActivos} cuentas habilitadas
+                                    </div>
                                 </div>
                             </div>
 
-                            <div style={{ background: '#fff', padding: '22px', borderRadius: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '700', letterSpacing: '0.05em' }}>DOCENTES Y ADMINS</span>
-                                    <GraduationCap size={18} color="#16a34a" />
+                            {/* Tarjeta 2: Docentes y Admins */}
+                            <div className="interactive-card" style={{ background: '#ffffff', padding: '22px', borderRadius: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', borderTop: '4px solid #10b981', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '700', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Docentes y Admins</span>
+                                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <GraduationCap size={19} color="#059669" />
+                                    </div>
                                 </div>
-                                <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#16a34a' }}>{totalProfesores + totalAdmins}</div>
-                                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>{totalProfesores} Profesores / {totalAdmins} Administradores</div>
+                                <div>
+                                    <div style={{ fontSize: '30px', fontWeight: '800', color: '#059669', letterSpacing: '-0.5px', marginBottom: '4px' }}>{totalProfesores + totalAdmins}</div>
+                                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>{totalProfesores} Profesores · {totalAdmins} Admins</div>
+                                </div>
                             </div>
 
-                            <div style={{ background: '#fff', padding: '22px', borderRadius: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '700', letterSpacing: '0.05em' }}>CUESTIONARIOS TOTALES</span>
-                                    <FileText size={18} color="#7c3aed" />
+                            {/* Tarjeta 3: Cuestionarios */}
+                            <div className="interactive-card" style={{ background: '#ffffff', padding: '22px', borderRadius: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', borderTop: '4px solid #8b5cf6', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '700', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Cuestionarios</span>
+                                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <FileText size={19} color="#7c3aed" />
+                                    </div>
                                 </div>
-                                <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#7c3aed' }}>{cuestionarios.length}</div>
-                                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Evaluaciones creadas</div>
+                                <div>
+                                    <div style={{ fontSize: '30px', fontWeight: '800', color: '#7c3aed', letterSpacing: '-0.5px', marginBottom: '4px' }}>{cuestionarios.length}</div>
+                                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>Evaluaciones académicas globales</div>
+                                </div>
                             </div>
 
-                            <div style={{ background: '#fff', padding: '22px', borderRadius: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '700', letterSpacing: '0.05em' }}>PROMEDIO INSTITUCIONAL</span>
-                                    <Award size={18} color="#d97706" />
+                            {/* Tarjeta 4: Promedio Institucional */}
+                            <div className="interactive-card" style={{ background: '#ffffff', padding: '22px', borderRadius: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', borderTop: '4px solid #f59e0b', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '700', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Promedio Institucional</span>
+                                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: '#fffbeb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Award size={19} color="#d97706" />
+                                    </div>
                                 </div>
-                                <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#d97706' }}>
-                                    {estadisticas?.promedioGeneral != null ? `${estadisticas.promedioGeneral.toFixed(1)} / 20` : '—'}
-                                </div>
-                                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-                                    {estadisticas?.totalRespuestas || 0} respuestas recibidas
+                                <div>
+                                    <div style={{ fontSize: '30px', fontWeight: '800', color: '#d97706', letterSpacing: '-0.5px', marginBottom: '4px' }}>
+                                        {estadisticas?.promedioGeneral != null ? `${estadisticas.promedioGeneral.toFixed(1)}` : '—'}
+                                        <span style={{ fontSize: '16px', fontWeight: '600', color: '#94a3b8' }}> / 20</span>
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
+                                        {estadisticas?.totalRespuestas || 0} entregas analizadas
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* FILA DE TABLA RÁPIDA DE USUARIOS Y ACTIVIDAD RECIENTE */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '24px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.4fr 1fr', gap: '24px' }}>
                             {/* USUARIOS RECIENTES */}
-                            <div style={{ background: '#fff', padding: '24px', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                            <div style={{ background: '#ffffff', padding: '24px', borderRadius: '18px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
-                                    <h3 style={{ margin: 0, fontSize: '17px', color: '#0f172a', fontWeight: '600' }}>Usuarios Registrados</h3>
+                                    <div>
+                                        <h3 style={{ margin: '0 0 2px 0', fontSize: '17px', color: '#0f172a', fontWeight: '800' }}>Usuarios Registrados</h3>
+                                        <span style={{ fontSize: '12px', color: '#64748b' }}>Vista rápida de cuentas recientes</span>
+                                    </div>
                                     <button
                                         onClick={() => setVistaActiva('usuarios')}
-                                        style={{ background: 'transparent', border: 'none', color: '#2563eb', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
+                                        style={{ background: 'transparent', border: 'none', color: '#2563eb', fontWeight: '700', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
                                     >
                                         Ver todos ({usuarios.length}) →
                                     </button>
                                 </div>
 
                                 <div style={{ overflowX: 'auto' }}>
-                                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+                                    <table className="saas-table">
                                         <thead>
-                                            <tr style={{ borderBottom: '2px solid #f1f5f9', color: '#64748b' }}>
-                                                <th style={{ padding: '10px 8px' }}>NOMBRE</th>
-                                                <th style={{ padding: '10px 8px' }}>CORREO</th>
-                                                <th style={{ padding: '10px 8px' }}>ROL</th>
-                                                <th style={{ padding: '10px 8px' }}>ESTADO</th>
+                                            <tr>
+                                                <th>Nombre</th>
+                                                <th>Correo</th>
+                                                <th>Rol</th>
+                                                <th>Estado</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {usuarios.slice(0, 5).map(u => (
-                                                <tr key={u.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                                    <td style={{ padding: '12px 8px', fontWeight: '600', color: '#0f172a' }}>
+                                                <tr key={u.id}>
+                                                    <td style={{ fontWeight: '700', color: '#0f172a' }}>
                                                         {`${u.nombre || ''} ${u.apellido || ''}`.trim() || '—'}
                                                     </td>
-                                                    <td style={{ padding: '12px 8px', color: '#64748b' }}>{u.email}</td>
-                                                    <td style={{ padding: '12px 8px' }}>
-                                                        <span style={{
-                                                            padding: '4px 8px',
-                                                            borderRadius: '14px',
-                                                            fontSize: '11px',
-                                                            fontWeight: '600',
-                                                            background: u.rol === 'ADMIN' ? '#fef3c7' : u.rol === 'PROFESOR' ? '#eff6ff' : '#f1f5f9',
-                                                            color: u.rol === 'ADMIN' ? '#b45309' : u.rol === 'PROFESOR' ? '#1d4ed8' : '#475569'
-                                                        }}>
+                                                    <td style={{ color: '#64748b' }}>{u.email}</td>
+                                                    <td>
+                                                        <span className={`badge-pill ${u.rol === 'ADMIN' ? 'badge-amber' : u.rol === 'PROFESOR' ? 'badge-blue' : 'badge-slate'}`}>
                                                             {u.rol}
                                                         </span>
                                                     </td>
-                                                    <td style={{ padding: '12px 8px' }}>
-                                                        <span style={{
-                                                            display: 'inline-flex',
-                                                            alignItems: 'center',
-                                                            gap: '4px',
-                                                            padding: '3px 8px',
-                                                            borderRadius: '6px',
-                                                            fontSize: '11px',
-                                                            fontWeight: '600',
-                                                            background: u.activo ? '#dcfce7' : '#fee2e2',
-                                                            color: u.activo ? '#15803d' : '#b91c1c'
-                                                        }}>
+                                                    <td>
+                                                        <span className={`badge-pill ${u.activo ? 'badge-emerald' : 'badge-rose'}`}>
                                                             {u.activo ? '● Activo' : '○ Inactivo'}
                                                         </span>
                                                     </td>
@@ -741,10 +769,13 @@ export default function AdminDashboardComponent() {
                             </div>
 
                             {/* ACTIVIDAD RECIENTE */}
-                            <div style={{ background: '#fff', padding: '24px', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                            <div style={{ background: '#ffffff', padding: '24px', borderRadius: '18px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
-                                    <h3 style={{ margin: 0, fontSize: '17px', color: '#0f172a', fontWeight: '600' }}>Actividad de Evaluaciones</h3>
-                                    <span style={{ fontSize: '12px', color: '#64748b' }}>Últimas entregas</span>
+                                    <div>
+                                        <h3 style={{ margin: '0 0 2px 0', fontSize: '17px', color: '#0f172a', fontWeight: '800' }}>Actividad de Evaluaciones</h3>
+                                        <span style={{ fontSize: '12px', color: '#64748b' }}>Últimas entregas registradas</span>
+                                    </div>
+                                    <Activity size={16} color="#64748b" />
                                 </div>
 
                                 {actividadReciente.length === 0 ? (
@@ -782,26 +813,27 @@ export default function AdminDashboardComponent() {
                 {/* VISTA: GESTIÓN DE USUARIOS */}
                 {vistaActiva === 'usuarios' && (
                     <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? '14px' : '0', marginBottom: '24px' }}>
                             <div>
-                                <h1 style={{ margin: '0 0 4px 0', fontSize: '24px', color: '#0f172a' }}>Gestión de Usuarios</h1>
-                                <span style={{ fontSize: '13px', color: '#64748b' }}>Supervisa, edita roles y administra el acceso de profesores, alumnos y administradores</span>
+                                <h1 style={{ margin: '0 0 4px 0', fontSize: isMobile ? '22px' : '26px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em' }}>Gestión de Usuarios</h1>
+                                <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>Supervisa, edita roles y administra el acceso de profesores, alumnos y administradores</span>
                             </div>
                             <button
                                 onClick={() => setModalCrearOpen(true)}
+                                className="interactive-card"
                                 style={{
-                                    backgroundColor: '#0f172a',
+                                    background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
                                     color: '#ffffff',
                                     border: 'none',
-                                    padding: '10px 18px',
-                                    borderRadius: '8px',
-                                    fontWeight: '600',
+                                    padding: '11px 20px',
+                                    borderRadius: '12px',
+                                    fontWeight: '700',
                                     cursor: 'pointer',
                                     fontSize: '13px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '8px',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
                                 }}
                             >
                                 <UserPlus size={16} /> Nuevo Usuario
@@ -809,9 +841,9 @@ export default function AdminDashboardComponent() {
                         </div>
 
                         {/* BARRA DE FILTROS Y BÚSQUEDA */}
-                        <div style={{ display: 'flex', gap: '15px', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', gap: '14px', alignItems: 'center', marginBottom: '22px', flexWrap: 'wrap' }}>
                             <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
-                                <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                                <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
                                 <input
                                     type="text"
                                     placeholder="Buscar por nombre, apellido o correo..."
@@ -819,33 +851,37 @@ export default function AdminDashboardComponent() {
                                     onChange={(e) => setBusquedaUsuario(e.target.value)}
                                     style={{
                                         width: '100%',
-                                        padding: '10px 14px 10px 36px',
-                                        borderRadius: '8px',
-                                        border: '1px solid #cbd5e1',
+                                        padding: '11px 16px 11px 40px',
+                                        borderRadius: '12px',
+                                        border: '1px solid #e2e8f0',
                                         outline: 'none',
                                         fontSize: '13px',
                                         backgroundColor: '#ffffff',
-                                        boxSizing: 'border-box'
+                                        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                                        boxSizing: 'border-box',
+                                        transition: 'all 0.2s ease',
+                                        color: '#0f172a'
                                     }}
                                 />
                             </div>
 
                             {/* Filtro por Rol */}
-                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', gap: '4px', alignItems: 'center', backgroundColor: '#f1f5f9', padding: '4px', borderRadius: '12px' }}>
                                 {['TODOS', 'PROFESOR', 'ADMIN', 'ALUMNO'].map(rol => (
                                     <button
                                         key={rol}
                                         onClick={() => setFiltroRol(rol)}
                                         style={{
-                                            padding: '8px 12px',
-                                            borderRadius: '8px',
-                                            border: '1px solid',
-                                            borderColor: filtroRol === rol ? '#0f172a' : '#cbd5e1',
-                                            background: filtroRol === rol ? '#0f172a' : '#ffffff',
-                                            color: filtroRol === rol ? '#ffffff' : '#64748b',
+                                            padding: '7px 12px',
+                                            borderRadius: '9px',
+                                            border: 'none',
+                                            background: filtroRol === rol ? '#ffffff' : 'transparent',
+                                            color: filtroRol === rol ? '#0f172a' : '#64748b',
+                                            boxShadow: filtroRol === rol ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
                                             fontSize: '12px',
-                                            fontWeight: '600',
-                                            cursor: 'pointer'
+                                            fontWeight: filtroRol === rol ? '700' : '500',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.15s ease'
                                         }}
                                     >
                                         {rol}
@@ -854,21 +890,22 @@ export default function AdminDashboardComponent() {
                             </div>
 
                             {/* Filtro por Estado */}
-                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', gap: '4px', alignItems: 'center', backgroundColor: '#f1f5f9', padding: '4px', borderRadius: '12px' }}>
                                 {['TODOS', 'ACTIVOS', 'INACTIVOS'].map(st => (
                                     <button
                                         key={st}
                                         onClick={() => setFiltroEstado(st)}
                                         style={{
-                                            padding: '8px 12px',
-                                            borderRadius: '8px',
-                                            border: '1px solid',
-                                            borderColor: filtroEstado === st ? '#2563eb' : '#cbd5e1',
-                                            background: filtroEstado === st ? '#2563eb' : '#ffffff',
+                                            padding: '7px 12px',
+                                            borderRadius: '9px',
+                                            border: 'none',
+                                            background: filtroEstado === st ? '#2563eb' : 'transparent',
                                             color: filtroEstado === st ? '#ffffff' : '#64748b',
+                                            boxShadow: filtroEstado === st ? '0 2px 6px rgba(37, 99, 235, 0.3)' : 'none',
                                             fontSize: '12px',
-                                            fontWeight: '600',
-                                            cursor: 'pointer'
+                                            fontWeight: filtroEstado === st ? '700' : '500',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.15s ease'
                                         }}
                                     >
                                         {st}
@@ -878,107 +915,111 @@ export default function AdminDashboardComponent() {
                         </div>
 
                         {/* TABLA DE USUARIOS COMPLETA */}
-                        <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+                        <div style={{ background: '#ffffff', borderRadius: '18px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
                             <div style={{ overflowX: 'auto' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+                                <table className="saas-table">
                                     <thead>
-                                        <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0', color: '#475569' }}>
-                                            <th style={{ padding: '14px 16px' }}>NOMBRE Y APELLIDO</th>
-                                            <th style={{ padding: '14px 16px' }}>CORREO ELECTRÓNICO</th>
-                                            <th style={{ padding: '14px 16px' }}>ROL ASIGNADO</th>
-                                            <th style={{ padding: '14px 16px' }}>ESTADO</th>
-                                            <th style={{ padding: '14px 16px', textAlign: 'center' }}>ACCIONES</th>
+                                        <tr>
+                                            <th>Nombre y Apellido</th>
+                                            <th>Correo Electrónico</th>
+                                            <th>Rol Asignado</th>
+                                            <th>Estado</th>
+                                            <th style={{ textAlign: 'center' }}>Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {loadingUsuarios ? (
                                             <tr>
-                                                <td colSpan="5" style={{ padding: '30px', textAlign: 'center', color: '#94a3b8' }}>
+                                                <td colSpan="5" style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
                                                     Cargando usuarios desde PostgreSQL...
                                                 </td>
                                             </tr>
                                         ) : usuariosFiltrados.length === 0 ? (
                                             <tr>
-                                                <td colSpan="5" style={{ padding: '30px', textAlign: 'center', color: '#94a3b8' }}>
+                                                <td colSpan="5" style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
                                                     No se encontraron usuarios con los criterios de búsqueda seleccionados.
                                                 </td>
                                             </tr>
                                         ) : (
                                             usuariosFiltrados.map(u => (
-                                                <tr key={u.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                                    <td style={{ padding: '14px 16px', fontWeight: '600', color: '#0f172a' }}>
-                                                        {`${u.nombre || ''} ${u.apellido || ''}`.trim() || '—'}
+                                                <tr key={u.id}>
+                                                    <td style={{ fontWeight: '700', color: '#0f172a' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                            <div style={{
+                                                                width: '32px',
+                                                                height: '32px',
+                                                                borderRadius: '8px',
+                                                                backgroundColor: u.rol === 'ADMIN' ? '#fef3c7' : u.rol === 'PROFESOR' ? '#eff6ff' : '#f1f5f9',
+                                                                color: u.rol === 'ADMIN' ? '#b45309' : u.rol === 'PROFESOR' ? '#1d4ed8' : '#475569',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                fontSize: '11px',
+                                                                fontWeight: '800'
+                                                            }}>
+                                                                {((u.nombre ? u.nombre[0] : '') + (u.apellido ? u.apellido[0] : '') || 'US').toUpperCase()}
+                                                            </div>
+                                                            <span>{`${u.nombre || ''} ${u.apellido || ''}`.trim() || '—'}</span>
+                                                        </div>
                                                     </td>
-                                                    <td style={{ padding: '14px 16px', color: '#64748b' }}>
+                                                    <td style={{ color: '#64748b' }}>
                                                         {u.email}
                                                     </td>
-                                                    <td style={{ padding: '14px 16px' }}>
-                                                        <span style={{
-                                                            padding: '4px 10px',
-                                                            borderRadius: '14px',
-                                                            fontSize: '11px',
-                                                            fontWeight: '600',
-                                                            background: u.rol === 'ADMIN' ? '#fef3c7' : u.rol === 'PROFESOR' ? '#eff6ff' : '#f1f5f9',
-                                                            color: u.rol === 'ADMIN' ? '#b45309' : u.rol === 'PROFESOR' ? '#1d4ed8' : '#475569'
-                                                        }}>
+                                                    <td>
+                                                        <span className={`badge-pill ${u.rol === 'ADMIN' ? 'badge-amber' : u.rol === 'PROFESOR' ? 'badge-blue' : 'badge-slate'}`}>
                                                             {u.rol}
                                                         </span>
                                                     </td>
-                                                    <td style={{ padding: '14px 16px' }}>
+                                                    <td>
                                                         <button
                                                             onClick={() => handleToggleActivo(u)}
                                                             title="Clic para cambiar estado"
-                                                            style={{
-                                                                border: 'none',
-                                                                padding: '5px 10px',
-                                                                borderRadius: '6px',
-                                                                fontSize: '11px',
-                                                                fontWeight: '600',
-                                                                cursor: 'pointer',
-                                                                background: u.activo ? '#dcfce7' : '#fee2e2',
-                                                                color: u.activo ? '#15803d' : '#b91c1c'
-                                                            }}
+                                                            className={`badge-pill ${u.activo ? 'badge-emerald' : 'badge-rose'}`}
+                                                            style={{ cursor: 'pointer', border: 'none' }}
                                                         >
                                                             {u.activo ? '● Activo' : '○ Inactivo'}
                                                         </button>
                                                     </td>
-                                                    <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                                                    <td style={{ textAlign: 'center' }}>
                                                         <div style={{ display: 'inline-flex', gap: '8px', alignItems: 'center' }}>
                                                             <button
                                                                 onClick={() => handleAbrirEditar(u)}
                                                                 style={{
-                                                                    background: '#f1f5f9',
-                                                                    border: 'none',
-                                                                    color: '#0f172a',
+                                                                    background: '#eff6ff',
+                                                                    border: '1px solid #bfdbfe',
+                                                                    color: '#1d4ed8',
                                                                     cursor: 'pointer',
-                                                                    padding: '6px 8px',
-                                                                    borderRadius: '6px',
+                                                                    padding: '6px 10px',
+                                                                    borderRadius: '8px',
                                                                     display: 'flex',
                                                                     alignItems: 'center',
                                                                     gap: '4px',
-                                                                    fontSize: '12px'
+                                                                    fontSize: '12px',
+                                                                    fontWeight: '600',
+                                                                    transition: 'all 0.15s ease'
                                                                 }}
                                                                 title="Editar usuario"
                                                             >
-                                                                <Edit2 size={14} /> Editar
+                                                                <Edit2 size={13} /> Editar
                                                             </button>
                                                             <button
                                                                 onClick={() => handleEliminarUsuario(u.id, `${u.nombre || ''} ${u.apellido || ''}`.trim())}
                                                                 style={{
-                                                                    background: '#fee2e2',
-                                                                    border: 'none',
-                                                                    color: '#dc2626',
+                                                                    background: '#fff1f2',
+                                                                    border: '1px solid #fecdd3',
+                                                                    color: '#e11d48',
                                                                     cursor: 'pointer',
                                                                     padding: '6px 8px',
-                                                                    borderRadius: '6px',
+                                                                    borderRadius: '8px',
                                                                     display: 'flex',
                                                                     alignItems: 'center',
                                                                     gap: '4px',
-                                                                    fontSize: '12px'
+                                                                    fontSize: '12px',
+                                                                    transition: 'all 0.15s ease'
                                                                 }}
                                                                 title="Eliminar usuario"
                                                             >
-                                                                <Trash2 size={14} />
+                                                                <Trash2 size={13} />
                                                             </button>
                                                         </div>
                                                     </td>
@@ -995,10 +1036,10 @@ export default function AdminDashboardComponent() {
                 {/* VISTA: CUESTIONARIOS GLOBALES */}
                 {vistaActiva === 'cuestionarios' && (
                     <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? '12px' : '0', marginBottom: '24px' }}>
                             <div>
-                                <h1 style={{ margin: '0 0 4px 0', fontSize: '24px', color: '#0f172a' }}>Cuestionarios Globales</h1>
-                                <span style={{ fontSize: '13px', color: '#64748b' }}>Supervisión y auditoría de todas las evaluaciones académicas registradas en el sistema</span>
+                                <h1 style={{ margin: '0 0 4px 0', fontSize: isMobile ? '22px' : '26px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em' }}>Cuestionarios Globales</h1>
+                                <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>Supervisión y auditoría de todas las evaluaciones académicas registradas en el sistema</span>
                             </div>
                             <button
                                 onClick={() => { cargarCuestionarios(); showToast('Cuestionarios actualizados.'); }}
@@ -1006,14 +1047,16 @@ export default function AdminDashboardComponent() {
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '6px',
-                                    padding: '8px 14px',
+                                    padding: '8px 16px',
                                     backgroundColor: '#ffffff',
-                                    border: '1px solid #cbd5e1',
-                                    borderRadius: '8px',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '10px',
                                     fontSize: '13px',
-                                    fontWeight: '500',
+                                    fontWeight: '600',
                                     color: '#475569',
-                                    cursor: 'pointer'
+                                    cursor: 'pointer',
+                                    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                                    transition: 'all 0.15s ease'
                                 }}
                             >
                                 <RefreshCw size={14} /> Refrescar
@@ -1021,8 +1064,8 @@ export default function AdminDashboardComponent() {
                         </div>
 
                         {/* Buscador de cuestionarios */}
-                        <div style={{ marginBottom: '20px', position: 'relative', maxWidth: '400px' }}>
-                            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                        <div style={{ marginBottom: '22px', position: 'relative', maxWidth: '420px' }}>
+                            <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
                             <input
                                 type="text"
                                 placeholder="Buscar por título, materia o código..."
@@ -1030,40 +1073,43 @@ export default function AdminDashboardComponent() {
                                 onChange={(e) => setBusquedaCuestionario(e.target.value)}
                                 style={{
                                     width: '100%',
-                                    padding: '10px 14px 10px 36px',
-                                    borderRadius: '8px',
-                                    border: '1px solid #cbd5e1',
+                                    padding: '11px 16px 11px 40px',
+                                    borderRadius: '12px',
+                                    border: '1px solid #e2e8f0',
                                     outline: 'none',
                                     fontSize: '13px',
                                     backgroundColor: '#ffffff',
-                                    boxSizing: 'border-box'
+                                    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                                    boxSizing: 'border-box',
+                                    color: '#0f172a',
+                                    transition: 'all 0.2s ease'
                                 }}
                             />
                         </div>
 
                         {loadingCuestionarios ? (
-                            <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>Cargando cuestionarios...</div>
+                            <div style={{ textAlign: 'center', padding: '50px', color: '#94a3b8' }}>Cargando cuestionarios...</div>
                         ) : cuestionariosFiltrados.length === 0 ? (
-                            <div style={{ textAlign: 'center', padding: '40px', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', color: '#64748b' }}>
-                                No se encontraron cuestionarios.
+                            <div style={{ textAlign: 'center', padding: '50px 20px', background: '#ffffff', borderRadius: '18px', border: '1px dashed #cbd5e1', color: '#64748b' }}>
+                                No se encontraron cuestionarios registrados.
                             </div>
                         ) : (
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}>
                                 {cuestionariosFiltrados.map(c => (
-                                    <div key={c.id} style={{ background: '#fff', borderRadius: '14px', padding: '22px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                    <div key={c.id} className="interactive-card" style={{ background: '#ffffff', borderRadius: '18px', padding: '24px', border: '1px solid #e2e8f0', borderTop: '4px solid #2563eb', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                         <div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                                                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                                                    <span style={{ background: '#eff6ff', color: '#2563eb', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '600' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                                    <span className="badge-pill badge-blue">
                                                         {c.preguntas ? `${c.preguntas.length} Preguntas` : 'Evaluación'}
                                                     </span>
                                                     {c.tiempoLimiteMinutos > 0 && (
-                                                        <span style={{ background: '#fef3c7', color: '#b45309', padding: '4px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                                        <span className="badge-pill badge-amber">
                                                             <Clock size={11} /> {c.tiempoLimiteMinutos}m
                                                         </span>
                                                     )}
                                                     {c.modoSeguro && (
-                                                        <span style={{ background: '#fef2f2', color: '#b91c1c', padding: '4px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                                        <span className="badge-pill badge-rose">
                                                             <ShieldAlert size={11} /> Seguro
                                                         </span>
                                                     )}
@@ -1076,51 +1122,53 @@ export default function AdminDashboardComponent() {
                                                         alignItems: 'center',
                                                         gap: '4px',
                                                         background: '#f1f5f9',
-                                                        border: 'none',
-                                                        padding: '4px 8px',
-                                                        borderRadius: '6px',
+                                                        border: '1px solid #e2e8f0',
+                                                        padding: '4px 10px',
+                                                        borderRadius: '8px',
                                                         fontSize: '11px',
-                                                        fontWeight: 'bold',
+                                                        fontWeight: '800',
                                                         color: '#0f172a',
-                                                        cursor: 'pointer'
+                                                        cursor: 'pointer',
+                                                        letterSpacing: '0.05em'
                                                     }}
                                                 >
                                                     <Copy size={12} /> {c.codigoAcceso || 'SIN CÓDIGO'}
                                                 </button>
                                             </div>
 
-                                            <h3 style={{ margin: '0 0 6px 0', fontSize: '17px', color: '#0f172a' }}>{c.titulo}</h3>
-                                            <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 16px 0', minHeight: '36px' }}>
-                                                {c.descripcion || 'Sin descripción adicional.'}
+                                            <h3 style={{ margin: '0 0 6px 0', fontSize: '18px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.01em' }}>{c.titulo}</h3>
+                                            <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 16px 0', minHeight: '38px', lineHeight: '1.5' }}>
+                                                {c.descripcion || 'Sin descripción adicional para esta evaluación.'}
                                             </p>
 
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', background: '#f8fafc', borderRadius: '8px', fontSize: '12px', color: '#475569', marginBottom: '16px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 14px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9', fontSize: '12px', color: '#475569', marginBottom: '18px' }}>
                                                 <div>
-                                                    <span style={{ color: '#94a3b8', display: 'block', fontSize: '10px' }}>DOCENTE</span>
-                                                    <strong>{c.creadoPor ? `${c.creadoPor.nombre || ''} ${c.creadoPor.apellido || ''}`.trim() : 'Sistema'}</strong>
+                                                    <span style={{ color: '#94a3b8', display: 'block', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase' }}>DOCENTE</span>
+                                                    <strong style={{ color: '#0f172a' }}>{c.creadoPor ? `${c.creadoPor.nombre || ''} ${c.creadoPor.apellido || ''}`.trim() : 'Sistema'}</strong>
                                                 </div>
                                                 <div style={{ textAlign: 'right' }}>
-                                                    <span style={{ color: '#94a3b8', display: 'block', fontSize: '10px' }}>RESPUESTAS</span>
-                                                    <strong>{c.totalRespuestas || 0} entregas</strong>
+                                                    <span style={{ color: '#94a3b8', display: 'block', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase' }}>RESPUESTAS</span>
+                                                    <strong style={{ color: '#0f172a' }}>{c.totalRespuestas || 0} entregas</strong>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid #f1f5f9', paddingTop: '14px' }}>
+                                        <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid #f1f5f9', paddingTop: '16px' }}>
                                             <button
                                                 onClick={() => {
                                                     setCuestionarioAuditoria(c);
                                                     setModalAuditoriaOpen(true);
                                                 }}
+                                                className="interactive-card"
                                                 style={{
                                                     flex: 1,
-                                                    padding: '9px 12px',
-                                                    background: '#0f172a',
+                                                    padding: '10px 14px',
+                                                    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
                                                     color: '#ffffff',
                                                     border: 'none',
-                                                    borderRadius: '8px',
+                                                    borderRadius: '10px',
                                                     fontSize: '12px',
-                                                    fontWeight: '600',
+                                                    fontWeight: '700',
                                                     cursor: 'pointer',
                                                     display: 'flex',
                                                     alignItems: 'center',
@@ -1133,20 +1181,21 @@ export default function AdminDashboardComponent() {
                                             <button
                                                 onClick={() => handleEliminarCuestionarioAdmin(c.id, c.titulo)}
                                                 style={{
-                                                    padding: '9px 12px',
-                                                    background: '#fee2e2',
-                                                    color: '#dc2626',
-                                                    border: 'none',
-                                                    borderRadius: '8px',
+                                                    padding: '10px 12px',
+                                                    background: '#fff1f2',
+                                                    color: '#e11d48',
+                                                    border: '1px solid #fecdd3',
+                                                    borderRadius: '10px',
                                                     fontSize: '12px',
                                                     cursor: 'pointer',
                                                     display: 'flex',
                                                     alignItems: 'center',
-                                                    justifyContent: 'center'
+                                                    justifyContent: 'center',
+                                                    transition: 'all 0.15s ease'
                                                 }}
                                                 title="Eliminar cuestionario permanentemente"
                                             >
-                                                <Trash2 size={14} />
+                                                <Trash2 size={15} />
                                             </button>
                                         </div>
                                     </div>
@@ -1160,31 +1209,35 @@ export default function AdminDashboardComponent() {
                 {vistaActiva === 'configuracion' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                         <div>
-                            <h1 style={{ margin: '0 0 4px 0', fontSize: '24px', color: '#0f172a' }}>Estado del Servidor y Base de Datos</h1>
-                            <span style={{ fontSize: '13px', color: '#64748b' }}>Diagnóstico de infraestructura, conexión a PostgreSQL y seguridad JWT</span>
+                            <h1 style={{ margin: '0 0 4px 0', fontSize: isMobile ? '22px' : '26px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em' }}>Estado del Servidor y Base de Datos</h1>
+                            <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>Diagnóstico de infraestructura, conexión a PostgreSQL y seguridad JWT</span>
                         </div>
 
                         {/* DIAGNÓSTICO EN TIEMPO REAL */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
-                            <div style={{ background: '#fff', padding: '24px', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                                    <Database size={22} color="#2563eb" />
-                                    <h3 style={{ margin: 0, fontSize: '16px', color: '#0f172a' }}>Base de Datos PostgreSQL</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '20px' }}>
+                            <div className="interactive-card" style={{ background: '#ffffff', padding: '24px', borderRadius: '18px', border: '1px solid #e2e8f0', borderTop: '4px solid #2563eb', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Database size={20} color="#2563eb" />
+                                    </div>
+                                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#0f172a' }}>Base de Datos PostgreSQL</h3>
                                 </div>
-                                <div style={{ fontSize: '13px', color: '#334155', lineHeight: '1.6' }}>
-                                    <div><strong>Estado:</strong> <span style={{ color: '#16a34a', fontWeight: 'bold' }}>● En línea (Conectado)</span></div>
+                                <div style={{ fontSize: '13px', color: '#334155', lineHeight: '1.7' }}>
+                                    <div><strong>Estado:</strong> <span style={{ color: '#059669', fontWeight: '700' }}>● En línea (Conectado)</span></div>
                                     <div><strong>Host:</strong> localhost:5432</div>
-                                    <div><strong>Base:</strong> <code>sis_cuestionarios</code></div>
+                                    <div><strong>Base:</strong> <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '6px' }}>sis_cuestionarios</code></div>
                                     <div><strong>Pool:</strong> HikariCP Concurrente</div>
                                 </div>
                             </div>
 
-                            <div style={{ background: '#fff', padding: '24px', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                                    <Server size={22} color="#16a34a" />
-                                    <h3 style={{ margin: 0, fontSize: '16px', color: '#0f172a' }}>Backend Spring Boot</h3>
+                            <div className="interactive-card" style={{ background: '#ffffff', padding: '24px', borderRadius: '18px', border: '1px solid #e2e8f0', borderTop: '4px solid #10b981', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Server size={20} color="#059669" />
+                                    </div>
+                                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#0f172a' }}>Backend Spring Boot</h3>
                                 </div>
-                                <div style={{ fontSize: '13px', color: '#334155', lineHeight: '1.6' }}>
+                                <div style={{ fontSize: '13px', color: '#334155', lineHeight: '1.7' }}>
                                     <div><strong>Versión:</strong> Java JDK 17 (Spring Boot 3.x)</div>
                                     <div><strong>Puerto:</strong> 8080 (REST API)</div>
                                     <div><strong>CORS:</strong> http://localhost:5173</div>
@@ -1192,12 +1245,14 @@ export default function AdminDashboardComponent() {
                                 </div>
                             </div>
 
-                            <div style={{ background: '#fff', padding: '24px', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                                    <Shield size={22} color="#d97706" />
-                                    <h3 style={{ margin: 0, fontSize: '16px', color: '#0f172a' }}>Seguridad y Cifrado</h3>
+                            <div className="interactive-card" style={{ background: '#ffffff', padding: '24px', borderRadius: '18px', border: '1px solid #e2e8f0', borderTop: '4px solid #f59e0b', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#fffbeb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Shield size={20} color="#d97706" />
+                                    </div>
+                                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#0f172a' }}>Seguridad y Cifrado</h3>
                                 </div>
-                                <div style={{ fontSize: '13px', color: '#334155', lineHeight: '1.6' }}>
+                                <div style={{ fontSize: '13px', color: '#334155', lineHeight: '1.7' }}>
                                     <div><strong>Autenticación:</strong> Stateless JWT Tokens</div>
                                     <div><strong>Algoritmo:</strong> HMAC-SHA384</div>
                                     <div><strong>Encriptación Passwords:</strong> BCrypt ($2a$)</div>
@@ -1207,12 +1262,12 @@ export default function AdminDashboardComponent() {
                         </div>
 
                         {/* RESUMEN DE PRUEBAS DE CARGA */}
-                        <div style={{ background: '#fff', padding: '24px', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
-                            <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#0f172a' }}>Simulación de Pruebas de Carga y Concurrencia</h3>
+                        <div style={{ background: '#ffffff', padding: '26px', borderRadius: '18px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                            <h3 style={{ margin: '0 0 6px 0', fontSize: '17px', fontWeight: '800', color: '#0f172a' }}>Simulación de Pruebas de Carga y Concurrencia</h3>
                             <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 16px 0' }}>
-                                Puedes ejecutar pruebas de estrés y concurrencia simulando hasta 100 o 200 envíos simultáneos de cuestionarios mediante el script:
+                                Puedes ejecutar pruebas de estrés y concurrencia simulando envíos simultáneos de cuestionarios mediante el script de carga:
                             </p>
-                            <pre style={{ background: '#0f172a', color: '#38bdf8', padding: '14px', borderRadius: '8px', fontSize: '12px', overflowX: 'auto' }}>
+                            <pre style={{ background: '#090d16', color: '#38bdf8', padding: '16px', borderRadius: '12px', fontSize: '13px', overflowX: 'auto', border: '1px solid #1e293b' }}>
 node backend/scripts/load_test_concurrency.js 50 148177
                             </pre>
                         </div>
@@ -1235,38 +1290,44 @@ node backend/scripts/load_test_concurrency.js 50 148177
                         left: 0,
                         width: '100vw',
                         height: '100vh',
-                        backgroundColor: 'rgba(15, 23, 42, 0.6)',
+                        backgroundColor: 'rgba(15, 23, 42, 0.65)',
+                        backdropFilter: 'blur(6px)',
                         display: 'flex',
                         justifyContent: 'center',
                         alignItems: 'center',
-                        zIndex: 1000,
+                        zIndex: 1300,
                         padding: '20px',
                         boxSizing: 'border-box'
                     }}
                 >
                     <div 
                         onClick={(e) => e.stopPropagation()}
+                        className="animate-scale-up"
                         style={{
                             backgroundColor: '#ffffff',
-                            borderRadius: '16px',
+                            borderRadius: '20px',
                             width: '100%',
                             maxWidth: '480px',
-                            padding: '30px',
-                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+                            padding: '32px',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                            border: '1px solid #e2e8f0'
                         }}
                     >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                            <h2 style={{ margin: 0, fontSize: '20px', color: '#0f172a' }}>Registrar Nuevo Usuario</h2>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '22px' }}>
+                            <div>
+                                <h2 style={{ margin: '0 0 4px 0', fontSize: '20px', fontWeight: '800', color: '#0f172a' }}>Registrar Nuevo Usuario</h2>
+                                <span style={{ fontSize: '12px', color: '#64748b' }}>Crea una cuenta para docentes, administradores o alumnos</span>
+                            </div>
                             <button
                                 onClick={() => setModalCrearOpen(false)}
-                                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', padding: '4px' }}
+                                style={{ background: '#f1f5f9', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', padding: '6px', borderRadius: '8px' }}
                             >
-                                <X size={20} />
+                                <X size={18} />
                             </button>
                         </div>
 
                         {errorModal && (
-                            <div style={{ background: '#fee2e2', color: '#991b1b', padding: '10px 12px', borderRadius: '8px', fontSize: '13px', marginBottom: '16px' }}>
+                            <div style={{ background: '#fee2e2', color: '#991b1b', padding: '10px 14px', borderRadius: '10px', fontSize: '13px', marginBottom: '16px', border: '1px solid #fca5a5' }}>
                                 {errorModal}
                             </div>
                         )}
@@ -1274,47 +1335,47 @@ node backend/scripts/load_test_concurrency.js 50 148177
                         <form onSubmit={handleCrearUsuario} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#475569', marginBottom: '6px' }}>NOMBRE *</label>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Nombre *</label>
                                     <input
                                         type="text"
                                         value={nuevoNombre}
                                         onChange={(e) => setNuevoNombre(e.target.value)}
                                         placeholder="Ej: Sofía"
                                         required
-                                        style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                        style={{ width: '100%', padding: '11px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
                                     />
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#475569', marginBottom: '6px' }}>APELLIDO *</label>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Apellido *</label>
                                     <input
                                         type="text"
                                         value={nuevoApellido}
                                         onChange={(e) => setNuevoApellido(e.target.value)}
                                         placeholder="Ej: Pérez"
                                         required
-                                        style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                        style={{ width: '100%', padding: '11px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#475569', marginBottom: '6px' }}>CORREO ELECTRÓNICO *</label>
+                                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Correo Electrónico *</label>
                                 <input
                                     type="email"
                                     value={nuevoEmail}
                                     onChange={(e) => setNuevoEmail(e.target.value)}
                                     placeholder="usuario@nativatec.edu"
                                     required
-                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                    style={{ width: '100%', padding: '11px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
                                 />
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#475569', marginBottom: '6px' }}>ROL ASIGNADO</label>
+                                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Rol Asignado</label>
                                 <select
                                     value={nuevoRol}
                                     onChange={(e) => setNuevoRol(e.target.value)}
-                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#fff', boxSizing: 'border-box' }}
+                                    style={{ width: '100%', padding: '11px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#fff', boxSizing: 'border-box', outline: 'none' }}
                                 >
                                     <option value="PROFESOR">Profesor</option>
                                     <option value="ADMIN">Administrador</option>
@@ -1323,29 +1384,30 @@ node backend/scripts/load_test_concurrency.js 50 148177
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#475569', marginBottom: '6px' }}>CONTRASEÑA TEMPORAL *</label>
+                                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Contraseña Temporal *</label>
                                 <input
                                     type="password"
                                     value={nuevoPassword}
                                     onChange={(e) => setNuevoPassword(e.target.value)}
                                     placeholder="••••••••"
                                     required
-                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                    style={{ width: '100%', padding: '11px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
                                 />
                             </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px' }}>
                                 <button
                                     type="button"
                                     onClick={() => setModalCrearOpen(false)}
-                                    style={{ padding: '10px 16px', borderRadius: '8px', border: 'none', background: '#f1f5f9', color: '#475569', fontWeight: '600', cursor: 'pointer', fontSize: '13px' }}
+                                    style={{ padding: '10px 18px', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#f8fafc', color: '#475569', fontWeight: '600', cursor: 'pointer', fontSize: '13px' }}
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={guardandoUsuario}
-                                    style={{ padding: '10px 18px', borderRadius: '8px', border: 'none', background: '#0f172a', color: '#ffffff', fontWeight: '600', cursor: 'pointer', fontSize: '13px' }}
+                                    className="interactive-card"
+                                    style={{ padding: '10px 20px', borderRadius: '10px', border: 'none', background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', color: '#ffffff', fontWeight: '700', cursor: 'pointer', fontSize: '13px', boxShadow: '0 4px 12px rgba(37,99,235,0.3)' }}
                                 >
                                     {guardandoUsuario ? 'Guardando...' : 'Guardar Usuario'}
                                 </button>
@@ -1365,38 +1427,44 @@ node backend/scripts/load_test_concurrency.js 50 148177
                         left: 0,
                         width: '100vw',
                         height: '100vh',
-                        backgroundColor: 'rgba(15, 23, 42, 0.6)',
+                        backgroundColor: 'rgba(15, 23, 42, 0.65)',
+                        backdropFilter: 'blur(6px)',
                         display: 'flex',
                         justifyContent: 'center',
                         alignItems: 'center',
-                        zIndex: 1000,
+                        zIndex: 1300,
                         padding: '20px',
                         boxSizing: 'border-box'
                     }}
                 >
                     <div 
                         onClick={(e) => e.stopPropagation()}
+                        className="animate-scale-up"
                         style={{
                             backgroundColor: '#ffffff',
-                            borderRadius: '16px',
+                            borderRadius: '20px',
                             width: '100%',
                             maxWidth: '480px',
-                            padding: '30px',
-                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+                            padding: '32px',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                            border: '1px solid #e2e8f0'
                         }}
                     >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                            <h2 style={{ margin: 0, fontSize: '20px', color: '#0f172a' }}>Editar Usuario</h2>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '22px' }}>
+                            <div>
+                                <h2 style={{ margin: '0 0 4px 0', fontSize: '20px', fontWeight: '800', color: '#0f172a' }}>Editar Usuario</h2>
+                                <span style={{ fontSize: '12px', color: '#64748b' }}>Actualiza datos, rol y estado de la cuenta</span>
+                            </div>
                             <button
                                 onClick={() => setModalEditarOpen(false)}
-                                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', padding: '4px' }}
+                                style={{ background: '#f1f5f9', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', padding: '6px', borderRadius: '8px' }}
                             >
-                                <X size={20} />
+                                <X size={18} />
                             </button>
                         </div>
 
                         {errorModalEditar && (
-                            <div style={{ background: '#fee2e2', color: '#991b1b', padding: '10px 12px', borderRadius: '8px', fontSize: '13px', marginBottom: '16px' }}>
+                            <div style={{ background: '#fee2e2', color: '#991b1b', padding: '10px 14px', borderRadius: '10px', fontSize: '13px', marginBottom: '16px', border: '1px solid #fca5a5' }}>
                                 {errorModalEditar}
                             </div>
                         )}
@@ -1404,45 +1472,45 @@ node backend/scripts/load_test_concurrency.js 50 148177
                         <form onSubmit={handleGuardarEdicion} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#475569', marginBottom: '6px' }}>NOMBRE *</label>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Nombre *</label>
                                     <input
                                         type="text"
                                         value={editNombre}
                                         onChange={(e) => setEditNombre(e.target.value)}
                                         required
-                                        style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                        style={{ width: '100%', padding: '11px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
                                     />
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#475569', marginBottom: '6px' }}>APELLIDO *</label>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Apellido *</label>
                                     <input
                                         type="text"
                                         value={editApellido}
                                         onChange={(e) => setEditApellido(e.target.value)}
                                         required
-                                        style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                        style={{ width: '100%', padding: '11px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#475569', marginBottom: '6px' }}>CORREO ELECTRÓNICO *</label>
+                                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Correo Electrónico *</label>
                                 <input
                                     type="email"
                                     value={editEmail}
                                     onChange={(e) => setEditEmail(e.target.value)}
                                     required
-                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                    style={{ width: '100%', padding: '11px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
                                 />
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#475569', marginBottom: '6px' }}>ROL ASIGNADO</label>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Rol Asignado</label>
                                     <select
                                         value={editRol}
                                         onChange={(e) => setEditRol(e.target.value)}
-                                        style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#fff', boxSizing: 'border-box' }}
+                                        style={{ width: '100%', padding: '11px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#fff', boxSizing: 'border-box', outline: 'none' }}
                                     >
                                         <option value="PROFESOR">Profesor</option>
                                         <option value="ADMIN">Administrador</option>
@@ -1451,11 +1519,11 @@ node backend/scripts/load_test_concurrency.js 50 148177
                                 </div>
 
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#475569', marginBottom: '6px' }}>ESTADO DE LA CUENTA</label>
+                                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Estado de la Cuenta</label>
                                     <select
                                         value={editActivo ? 'true' : 'false'}
                                         onChange={(e) => setEditActivo(e.target.value === 'true')}
-                                        style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#fff', boxSizing: 'border-box' }}
+                                        style={{ width: '100%', padding: '11px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '13px', backgroundColor: '#fff', boxSizing: 'border-box', outline: 'none' }}
                                     >
                                         <option value="true">Activo</option>
                                         <option value="false">Inactivo</option>
@@ -1464,28 +1532,29 @@ node backend/scripts/load_test_concurrency.js 50 148177
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#475569', marginBottom: '6px' }}>REESTABLECER CONTRASEÑA (OPCIONAL)</label>
+                                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Reestablecer Contraseña (Opcional)</label>
                                 <input
                                     type="password"
                                     value={editPassword}
                                     onChange={(e) => setEditPassword(e.target.value)}
                                     placeholder="Dejar vacío para mantener la contraseña actual"
-                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                                    style={{ width: '100%', padding: '11px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
                                 />
                             </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px' }}>
                                 <button
                                     type="button"
                                     onClick={() => setModalEditarOpen(false)}
-                                    style={{ padding: '10px 16px', borderRadius: '8px', border: 'none', background: '#f1f5f9', color: '#475569', fontWeight: '600', cursor: 'pointer', fontSize: '13px' }}
+                                    style={{ padding: '10px 18px', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#f8fafc', color: '#475569', fontWeight: '600', cursor: 'pointer', fontSize: '13px' }}
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={guardandoEdicion}
-                                    style={{ padding: '10px 18px', borderRadius: '8px', border: 'none', background: '#0f172a', color: '#ffffff', fontWeight: '600', cursor: 'pointer', fontSize: '13px' }}
+                                    className="interactive-card"
+                                    style={{ padding: '10px 20px', borderRadius: '10px', border: 'none', background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', color: '#ffffff', fontWeight: '700', cursor: 'pointer', fontSize: '13px', boxShadow: '0 4px 12px rgba(37,99,235,0.3)' }}
                                 >
                                     {guardandoEdicion ? 'Actualizando...' : 'Guardar Cambios'}
                                 </button>

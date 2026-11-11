@@ -27,31 +27,33 @@ export default function EliminarCuestionarioModal({ isOpen, onClose, cuestionari
                 left: 0,
                 width: '100vw',
                 height: '100vh',
-                backgroundColor: 'rgba(15, 23, 42, 0.6)',
+                backgroundColor: 'rgba(15, 23, 42, 0.65)',
+                backdropFilter: 'blur(6px)',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
                 zIndex: 1100,
                 padding: '20px',
-                boxSizing: 'border-box',
-                fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
+                boxSizing: 'border-box'
             }}
         >
             <div 
                 onClick={(e) => e.stopPropagation()}
+                className="animate-scale-up"
                 style={{
                     backgroundColor: '#ffffff',
-                    borderRadius: '20px',
+                    borderRadius: '24px',
                     width: '90%',
                     maxWidth: '430px',
-                    padding: '32px 28px',
+                    padding: '36px 30px',
                     boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     textAlign: 'center',
                     boxSizing: 'border-box',
-                    position: 'relative'
+                    position: 'relative',
+                    border: '1px solid #e2e8f0'
                 }}
             >
                 {/* BOTÓN CERRAR X */}
@@ -61,21 +63,19 @@ export default function EliminarCuestionarioModal({ isOpen, onClose, cuestionari
                         position: 'absolute',
                         top: '16px',
                         right: '16px',
-                        background: 'transparent',
+                        background: '#f1f5f9',
                         border: 'none',
-                        color: '#94a3b8',
+                        color: '#64748b',
                         cursor: 'pointer',
-                        padding: '4px',
+                        padding: '6px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        borderRadius: '50%',
-                        transition: 'color 0.2s'
+                        borderRadius: '8px',
+                        transition: 'all 0.2s'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = '#0f172a'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
                 >
-                    <X size={20} />
+                    <X size={18} />
                 </button>
                 {/* ICONO SUPERIOR */}
                 <div style={{
@@ -143,26 +143,21 @@ export default function EliminarCuestionarioModal({ isOpen, onClose, cuestionari
                         type="button"
                         onClick={handleConfirmar}
                         disabled={eliminando}
+                        className="interactive-card"
                         style={{
-                            backgroundColor: '#dc2626',
+                            background: 'linear-gradient(135deg, #e11d48 0%, #be123c 100%)',
                             border: 'none',
                             color: '#ffffff',
                             borderRadius: '12px',
                             padding: '12px',
                             fontSize: '14px',
-                            fontWeight: '600',
+                            fontWeight: '700',
                             cursor: eliminando ? 'not-allowed' : 'pointer',
                             opacity: eliminando ? 0.7 : 1,
-                            transition: 'all 0.2s'
-                        }}
-                        onMouseEnter={(e) => {
-                            if (!eliminando) e.currentTarget.style.backgroundColor = '#b91c1c';
-                        }}
-                        onMouseLeave={(e) => {
-                            if (!eliminando) e.currentTarget.style.backgroundColor = '#dc2626';
+                            boxShadow: '0 4px 12px rgba(225, 29, 72, 0.35)'
                         }}
                     >
-                        {eliminando ? 'Eliminando...' : 'Eliminar'}
+                        {eliminando ? 'Eliminando...' : 'Sí, eliminar'}
                     </button>
                 </div>
             </div>

@@ -300,16 +300,16 @@ export default function BancoPreguntasView() {
             {/* ENCABEZADO */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
                 <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ backgroundColor: '#eff6ff', color: '#2563eb', padding: '8px', borderRadius: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ backgroundColor: '#eff6ff', color: '#2563eb', padding: '10px', borderRadius: '14px', boxShadow: '0 2px 6px rgba(37,99,235,0.15)' }}>
                             <BookOpen size={24} />
                         </div>
                         <div>
-                            <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+                            <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
                                 Banco Centralizado de Preguntas
                             </h1>
-                            <p style={{ fontSize: '14px', color: '#64748b', margin: '4px 0 0 0' }}>
-                                Repositorio para guardar, catalogar y reutilizar preguntas por materia y nivel de dificultad.
+                            <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0', fontWeight: '500' }}>
+                                Repositorio para catalogar, almacenar y reutilizar preguntas por materia y nivel de dificultad.
                             </p>
                         </div>
                     </div>
@@ -317,77 +317,75 @@ export default function BancoPreguntasView() {
 
                 <button
                     onClick={abrirCrearModal}
+                    className="interactive-card"
                     style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
-                        backgroundColor: '#10b981',
+                        background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
                         color: '#ffffff',
-                        padding: '10px 18px',
-                        borderRadius: '8px',
+                        padding: '11px 20px',
+                        borderRadius: '12px',
                         border: 'none',
-                        fontWeight: '600',
-                        fontSize: '14px',
+                        fontWeight: '700',
+                        fontSize: '13px',
                         cursor: 'pointer',
-                        boxShadow: '0 2px 4px rgba(16, 185, 129, 0.2)',
-                        transition: 'all 0.2s'
+                        boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#059669'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
                 >
                     <Plus size={18} /> Nueva Pregunta en el Banco
                 </button>
             </div>
 
             {/* TARJETAS RESUMEN */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-                <div style={{ background: '#ffffff', borderRadius: '12px', padding: '16px 20px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ background: '#f1f5f9', color: '#475569', padding: '10px', borderRadius: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '18px', marginBottom: '26px' }}>
+                <div className="interactive-card" style={{ background: '#ffffff', borderRadius: '18px', padding: '20px 22px', border: '1px solid #e2e8f0', borderTop: '4px solid #2563eb', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ background: '#eff6ff', color: '#2563eb', padding: '10px', borderRadius: '12px' }}>
                         <Layers size={22} />
                     </div>
                     <div>
-                        <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>Total en Banco</div>
-                        <div style={{ fontSize: '22px', fontWeight: '700', color: '#0f172a' }}>{preguntas.length}</div>
+                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Total en Banco</div>
+                        <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.5px' }}>{preguntas.length}</div>
                     </div>
                 </div>
 
-                <div style={{ background: '#ffffff', borderRadius: '12px', padding: '16px 20px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ background: '#dcfce7', color: '#16a34a', padding: '10px', borderRadius: '10px' }}>
+                <div className="interactive-card" style={{ background: '#ffffff', borderRadius: '18px', padding: '20px 22px', border: '1px solid #e2e8f0', borderTop: '4px solid #10b981', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ background: '#ecfdf5', color: '#059669', padding: '10px', borderRadius: '12px' }}>
                         <CheckCircle2 size={22} />
                     </div>
                     <div>
-                        <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>Nivel Fácil</div>
-                        <div style={{ fontSize: '22px', fontWeight: '700', color: '#16a34a' }}>{totalFaciles}</div>
+                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Nivel Fácil</div>
+                        <div style={{ fontSize: '28px', fontWeight: '800', color: '#059669', letterSpacing: '-0.5px' }}>{totalFaciles}</div>
                     </div>
                 </div>
 
-                <div style={{ background: '#ffffff', borderRadius: '12px', padding: '16px 20px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ background: '#fef3c7', color: '#d97706', padding: '10px', borderRadius: '10px' }}>
+                <div className="interactive-card" style={{ background: '#ffffff', borderRadius: '18px', padding: '20px 22px', border: '1px solid #e2e8f0', borderTop: '4px solid #f59e0b', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ background: '#fffbeb', color: '#d97706', padding: '10px', borderRadius: '12px' }}>
                         <Sparkles size={22} />
                     </div>
                     <div>
-                        <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>Nivel Medio</div>
-                        <div style={{ fontSize: '22px', fontWeight: '700', color: '#d97706' }}>{totalMedias}</div>
+                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Nivel Medio</div>
+                        <div style={{ fontSize: '28px', fontWeight: '800', color: '#d97706', letterSpacing: '-0.5px' }}>{totalMedias}</div>
                     </div>
                 </div>
 
-                <div style={{ background: '#ffffff', borderRadius: '12px', padding: '16px 20px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ background: '#fee2e2', color: '#dc2626', padding: '10px', borderRadius: '10px' }}>
+                <div className="interactive-card" style={{ background: '#ffffff', borderRadius: '18px', padding: '20px 22px', border: '1px solid #e2e8f0', borderTop: '4px solid #f43f5e', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ background: '#fff1f2', color: '#e11d48', padding: '10px', borderRadius: '12px' }}>
                         <Award size={22} />
                     </div>
                     <div>
-                        <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>Nivel Difícil</div>
-                        <div style={{ fontSize: '22px', fontWeight: '700', color: '#dc2626' }}>{totalDificiles}</div>
+                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Nivel Difícil</div>
+                        <div style={{ fontSize: '28px', fontWeight: '800', color: '#e11d48', letterSpacing: '-0.5px' }}>{totalDificiles}</div>
                     </div>
                 </div>
             </div>
 
             {/* FILTROS Y BÚSQUEDA */}
-            <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '16px 20px', marginBottom: '24px' }}>
+            <div style={{ background: '#ffffff', borderRadius: '18px', border: '1px solid #e2e8f0', padding: '18px 22px', marginBottom: '26px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
                 <form onSubmit={handleBuscar} style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', alignItems: 'center' }}>
                     {/* Búsqueda por texto */}
                     <div style={{ flex: '1 1 240px', position: 'relative' }}>
-                        <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                        <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
                         <input
                             type="text"
                             placeholder="Buscar por pregunta, tema o contenido..."
@@ -395,11 +393,14 @@ export default function BancoPreguntasView() {
                             onChange={(e) => setBusqueda(e.target.value)}
                             style={{
                                 width: '100%',
-                                padding: '9px 12px 9px 36px',
-                                borderRadius: '8px',
-                                border: '1px solid #cbd5e1',
-                                fontSize: '14px',
-                                outline: 'none'
+                                padding: '11px 16px 11px 40px',
+                                borderRadius: '12px',
+                                border: '1px solid #e2e8f0',
+                                fontSize: '13px',
+                                outline: 'none',
+                                color: '#0f172a',
+                                boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                                boxSizing: 'border-box'
                             }}
                         />
                     </div>
@@ -411,13 +412,15 @@ export default function BancoPreguntasView() {
                             onChange={(e) => setFiltroMateria(e.target.value)}
                             style={{
                                 width: '100%',
-                                padding: '9px 12px',
-                                borderRadius: '8px',
-                                border: '1px solid #cbd5e1',
-                                fontSize: '14px',
+                                padding: '11px 14px',
+                                borderRadius: '12px',
+                                border: '1px solid #e2e8f0',
+                                fontSize: '13px',
                                 backgroundColor: '#ffffff',
+                                color: '#0f172a',
                                 outline: 'none',
-                                cursor: 'pointer'
+                                cursor: 'pointer',
+                                boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
                             }}
                         >
                             <option value="">Todas las materias</option>
@@ -428,7 +431,7 @@ export default function BancoPreguntasView() {
                     </div>
 
                     {/* Tabs de Dificultad */}
-                    <div style={{ display: 'flex', gap: '6px', backgroundColor: '#f1f5f9', padding: '4px', borderRadius: '8px' }}>
+                    <div style={{ display: 'flex', gap: '4px', backgroundColor: '#f1f5f9', padding: '4px', borderRadius: '12px' }}>
                         {DIFICULTADES.map((d) => {
                             const activa = filtroDificultad === d.key;
                             return (
@@ -440,13 +443,13 @@ export default function BancoPreguntasView() {
                                         border: 'none',
                                         background: activa ? '#ffffff' : 'transparent',
                                         color: activa ? (d.color !== '#64748b' ? d.color : '#0f172a') : '#64748b',
-                                        fontWeight: activa ? '600' : '500',
-                                        fontSize: '13px',
-                                        padding: '6px 12px',
-                                        borderRadius: '6px',
+                                        fontWeight: activa ? '700' : '500',
+                                        fontSize: '12px',
+                                        padding: '7px 12px',
+                                        borderRadius: '8px',
                                         cursor: 'pointer',
-                                        boxShadow: activa ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
-                                        transition: 'all 0.15s'
+                                        boxShadow: activa ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                                        transition: 'all 0.15s ease'
                                     }}
                                 >
                                     {d.label}
@@ -457,14 +460,15 @@ export default function BancoPreguntasView() {
 
                     <button
                         type="submit"
+                        className="interactive-card"
                         style={{
-                            padding: '9px 16px',
+                            padding: '11px 18px',
                             background: '#0f172a',
                             color: '#ffffff',
                             border: 'none',
-                            borderRadius: '8px',
+                            borderRadius: '12px',
                             fontSize: '13px',
-                            fontWeight: '600',
+                            fontWeight: '700',
                             cursor: 'pointer'
                         }}
                     >
@@ -512,45 +516,47 @@ export default function BancoPreguntasView() {
                         return (
                             <div
                                 key={p.id || idx}
+                                className="interactive-card"
                                 style={{
                                     background: '#ffffff',
-                                    borderRadius: '12px',
+                                    borderRadius: '16px',
                                     border: '1px solid #e2e8f0',
-                                    padding: '20px',
-                                    boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+                                    borderLeft: `4px solid ${difInfo.key === 'FACIL' ? '#10b981' : difInfo.key === 'MEDIA' ? '#f59e0b' : '#f43f5e'}`,
+                                    padding: '22px',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                                     display: 'flex',
                                     flexDirection: 'column',
                                     gap: '14px',
-                                    transition: 'all 0.2s'
+                                    transition: 'all 0.2s ease'
                                 }}
                             >
                                 {/* HEADER DE TARJETA */}
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                                         {/* Chip Materia */}
-                                        <span style={{ background: '#eff6ff', color: '#1d4ed8', fontSize: '12px', fontWeight: '600', padding: '3px 10px', borderRadius: '12px', border: '1px solid #bfdbfe' }}>
+                                        <span className="badge-pill badge-blue">
                                             {p.materia || 'General'}
                                         </span>
 
                                         {/* Chip Tema si existe */}
                                         {p.tema && (
-                                            <span style={{ background: '#f8fafc', color: '#475569', fontSize: '12px', fontWeight: '500', padding: '3px 10px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                                            <span className="badge-pill badge-slate">
                                                 {p.tema}
                                             </span>
                                         )}
 
                                         {/* Chip Dificultad */}
-                                        <span style={{ background: difInfo.bg, color: difInfo.color, border: `1px solid ${difInfo.border || difInfo.color}`, fontSize: '12px', fontWeight: '600', padding: '3px 10px', borderRadius: '12px' }}>
+                                        <span className={`badge-pill ${difInfo.key === 'FACIL' ? 'badge-emerald' : difInfo.key === 'MEDIA' ? 'badge-amber' : 'badge-rose'}`}>
                                             ● {difInfo.label}
                                         </span>
 
                                         {/* Chip Tipo */}
-                                        <span style={{ background: '#f1f5f9', color: '#334155', fontSize: '12px', fontWeight: '500', padding: '3px 8px', borderRadius: '6px' }}>
-                                            {p.tipo === 'VERDADERO_FALSO' ? 'Verdadero/Falso' : p.tipo === 'RESPUESTA_CORTA' ? 'Respuesta escrita' : 'Opción múltiple'}
+                                        <span style={{ background: '#f8fafc', color: '#475569', fontSize: '11px', fontWeight: '600', padding: '3px 8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                                            {p.tipo === 'VERDADERO_FALSO' ? 'Verdadero / Falso' : p.tipo === 'RESPUESTA_CORTA' ? 'Respuesta escrita' : 'Opción múltiple'}
                                         </span>
 
                                         {/* Chip Ponderación */}
-                                        <span style={{ background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', fontSize: '12px', fontWeight: '700', padding: '3px 9px', borderRadius: '6px' }}>
+                                        <span style={{ background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', fontSize: '11px', fontWeight: '800', padding: '3px 9px', borderRadius: '6px' }}>
                                             {puntosVal.toFixed(1)} pts
                                         </span>
                                     </div>
@@ -560,40 +566,42 @@ export default function BancoPreguntasView() {
                                         <button
                                             onClick={() => abrirEditarModal(p)}
                                             style={{
-                                                background: '#f8fafc',
-                                                border: '1px solid #e2e8f0',
-                                                borderRadius: '6px',
-                                                padding: '6px 10px',
-                                                color: '#334155',
+                                                background: '#eff6ff',
+                                                border: '1px solid #bfdbfe',
+                                                borderRadius: '8px',
+                                                padding: '6px 12px',
+                                                color: '#1d4ed8',
                                                 fontSize: '12px',
-                                                fontWeight: '600',
+                                                fontWeight: '700',
                                                 cursor: 'pointer',
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                gap: '5px'
+                                                gap: '5px',
+                                                transition: 'all 0.15s ease'
                                             }}
                                             title="Editar pregunta"
                                         >
-                                            <Edit3 size={14} /> Editar
+                                            <Edit3 size={13} /> Editar
                                         </button>
                                         <button
                                             onClick={() => handleEliminar(p.id)}
                                             style={{
-                                                background: '#fef2f2',
-                                                border: '1px solid #fecaca',
-                                                borderRadius: '6px',
+                                                background: '#fff1f2',
+                                                border: '1px solid #fecdd3',
+                                                borderRadius: '8px',
                                                 padding: '6px 10px',
-                                                color: '#dc2626',
+                                                color: '#e11d48',
                                                 fontSize: '12px',
                                                 fontWeight: '600',
                                                 cursor: 'pointer',
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                gap: '5px'
+                                                gap: '4px',
+                                                transition: 'all 0.15s ease'
                                             }}
                                             title="Eliminar del banco"
                                         >
-                                            <Trash2 size={14} /> Eliminar
+                                            <Trash2 size={13} />
                                         </button>
                                     </div>
                                 </div>

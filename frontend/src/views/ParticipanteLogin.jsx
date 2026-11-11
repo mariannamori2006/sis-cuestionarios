@@ -109,37 +109,38 @@ export default function ParticipanteLogin() {
             display: 'flex',
             minHeight: '100vh',
             width: '100vw',
-            backgroundColor: '#0f172a',
+            background: 'radial-gradient(ellipse at top, #1e293b 0%, #090d16 100%)',
             justifyContent: 'center',
             alignItems: 'center',
-            fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif',
-            padding: isMobile ? '16px 12px' : '20px',
+            padding: isMobile ? '16px 12px' : '24px',
             boxSizing: 'border-box'
         }}>
-            <div style={{
+            <div className="animate-scale-up" style={{
                 backgroundColor: '#ffffff',
-                padding: isMobile ? '28px 20px' : '36px',
-                borderRadius: '20px',
+                padding: isMobile ? '32px 22px' : '40px 36px',
+                borderRadius: '24px',
                 width: '100%',
-                maxWidth: '430px',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+                maxWidth: '450px',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08)',
                 boxSizing: 'border-box'
             }}>
                 {/* Logo Institucional */}
-                <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                    <div style={{ marginBottom: '14px', display: 'flex', justifyContent: 'center' }}>
-                        <img src={logoNativa} alt="NativaTec" style={{ height: '42px', objectFit: 'contain' }} />
+                <div style={{ textAlign: 'center', marginBottom: '26px' }}>
+                    <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+                        <div style={{ background: '#f8fafc', padding: '8px 16px', borderRadius: '14px', border: '1px solid #e2e8f0', display: 'inline-flex', alignItems: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.04)' }}>
+                            <img src={logoNativa} alt="NativaTec" style={{ height: '34px', objectFit: 'contain' }} />
+                        </div>
                     </div>
-                    <h2 style={{ margin: '0 0 6px 0', fontSize: '22px', color: '#0f172a' }}>Portal de Evaluaciones</h2>
-                    <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+                    <h2 style={{ margin: '0 0 6px 0', fontSize: '24px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em' }}>Portal de Evaluaciones</h2>
+                    <p style={{ margin: 0, fontSize: '13px', color: '#64748b', fontWeight: '500' }}>
                         {paso === 1
-                            ? 'Ingresa el código numérico para unirte a la evaluación'
-                            : 'Identifícate para comenzar el examen'}
+                            ? 'Ingresa el código numérico para unirte a tu examen'
+                            : 'Identifícate para dar inicio a la evaluación'}
                     </p>
                 </div>
 
                 {/* Barra de progreso de pasos */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '26px' }}>
                     <div style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -149,22 +150,23 @@ export default function ParticipanteLogin() {
                         color: paso === 1 ? '#2563eb' : '#10b981'
                     }}>
                         <span style={{
-                            width: '22px',
-                            height: '22px',
+                            width: '24px',
+                            height: '24px',
                             borderRadius: '50%',
                             backgroundColor: paso === 1 ? '#2563eb' : '#10b981',
                             color: '#ffffff',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: '11px'
+                            fontSize: '11px',
+                            boxShadow: paso === 1 ? '0 2px 8px rgba(37,99,235,0.4)' : 'none'
                         }}>
                             {paso > 1 ? '✓' : '1'}
                         </span>
-                        <span>Código</span>
+                        <span>Código PIN</span>
                     </div>
 
-                    <div style={{ width: '30px', height: '2px', backgroundColor: paso === 2 ? '#10b981' : '#e2e8f0' }} />
+                    <div style={{ width: '34px', height: '2px', backgroundColor: paso === 2 ? '#10b981' : '#e2e8f0' }} />
 
                     <div style={{
                         display: 'flex',
@@ -175,31 +177,32 @@ export default function ParticipanteLogin() {
                         color: paso === 2 ? '#2563eb' : '#94a3b8'
                     }}>
                         <span style={{
-                            width: '22px',
-                            height: '22px',
+                            width: '24px',
+                            height: '24px',
                             borderRadius: '50%',
-                            backgroundColor: paso === 2 ? '#2563eb' : '#e2e8f0',
+                            backgroundColor: paso === 2 ? '#2563eb' : '#f1f5f9',
                             color: paso === 2 ? '#ffffff' : '#64748b',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: '11px'
+                            fontSize: '11px',
+                            boxShadow: paso === 2 ? '0 2px 8px rgba(37,99,235,0.4)' : 'none'
                         }}>
                             2
                         </span>
-                        <span>Nombre</span>
+                        <span>Identificación</span>
                     </div>
                 </div>
 
                 {/* Mensaje de Error */}
                 {error && (
-                    <div style={{
+                    <div className="animate-fade-in" style={{
                         backgroundColor: '#fee2e2',
                         color: '#991b1b',
                         padding: '12px 14px',
-                        borderRadius: '10px',
+                        borderRadius: '12px',
                         fontSize: '13px',
-                        marginBottom: '18px',
+                        marginBottom: '20px',
                         border: '1px solid #fca5a5',
                         display: 'flex',
                         alignItems: 'flex-start',
@@ -212,13 +215,13 @@ export default function ParticipanteLogin() {
 
                 {/* PASO 1: VALIDACIÓN DE CÓDIGO NUMÉRICO */}
                 {paso === 1 && (
-                    <form onSubmit={handleValidarCodigo} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <form onSubmit={handleValidarCodigo} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                         <div>
-                            <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '8px' }}>
-                                CÓDIGO DEL CUESTIONARIO (6 NÚMEROS)
+                            <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '8px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                                Código PIN del Cuestionario
                             </label>
                             <div style={{ position: 'relative' }}>
-                                <KeyRound size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                                <KeyRound size={20} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
                                 <input
                                     type="text"
                                     inputMode="numeric"
@@ -231,35 +234,37 @@ export default function ParticipanteLogin() {
                                     required
                                     style={{
                                         width: '100%',
-                                        padding: '14px 14px 14px 44px',
-                                        borderRadius: '10px',
-                                        border: '2px solid #cbd5e1',
+                                        padding: '15px 16px 15px 48px',
+                                        borderRadius: '14px',
+                                        border: '2px solid #e2e8f0',
                                         outline: 'none',
-                                        fontSize: '18px',
-                                        fontWeight: '700',
-                                        letterSpacing: '3px',
+                                        fontSize: '20px',
+                                        fontWeight: '800',
+                                        letterSpacing: '4px',
                                         color: '#0f172a',
                                         backgroundColor: '#f8fafc',
                                         boxSizing: 'border-box',
-                                        transition: 'border-color 0.2s'
+                                        transition: 'all 0.2s ease',
+                                        textAlign: 'left'
                                     }}
                                 />
                             </div>
-                            <span style={{ fontSize: '12px', color: '#64748b', marginTop: '6px', display: 'block' }}>
-                                Ingresa el código numérico que tu profesor te compartió.
+                            <span style={{ fontSize: '12px', color: '#64748b', marginTop: '8px', display: 'block' }}>
+                                Solicita a tu profesor el código numérico de 6 dígitos.
                             </span>
                         </div>
 
                         <button
                             type="submit"
                             disabled={validando || !codigoAcceso.trim()}
+                            className="interactive-card"
                             style={{
-                                backgroundColor: codigoAcceso.trim() ? '#0f172a' : '#94a3b8',
+                                background: codigoAcceso.trim() ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : '#cbd5e1',
                                 color: '#ffffff',
                                 border: 'none',
                                 padding: '14px',
-                                borderRadius: '10px',
-                                fontWeight: '600',
+                                borderRadius: '14px',
+                                fontWeight: '700',
                                 cursor: codigoAcceso.trim() ? 'pointer' : 'default',
                                 fontSize: '14px',
                                 marginTop: '4px',
@@ -267,7 +272,7 @@ export default function ParticipanteLogin() {
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 gap: '8px',
-                                transition: 'background-color 0.2s'
+                                boxShadow: codigoAcceso.trim() ? '0 4px 14px rgba(37, 99, 235, 0.35)' : 'none'
                             }}
                         >
                             {validando ? 'Verificando código...' : (
@@ -284,26 +289,16 @@ export default function ParticipanteLogin() {
                     <form onSubmit={handleComenzarExamen} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
                         {/* Tarjeta de Cuestionario Verificado */}
-                        {/*<div style={{
+                        <div style={{
                             backgroundColor: '#f0fdf4',
                             border: '1px solid #bbf7d0',
-                            borderRadius: '12px',
+                            borderRadius: '14px',
                             padding: '14px 16px',
                             marginBottom: '4px'
                         }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                                <span style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '4px',
-                                    fontSize: '11px',
-                                    fontWeight: '700',
-                                    color: '#15803d',
-                                    backgroundColor: '#dcfce7',
-                                    padding: '3px 8px',
-                                    borderRadius: '12px'
-                                }}>
-                                    <CheckCircle2 size={13} /> Código: {cuestionario.codigoAcceso || codigoAcceso}
+                                <span className="badge-pill badge-emerald">
+                                    <CheckCircle2 size={12} /> PIN: {cuestionario.codigoAcceso || codigoAcceso}
                                 </span>
                                 <button
                                     type="button"
@@ -313,6 +308,7 @@ export default function ParticipanteLogin() {
                                         border: 'none',
                                         color: '#64748b',
                                         fontSize: '11px',
+                                        fontWeight: '600',
                                         cursor: 'pointer',
                                         textDecoration: 'underline'
                                     }}
@@ -320,11 +316,12 @@ export default function ParticipanteLogin() {
                                     Cambiar
                                 </button>
                             </div>
-                            <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', color: '#0f172a' }}>{cuestionario.titulo}</h3>
+                            <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '800', color: '#0f172a' }}>{cuestionario.titulo}</h3>
                             <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
-                                {cuestionario.descripcion || 'Evaluación académica'} • {cuestionario.preguntas ? `${cuestionario.preguntas.length} preguntas` : ''}
+                                {cuestionario.materia || 'General'} • {cuestionario.preguntas ? `${cuestionario.preguntas.length} preguntas` : ''}
+                                {cuestionario.tiempoLimiteMinutos > 0 ? ` • ${cuestionario.tiempoLimiteMinutos} min` : ''}
                             </p>
-                        </div>*/}
+                        </div>
 
                         {/* Información de disponibilidad e intentos */}
                         {disponibilidad && (
@@ -334,31 +331,11 @@ export default function ParticipanteLogin() {
                                 gap: '6px',
                                 marginBottom: '2px'
                             }}>
-                                <span style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '4px',
-                                    fontSize: '11px',
-                                    fontWeight: '600',
-                                    color: '#6d28d9',
-                                    backgroundColor: '#ede9fe',
-                                    padding: '4px 8px',
-                                    borderRadius: '6px'
-                                }}>
+                                <span className="badge-pill badge-purple">
                                     <RotateCcw size={12} /> {disponibilidad.limiteIntentos === 0 ? 'Intentos ilimitados' : `${disponibilidad.limiteIntentos} intento(s) máx.`}
                                 </span>
                                 {disponibilidad.fechaFin && (
-                                    <span style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '4px',
-                                        fontSize: '11px',
-                                        fontWeight: '600',
-                                        color: '#991b1b',
-                                        backgroundColor: '#fee2e2',
-                                        padding: '4px 8px',
-                                        borderRadius: '6px'
-                                    }}>
+                                    <span className="badge-pill badge-rose">
                                         <Clock size={12} /> Cierre programado
                                     </span>
                                 )}
@@ -366,8 +343,8 @@ export default function ParticipanteLogin() {
                         )}
 
                         <div>
-                            <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>
-                                TU NOMBRE *
+                            <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                                Tu Nombre y Apellido *
                             </label>
                             <div style={{ position: 'relative' }}>
                                 <User size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
@@ -380,8 +357,8 @@ export default function ParticipanteLogin() {
                                     required
                                     style={{
                                         width: '100%',
-                                        padding: '12px 14px 12px 40px',
-                                        borderRadius: '10px',
+                                        padding: '13px 14px 13px 40px',
+                                        borderRadius: '12px',
                                         border: '1px solid #cbd5e1',
                                         outline: 'none',
                                         fontSize: '14px',
@@ -390,14 +367,14 @@ export default function ParticipanteLogin() {
                                 />
                             </div>
                             <span style={{ fontSize: '12px', color: '#64748b', marginTop: '6px', display: 'block' }}>
-                                Tu nombre se registrará junto con tus respuestas para calificar la evaluación.
+                                Se registrará con tus respuestas para asentar tu calificación.
                             </span>
                         </div>
 
                         {/* GRUPO / SECCIÓN */}
                         <div>
-                            <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>
-                                GRUPO O SECCIÓN (OPCIONAL)
+                            <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '6px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                                Grupo o Sección (Opcional)
                             </label>
                             <div style={{ position: 'relative' }}>
                                 <Users size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', zIndex: 1 }} />
@@ -407,8 +384,8 @@ export default function ParticipanteLogin() {
                                         onChange={(e) => setGrupoParticipante(e.target.value)}
                                         style={{
                                             width: '100%',
-                                            padding: '12px 14px 12px 40px',
-                                            borderRadius: '10px',
+                                            padding: '13px 14px 13px 40px',
+                                            borderRadius: '12px',
                                             border: '1px solid #cbd5e1',
                                             outline: 'none',
                                             fontSize: '14px',
@@ -430,8 +407,8 @@ export default function ParticipanteLogin() {
                                         placeholder="Ej: 5to A, Grupo 1, Sección B"
                                         style={{
                                             width: '100%',
-                                            padding: '12px 14px 12px 40px',
-                                            borderRadius: '10px',
+                                            padding: '13px 14px 13px 40px',
+                                            borderRadius: '12px',
                                             border: '1px solid #cbd5e1',
                                             outline: 'none',
                                             fontSize: '14px',
@@ -440,22 +417,19 @@ export default function ParticipanteLogin() {
                                     />
                                 )}
                             </div>
-                            <span style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', display: 'block' }}>
-                                Permite a tu docente filtrar y organizar las calificaciones por aula.
-                            </span>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
                             <button
                                 type="button"
                                 onClick={() => setPaso(1)}
                                 style={{
                                     backgroundColor: '#f1f5f9',
                                     color: '#475569',
-                                    border: 'none',
-                                    padding: '12px 16px',
-                                    borderRadius: '10px',
-                                    fontWeight: '600',
+                                    border: '1px solid #e2e8f0',
+                                    padding: '13px 18px',
+                                    borderRadius: '12px',
+                                    fontWeight: '700',
                                     cursor: 'pointer',
                                     fontSize: '13px',
                                     display: 'flex',
@@ -468,23 +442,25 @@ export default function ParticipanteLogin() {
 
                             <button
                                 type="submit"
+                                className="interactive-card"
                                 style={{
                                     flex: 1,
-                                    backgroundColor: '#10b981',
+                                    background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
                                     color: '#ffffff',
                                     border: 'none',
-                                    padding: '12px',
-                                    borderRadius: '10px',
-                                    fontWeight: '600',
+                                    padding: '13px',
+                                    borderRadius: '12px',
+                                    fontWeight: '700',
                                     cursor: 'pointer',
                                     fontSize: '14px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    gap: '8px'
+                                    gap: '8px',
+                                    boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)'
                                 }}
                             >
-                                Acceder al Cuestionario <ArrowRight size={16} />
+                                Iniciar Examen <ArrowRight size={16} />
                             </button>
                         </div>
                     </form>

@@ -43,69 +43,74 @@ export default function CompartirCuestionarioModal({ isOpen, onClose, cuestionar
                 width: '100vw',
                 height: '100vh',
                 backgroundColor: 'rgba(15, 23, 42, 0.65)',
+                backdropFilter: 'blur(6px)',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
                 zIndex: 1100,
                 padding: '20px',
-                boxSizing: 'border-box',
-                fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
+                boxSizing: 'border-box'
             }}
         >
             <div 
                 onClick={(e) => e.stopPropagation()}
+                className="animate-scale-up"
                 style={{
                     backgroundColor: '#ffffff',
-                    borderRadius: '20px',
+                    borderRadius: '24px',
                     width: '100%',
                     maxWidth: '460px',
                     maxHeight: '92vh',
                     overflowY: 'auto',
                     boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                    padding: '28px',
+                    padding: '30px',
                     position: 'relative',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    border: '1px solid #e2e8f0'
                 }}
             >
                 {/* ENCABEZADO */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '22px' }}>
                     <div>
-                        <h3 style={{ margin: '0 0 4px 0', fontSize: '20px', color: '#0f172a', fontWeight: 'bold' }}>
+                        <h3 style={{ margin: '0 0 4px 0', fontSize: '20px', color: '#0f172a', fontWeight: '800', letterSpacing: '-0.02em' }}>
                             Compartir Cuestionario
                         </h3>
-                        <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+                        <p style={{ margin: 0, fontSize: '13px', color: '#64748b', fontWeight: '500' }}>
                             {cuestionario.titulo}
                         </p>
                     </div>
                     <button
                         onClick={onClose}
                         style={{
-                            background: 'transparent',
+                            background: '#f1f5f9',
                             border: 'none',
                             cursor: 'pointer',
-                            color: '#94a3b8',
+                            color: '#64748b',
                             display: 'flex',
                             alignItems: 'center',
-                            padding: '4px'
+                            padding: '6px',
+                            borderRadius: '8px'
                         }}
                     >
-                        <X size={20} />
+                        <X size={18} />
                     </button>
                 </div>
 
                 {/* 1. CÓDIGO NUMÉRICO DE 6 DÍGITOS */}
                 <div style={{
-                    backgroundColor: '#0f172a',
-                    borderRadius: '14px',
-                    padding: '18px 20px',
+                    background: 'linear-gradient(135deg, #090d16 0%, #1e293b 100%)',
+                    borderRadius: '16px',
+                    padding: '20px',
                     color: '#ffffff',
                     marginBottom: '20px',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between'
+                    justifyContent: 'space-between',
+                    border: '1px solid #1e293b',
+                    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.2)'
                 }}>
                     <div>
-                        <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '700', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '4px' }}>
+                        <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '700', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '4px' }}>
                             CÓDIGO NUMÉRICO DE ACCESO
                         </div>
                         <div style={{ fontSize: '32px', fontWeight: '800', letterSpacing: '4px', fontFamily: 'monospace', color: '#38bdf8' }}>

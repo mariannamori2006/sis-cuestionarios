@@ -160,8 +160,7 @@ export default function LoginComponent() {
             display: 'flex',
             height: '100vh',
             width: '100vw',
-            backgroundColor: '#f8fafc',
-            fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
+            backgroundColor: '#f8fafc'
         }}>
             {/* Panel lateral estético institucional (Oculto en celulares) */}
             <div style={{

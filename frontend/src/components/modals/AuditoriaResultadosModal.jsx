@@ -258,40 +258,42 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
                 left: 0,
                 width: '100vw',
                 height: '100vh',
-                backgroundColor: 'rgba(15, 23, 42, 0.6)',
+                backgroundColor: 'rgba(15, 23, 42, 0.65)',
+                backdropFilter: 'blur(6px)',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                zIndex: 1000,
+                zIndex: 1100,
                 padding: '20px',
-                boxSizing: 'border-box',
-                fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
+                boxSizing: 'border-box'
             }}
         >
             <div 
                 onClick={(e) => e.stopPropagation()}
+                className="animate-scale-up"
                 style={{
                     backgroundColor: '#ffffff',
-                    borderRadius: '20px',
+                    borderRadius: '24px',
                     width: '100%',
-                    maxWidth: '920px',
+                    maxWidth: '960px',
                     maxHeight: '90vh',
                     overflowY: 'auto',
                     boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
                     display: 'flex',
                     flexDirection: 'column',
-                    padding: '28px 32px',
-                    boxSizing: 'border-box'
+                    padding: '30px 34px',
+                    boxSizing: 'border-box',
+                    border: '1px solid #e2e8f0'
                 }}
             >
 
                 {/* ENCABEZADO */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
                     <div>
-                        <h2 style={{ margin: '0 0 6px 0', fontSize: '20px', color: '#0f172a', fontWeight: '700' }}>
-                            Auditoría de resultados
+                        <h2 style={{ margin: '0 0 6px 0', fontSize: '22px', color: '#0f172a', fontWeight: '800', letterSpacing: '-0.02em' }}>
+                            Auditoría de Resultados
                         </h2>
-                        <span style={{ fontSize: '14px', color: '#64748b' }}>
+                        <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>
                             {titulo} · {totalParticipantes} {totalParticipantes === 1 ? 'evaluación registrada' : 'evaluaciones registradas'}
                             {filtroGrupo !== 'TODOS' && (
                                 <span style={{
@@ -315,20 +317,20 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
                             onClick={handleExportarExcel}
                             disabled={intentosFiltrados.length === 0}
                             title={intentosFiltrados.length === 0 ? "No hay evaluaciones para descargar" : "Descargar notas en Excel"}
+                            className="interactive-card"
                             style={{
-                                backgroundColor: intentosFiltrados.length > 0 ? '#10b981' : '#cbd5e1',
+                                background: intentosFiltrados.length > 0 ? 'linear-gradient(135deg, #059669 0%, #10b981 100%)' : '#cbd5e1',
                                 color: '#ffffff',
                                 border: 'none',
-                                borderRadius: '8px',
-                                padding: '8px 14px',
+                                borderRadius: '10px',
+                                padding: '9px 16px',
                                 fontSize: '13px',
-                                fontWeight: '600',
+                                fontWeight: '700',
                                 cursor: intentosFiltrados.length > 0 ? 'pointer' : 'not-allowed',
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '6px',
-                                transition: 'all 0.2s',
-                                boxShadow: intentosFiltrados.length > 0 ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
+                                boxShadow: intentosFiltrados.length > 0 ? '0 4px 12px rgba(16, 185, 129, 0.3)' : 'none'
                             }}
                         >
                             <Download size={15} /> Descargar Excel
