@@ -32,6 +32,9 @@ public class IntentoCuestionarioService {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
+    @Autowired
+    private NotificacionService notificacionService;
+
     public IntentoCuestionario iniciarIntento(IntentoCuestionario intento) {
         if (intento.getCuestionario() != null && intento.getCuestionario().getId() != null) {
             Cuestionario cuestionarioDb = cuestionarioRepository.findById(intento.getCuestionario().getId())
@@ -281,6 +284,25 @@ public class IntentoCuestionarioService {
             intento.setCalificacion(null);
             intentoRepository.save(intento);
 
+            // Notificación al docente sobre la entrega con preguntas abiertas
+            try {
+                if (cuestionario.getCreadoPor() != null) {
+                    String nombreAlumno = dto.getNombreParticipante() != null ? dto.getNombreParticipante().trim() : "Un estudiante";
+                    String cuestionarioTitulo = cuestionario.getTitulo() != null ? cuestionario.getTitulo() : "Cuestionario";
+                    notificacionService.crearNotificacion(
+                            cuestionario.getCreadoPor(),
+                            "REVISION_PENDIENTE",
+                            "Revisión de respuestas requerida",
+                            String.format("El alumno %s entregó respuestas escritas en '%s'. Requiere revisión docente para asignar la calificación final.", nombreAlumno, cuestionarioTitulo),
+                            cuestionario.getId(),
+                            intento.getId(),
+                            "/cuestionarios"
+                    );
+                }
+            } catch (Exception ex) {
+                System.err.println("Advertencia al generar notificación docente: " + ex.getMessage());
+            }
+
             return new ResultadoEvaluacionDTO(
                     intento.getId(),
                     null,
@@ -317,6 +339,38 @@ public class IntentoCuestionarioService {
         }
 
         String notaFormateada = String.format("%.1f / 20", calificacionFinal);
+
+        // Notificación automática al docente creador del cuestionario
+        try {
+            if (cuestionario.getCreadoPor() != null) {
+                String nombreAlumno = dto.getNombreParticipante() != null ? dto.getNombreParticipante().trim() : "Un estudiante";
+                String cuestionarioTitulo = cuestionario.getTitulo() != null ? cuestionario.getTitulo() : "Cuestionario";
+
+                if (Boolean.TRUE.equals(dto.getFinalizadoPorInfraccion())) {
+                    notificacionService.crearNotificacion(
+                            cuestionario.getCreadoPor(),
+                            "MODO_SEGURO",
+                            "Alerta de Modo Seguro",
+                            String.format("El alumno %s superó el límite de cambios de pestaña (%d advertencias) en '%s'.", nombreAlumno, dto.getAdvertencias() != null ? dto.getAdvertencias() : 3, cuestionarioTitulo),
+                            cuestionario.getId(),
+                            intento.getId(),
+                            "/cuestionarios"
+                    );
+                } else {
+                    notificacionService.crearNotificacion(
+                            cuestionario.getCreadoPor(),
+                            "ENTREGA",
+                            "Nueva evaluación completada",
+                            String.format("El alumno %s completó '%s' obteniendo una calificación de %s.", nombreAlumno, cuestionarioTitulo, notaFormateada),
+                            cuestionario.getId(),
+                            intento.getId(),
+                            "/cuestionarios"
+                    );
+                }
+            }
+        } catch (Exception ex) {
+            System.err.println("Advertencia al generar notificación docente: " + ex.getMessage());
+        }
 
         return new ResultadoEvaluacionDTO(
                 intento.getId(),

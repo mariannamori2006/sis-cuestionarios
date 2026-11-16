@@ -5,6 +5,7 @@ import { obtenerUsuarios, crearUsuario, actualizarUsuario, eliminarUsuario } fro
 import { obtenerCuestionarios, obtenerEstadisticas, obtenerActividadReciente, eliminarCuestionario } from '../services/cuestionarioService';
 import AuditoriaResultadosModal from '../components/modals/AuditoriaResultadosModal';
 import ConfirmarLogoutModal from '../components/modals/ConfirmarLogoutModal';
+import NotificationCenter from '../components/common/NotificationCenter';
 import EstadisticasView from './EstadisticasView';
 import logoNativa from '../images/logoNativa.jpeg';
 import useResponsive from '../hooks/useResponsive';
@@ -362,7 +363,9 @@ export default function AdminDashboardComponent() {
                     <div style={{ background: '#ffffff', padding: '4px 10px', borderRadius: '6px', display: 'flex', alignItems: 'center' }}>
                         <img src={logoNativa} alt="NativaTec" style={{ height: '22px', objectFit: 'contain' }} />
                     </div>
-                    <div style={{ width: '28px' }}></div>
+                    <div>
+                        <NotificationCenter onNavegar={cambiarVista} />
+                    </div>
                 </div>
             )}
 
@@ -570,6 +573,13 @@ export default function AdminDashboardComponent() {
 
             {/* CONTENIDO PRINCIPAL */}
             <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '18px 14px' : '30px 40px', boxSizing: 'border-box' }}>
+
+                {/* BARRA SUPERIOR GLOBAL PARA ESCRITORIO */}
+                {!isMobile && (
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '16px' }}>
+                        <NotificationCenter onNavegar={cambiarVista} />
+                    </div>
+                )}
 
                 {/* VISTA: PANEL PRINCIPAL */}
                 {vistaActiva === 'panel' && (

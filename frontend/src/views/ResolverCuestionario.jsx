@@ -4,7 +4,8 @@ import axios from 'axios';
 import api from '../services/api';
 import logoNativa from '../images/logoNativa.jpeg';
 import useResponsive from '../hooks/useResponsive';
-import { Award, CheckCircle, LogOut, Clock, AlertTriangle, AlertCircle, Shuffle, ShieldAlert, ShieldCheck, RotateCcw, Calendar, Lightbulb, BookOpen, Check, X, Filter, Users } from 'lucide-react';
+import useAutosave from '../hooks/useAutosave';
+import { Award, CheckCircle, LogOut, Clock, AlertTriangle, AlertCircle, Shuffle, ShieldAlert, ShieldCheck, RotateCcw, Calendar, Lightbulb, BookOpen, Check, X, Filter, Users, CloudCheck, WifiOff, RefreshCw, Sparkles, Cloud } from 'lucide-react';
 import { responderCuestionario, verificarDisponibilidadCuestionario } from '../services/cuestionarioService';
 
 export default function ResolverCuestionario() {
@@ -25,6 +26,10 @@ export default function ResolverCuestionario() {
     const [enviando, setEnviando] = useState(false);
     const [filtroRetro, setFiltroRetro] = useState('todas'); // 'todas', 'correctas', 'incorrectas'
 
+    // Estados del Autoguardado Inteligente
+    const [borradorRecuperado, setBorradorRecuperado] = useState(false);
+    const [inicioTimestamp, setInicioTimestamp] = useState(null);
+
     // Estados del Temporizador con Auto-Envío
     const [tiempoTotalSegundos, setTiempoTotalSegundos] = useState(0);
     const [tiempoRestanteSegundos, setTiempoRestanteSegundos] = useState(null);
@@ -41,6 +46,29 @@ export default function ResolverCuestionario() {
     const resultadoRef = useRef(resultado);
     const advertenciasRef = useRef(0);
     const ultimaSalidaRef = useRef(0);
+
+    // Clave única para el borrador del cuestionario
+    const draftKey = cuestionario?.id && (nombreParticipante || sessionStorage.getItem('nombreParticipante'))
+        ? `cuestionario_draft_${cuestionario.id}_${encodeURIComponent((nombreParticipante || sessionStorage.getItem('nombreParticipante') || '').trim().toLowerCase())}`
+        : null;
+
+    // Inicialización del Hook de Autoguardado Inteligente
+    const {
+        status: autosaveStatus,
+        lastSaved: autosaveLastSaved,
+        isOnline,
+        clearDraft,
+        saveImmediately
+    } = useAutosave({
+        key: draftKey,
+        data: respuestasSeleccionadas,
+        enabled: Boolean(comenzado && cuestionario && !resultado && !enviando),
+        debounceMs: 600,
+        meta: {
+            inicioTimestamp: inicioTimestamp || Date.now(),
+            advertencias: advertenciasRef.current
+        }
+    });
 
     useEffect(() => {
         respuestasRef.current = respuestasSeleccionadas;
@@ -81,11 +109,53 @@ export default function ResolverCuestionario() {
                 }
 
                 setCuestionario(data);
+
+                // --- RESTAURACIÓN INTELIGENTE DE BORRADOR PREVIO ---
+                const dKey = data?.id && nombre
+                    ? `cuestionario_draft_${data.id}_${encodeURIComponent(nombre.trim().toLowerCase())}`
+                    : null;
+
+                let borradorCargado = null;
+                if (dKey) {
+                    try {
+                        const raw = localStorage.getItem(dKey);
+                        if (raw) {
+                            borradorCargado = JSON.parse(raw);
+                        }
+                    } catch (e) {
+                        console.warn("No se pudo leer el borrador existente:", e);
+                    }
+                }
+
+                if (borradorCargado && borradorCargado.data && Object.keys(borradorCargado.data).length > 0) {
+                    setRespuestasSeleccionadas(borradorCargado.data);
+                    respuestasRef.current = borradorCargado.data;
+                    setBorradorRecuperado(true);
+                }
+
+                if (borradorCargado && borradorCargado.meta && borradorCargado.meta.advertencias) {
+                    setAdvertencias(borradorCargado.meta.advertencias);
+                    advertenciasRef.current = borradorCargado.meta.advertencias;
+                }
+
                 const minutos = data?.tiempoLimiteMinutos || 0;
                 if (minutos > 0) {
                     const segs = minutos * 60;
                     setTiempoTotalSegundos(segs);
-                    setTiempoRestanteSegundos(segs);
+
+                    // Sincronización precisa del temporizador contra trampas o recargas
+                    if (borradorCargado && borradorCargado.meta && borradorCargado.meta.inicioTimestamp) {
+                        const transcurrido = Math.floor((Date.now() - borradorCargado.meta.inicioTimestamp) / 1000);
+                        const restante = Math.max(0, segs - transcurrido);
+                        setTiempoRestanteSegundos(restante);
+                        setInicioTimestamp(borradorCargado.meta.inicioTimestamp);
+                    } else {
+                        const ahora = Date.now();
+                        setTiempoRestanteSegundos(segs);
+                        setInicioTimestamp(ahora);
+                    }
+                } else {
+                    setInicioTimestamp(borradorCargado?.meta?.inicioTimestamp || Date.now());
                 }
 
                 // Verificar disponibilidad de fecha/hora y límite de intentos para este participante
@@ -192,10 +262,15 @@ export default function ResolverCuestionario() {
     };
 
     const handleSelectOpcion = (preguntaKey, opcionKey) => {
-        setRespuestasSeleccionadas(prev => ({
-            ...prev,
-            [preguntaKey]: opcionKey
-        }));
+        setRespuestasSeleccionadas(prev => {
+            const nuevas = {
+                ...prev,
+                [preguntaKey]: opcionKey
+            };
+            // Guardado inmediato en local sin esperar debounce para selección de opciones
+            saveImmediately(nuevas);
+            return nuevas;
+        });
     };
 
     const handleTextoRespuesta = (preguntaKey, valor) => {
@@ -309,6 +384,7 @@ export default function ResolverCuestionario() {
                     : generarRetroalimentacionCliente(cuestionario.preguntas, respuestasRef.current),
                 porTiempo: true
             });
+            clearDraft();
 
             try {
                 const dispActualizado = await verificarDisponibilidadCuestionario(cuestionario.id, (sessionStorage.getItem('nombreParticipante') || nombreParticipante || 'Anónimo').trim());
@@ -357,6 +433,7 @@ export default function ResolverCuestionario() {
                 retroalimentacion: generarRetroalimentacionCliente(cuestionario.preguntas, respuestasRef.current),
                 porTiempo: true
             });
+            clearDraft();
         } finally {
             setEnviando(false);
         }
@@ -389,6 +466,7 @@ export default function ResolverCuestionario() {
                     : generarRetroalimentacionCliente(cuestionario.preguntas, respuestasRef.current),
                 porInfraccion: true
             });
+            clearDraft();
         } catch (err) {
             console.error("Error al auto-enviar por infracción:", err);
             let totalPreguntas = cuestionario.preguntas?.length || 0;
@@ -412,6 +490,7 @@ export default function ResolverCuestionario() {
                 retroalimentacion: generarRetroalimentacionCliente(cuestionario.preguntas, respuestasRef.current),
                 porInfraccion: true
             });
+            clearDraft();
         } finally {
             setEnviando(false);
         }
@@ -447,6 +526,7 @@ export default function ResolverCuestionario() {
                     : generarRetroalimentacionCliente(cuestionario.preguntas, respuestasSeleccionadas),
                 porTiempo: false
             });
+            clearDraft();
 
             try {
                 const dispActualizado = await verificarDisponibilidadCuestionario(cuestionario.id, nombreParticipanteFinal);
@@ -501,6 +581,7 @@ export default function ResolverCuestionario() {
                     retroalimentacion: generarRetroalimentacionCliente(cuestionario.preguntas, respuestasSeleccionadas),
                     porTiempo: false
                 });
+                clearDraft();
             } else {
                 const notaCalculada = totalPreguntas > 0 ? ((aciertos / totalPreguntas) * 20).toFixed(1) : "20.0";
                 setResultado({
@@ -511,6 +592,7 @@ export default function ResolverCuestionario() {
                     retroalimentacion: generarRetroalimentacionCliente(cuestionario.preguntas, respuestasSeleccionadas),
                     porTiempo: false
                 });
+                clearDraft();
             }
         } finally {
             setEnviando(false);
@@ -553,6 +635,8 @@ export default function ResolverCuestionario() {
             advertenciasRef.current = 0;
             setAutoEnviadoPorTiempo(false);
             setBloqueadoPorInfraccion(false);
+            setBorradorRecuperado(false);
+            clearDraft();
 
             const minutos = cuestionario.tiempoLimiteMinutos || 0;
             if (minutos > 0) {
@@ -921,8 +1005,136 @@ export default function ResolverCuestionario() {
                                 <ShieldAlert size={12} /> Advertencias: {advertencias} / {cuestionario.limiteAdvertencias || 3}
                             </div>
                         )}
+
+                        {/* Indicador de Autoguardado Inteligente en Cabecera */}
+                        {!resultado && (
+                            <div style={{
+                                marginTop: '6px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                backgroundColor: autosaveStatus === 'saving'
+                                    ? '#eff6ff'
+                                    : !isOnline
+                                    ? '#fffbeb'
+                                    : autosaveStatus === 'saved'
+                                    ? '#f0fdf4'
+                                    : '#f8fafc',
+                                color: autosaveStatus === 'saving'
+                                    ? '#2563eb'
+                                    : !isOnline
+                                    ? '#d97706'
+                                    : autosaveStatus === 'saved'
+                                    ? '#16a34a'
+                                    : '#64748b',
+                                border: autosaveStatus === 'saving'
+                                    ? '1px solid #bfdbfe'
+                                    : !isOnline
+                                    ? '1px solid #fde68a'
+                                    : autosaveStatus === 'saved'
+                                    ? '1px solid #bbf7d0'
+                                    : '1px solid #e2e8f0',
+                                padding: '2px 8px',
+                                borderRadius: '12px',
+                                fontSize: '11px',
+                                fontWeight: '700',
+                                transition: 'all 0.25s ease'
+                            }}>
+                                {autosaveStatus === 'saving' ? (
+                                    <>
+                                        <RefreshCw size={11} className="spin-animation" />
+                                        <span>Guardando...</span>
+                                    </>
+                                ) : !isOnline ? (
+                                    <>
+                                        <WifiOff size={11} color="#d97706" />
+                                        <span>Offline (Local)</span>
+                                    </>
+                                ) : autosaveStatus === 'saved' ? (
+                                    <>
+                                        <CloudCheck size={12} color="#16a34a" />
+                                        <span>Guardado {autosaveLastSaved ? `(${autosaveLastSaved})` : 'automático'}</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Cloud size={11} color="#64748b" />
+                                        <span>Autoguardado activo</span>
+                                    </>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
+
+                {/* BANNER DE BORRADOR RECUPERADO AUTOMÁTICAMENTE */}
+                {borradorRecuperado && !resultado && (
+                    <div style={{
+                        backgroundColor: '#eff6ff',
+                        border: '1px solid #bfdbfe',
+                        borderRadius: '12px',
+                        padding: '12px 16px',
+                        marginBottom: '20px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: '12px',
+                        boxShadow: '0 2px 8px rgba(37, 99, 235, 0.08)'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <Sparkles size={18} color="#2563eb" style={{ flexShrink: 0 }} />
+                            <div>
+                                <strong style={{ fontSize: '13px', color: '#1e40af', display: 'block' }}>
+                                    ¡Respuestas recuperadas con éxito!
+                                </strong>
+                                <span style={{ fontSize: '12px', color: '#3b82f6' }}>
+                                    Hemos restaurado tu progreso previo guardado de forma segura en este dispositivo.
+                                </span>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setBorradorRecuperado(false)}
+                            title="Cerrar aviso"
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                color: '#64748b',
+                                padding: '4px',
+                                display: 'flex',
+                                alignItems: 'center'
+                            }}
+                        >
+                            <X size={16} />
+                        </button>
+                    </div>
+                )}
+
+                {/* BANNER DE AVISO SIN CONEXIÓN A INTERNET */}
+                {!isOnline && !resultado && (
+                    <div style={{
+                        backgroundColor: '#fffbeb',
+                        border: '1px solid #fde68a',
+                        borderRadius: '12px',
+                        padding: '12px 16px',
+                        marginBottom: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        color: '#b45309',
+                        boxShadow: '0 2px 8px rgba(217, 119, 6, 0.08)'
+                    }}>
+                        <WifiOff size={18} color="#d97706" style={{ flexShrink: 0 }} />
+                        <div>
+                            <strong style={{ fontSize: '13px', color: '#92400e', display: 'block' }}>
+                                Modo sin conexión
+                            </strong>
+                            <span style={{ fontSize: '12px', color: '#b45309' }}>
+                                Tus respuestas se están guardando localmente en este equipo. No cierres la ventana antes de recuperar la señal para enviarlas.
+                            </span>
+                        </div>
+                    </div>
+                )}
 
                 {resultado ? (
                     <div style={{ textAlign: 'center', padding: '40px 20px' }}>
@@ -1561,13 +1773,51 @@ export default function ResolverCuestionario() {
                                     padding: '12px 16px',
                                     marginBottom: '4px'
                                 }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                        <span style={{ fontSize: '12px', fontWeight: '700', color: '#475569' }}>
-                                            Progreso de Respuestas: {respondidasCount} de {totalP} completadas
-                                        </span>
-                                        <span style={{ fontSize: '12px', fontWeight: '800', color: pct === 100 ? '#059669' : '#2563eb' }}>
-                                            {pct}%
-                                        </span>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span style={{ fontSize: '12px', fontWeight: '700', color: '#475569' }}>
+                                                Progreso: {respondidasCount} de {totalP} respondidas
+                                            </span>
+                                            <span style={{ fontSize: '12px', fontWeight: '800', color: pct === 100 ? '#059669' : '#2563eb' }}>
+                                                ({pct}%)
+                                            </span>
+                                        </div>
+                                        <div style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '5px',
+                                            fontSize: '11px',
+                                            fontWeight: '600',
+                                            color: autosaveStatus === 'saving'
+                                                ? '#2563eb'
+                                                : !isOnline
+                                                ? '#d97706'
+                                                : autosaveStatus === 'saved'
+                                                ? '#16a34a'
+                                                : '#64748b'
+                                        }}>
+                                            {autosaveStatus === 'saving' ? (
+                                                <>
+                                                    <RefreshCw size={12} className="spin-animation" />
+                                                    <span>Guardando respuestas...</span>
+                                                </>
+                                            ) : !isOnline ? (
+                                                <>
+                                                    <WifiOff size={12} color="#d97706" />
+                                                    <span>Sin conexión (Guardado en equipo)</span>
+                                                </>
+                                            ) : autosaveStatus === 'saved' ? (
+                                                <>
+                                                    <CloudCheck size={13} color="#16a34a" />
+                                                    <span>{autosaveLastSaved ? `Autoguardado (${autosaveLastSaved})` : 'Autoguardado al día'}</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Cloud size={12} color="#64748b" />
+                                                    <span>Autoguardado inteligente</span>
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
                                     <div style={{ width: '100%', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
                                         <div style={{
