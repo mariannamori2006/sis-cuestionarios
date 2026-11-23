@@ -362,9 +362,6 @@ export default function BancoPreguntasView() {
                             <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
                                 Banco Centralizado de Preguntas
                             </h1>
-                            <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0', fontWeight: '500' }}>
-                                Repositorio para catalogar, almacenar y reutilizar preguntas por materia y nivel de dificultad.
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -389,49 +386,6 @@ export default function BancoPreguntasView() {
                 >
                     <Plus size={18} /> Nueva Pregunta en el Banco
                 </button>
-            </div>
-
-            {/* TARJETAS RESUMEN */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '18px', marginBottom: '26px' }}>
-                <div className="interactive-card" style={{ background: '#ffffff', borderRadius: '18px', padding: '20px 22px', border: '1px solid #e2e8f0', borderTop: '4px solid #2563eb', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ background: '#eff6ff', color: '#2563eb', padding: '10px', borderRadius: '12px' }}>
-                        <Layers size={22} />
-                    </div>
-                    <div>
-                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Total en Banco</div>
-                        <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.5px' }}>{preguntas.length}</div>
-                    </div>
-                </div>
-
-                <div className="interactive-card" style={{ background: '#ffffff', borderRadius: '18px', padding: '20px 22px', border: '1px solid #e2e8f0', borderTop: '4px solid #10b981', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ background: '#ecfdf5', color: '#059669', padding: '10px', borderRadius: '12px' }}>
-                        <CheckCircle2 size={22} />
-                    </div>
-                    <div>
-                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Nivel Fácil</div>
-                        <div style={{ fontSize: '28px', fontWeight: '800', color: '#059669', letterSpacing: '-0.5px' }}>{totalFaciles}</div>
-                    </div>
-                </div>
-
-                <div className="interactive-card" style={{ background: '#ffffff', borderRadius: '18px', padding: '20px 22px', border: '1px solid #e2e8f0', borderTop: '4px solid #f59e0b', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ background: '#fffbeb', color: '#d97706', padding: '10px', borderRadius: '12px' }}>
-                        <Sparkles size={22} />
-                    </div>
-                    <div>
-                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Nivel Medio</div>
-                        <div style={{ fontSize: '28px', fontWeight: '800', color: '#d97706', letterSpacing: '-0.5px' }}>{totalMedias}</div>
-                    </div>
-                </div>
-
-                <div className="interactive-card" style={{ background: '#ffffff', borderRadius: '18px', padding: '20px 22px', border: '1px solid #e2e8f0', borderTop: '4px solid #f43f5e', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ background: '#fff1f2', color: '#e11d48', padding: '10px', borderRadius: '12px' }}>
-                        <Award size={22} />
-                    </div>
-                    <div>
-                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Nivel Difícil</div>
-                        <div style={{ fontSize: '28px', fontWeight: '800', color: '#e11d48', letterSpacing: '-0.5px' }}>{totalDificiles}</div>
-                    </div>
-                </div>
             </div>
 
             {/* FILTROS Y BÚSQUEDA */}
@@ -529,6 +483,49 @@ export default function BancoPreguntasView() {
                         Filtrar
                     </button>
                 </form>
+            </div>
+
+            {/* TARJETAS RESUMEN */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '18px', marginBottom: '26px' }}>
+                <div className="interactive-card" style={{ background: '#ffffff', borderRadius: '18px', padding: '20px 22px', border: '1px solid #e2e8f0', borderTop: '4px solid #2563eb', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ background: '#eff6ff', color: '#2563eb', padding: '10px', borderRadius: '12px' }}>
+                        <Layers size={22} />
+                    </div>
+                    <div>
+                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Total en Banco</div>
+                        <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.5px' }}>{preguntas.length}</div>
+                    </div>
+                </div>
+
+                <div className="interactive-card" style={{ background: '#ffffff', borderRadius: '18px', padding: '20px 22px', border: '1px solid #e2e8f0', borderTop: '4px solid #10b981', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ background: '#ecfdf5', color: '#059669', padding: '10px', borderRadius: '12px' }}>
+                        <CheckCircle2 size={22} />
+                    </div>
+                    <div>
+                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Nivel Fácil</div>
+                        <div style={{ fontSize: '28px', fontWeight: '800', color: '#059669', letterSpacing: '-0.5px' }}>{totalFaciles}</div>
+                    </div>
+                </div>
+
+                <div className="interactive-card" style={{ background: '#ffffff', borderRadius: '18px', padding: '20px 22px', border: '1px solid #e2e8f0', borderTop: '4px solid #f59e0b', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ background: '#fffbeb', color: '#d97706', padding: '10px', borderRadius: '12px' }}>
+                        <Sparkles size={22} />
+                    </div>
+                    <div>
+                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Nivel Medio</div>
+                        <div style={{ fontSize: '28px', fontWeight: '800', color: '#d97706', letterSpacing: '-0.5px' }}>{totalMedias}</div>
+                    </div>
+                </div>
+
+                <div className="interactive-card" style={{ background: '#ffffff', borderRadius: '18px', padding: '20px 22px', border: '1px solid #e2e8f0', borderTop: '4px solid #f43f5e', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ background: '#fff1f2', color: '#e11d48', padding: '10px', borderRadius: '12px' }}>
+                        <Award size={22} />
+                    </div>
+                    <div>
+                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Nivel Difícil</div>
+                        <div style={{ fontSize: '28px', fontWeight: '800', color: '#e11d48', letterSpacing: '-0.5px' }}>{totalDificiles}</div>
+                    </div>
+                </div>
             </div>
 
             {/* LISTADO DE PREGUNTAS */}
@@ -725,7 +722,7 @@ export default function BancoPreguntasView() {
 
             {/* MODAL CREAR / EDITAR PREGUNTA */}
             {modalAbierto && (
-                <div 
+                <div
                     onClick={() => setModalAbierto(false)}
                     style={{
                         position: 'fixed',
@@ -742,7 +739,7 @@ export default function BancoPreguntasView() {
                         padding: '20px'
                     }}
                 >
-                    <div 
+                    <div
                         onClick={(e) => e.stopPropagation()}
                         style={{
                             backgroundColor: '#ffffff',

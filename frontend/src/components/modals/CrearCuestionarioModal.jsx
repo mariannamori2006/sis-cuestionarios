@@ -3,7 +3,7 @@ import { crearCuestionario, actualizarCuestionario } from '../../services/cuesti
 import { descargarPlantillaExcel, procesarArchivoPreguntas } from '../../services/excelService';
 import { obtenerPreguntasBanco, crearPreguntaBanco } from '../../services/bancoPreguntaService';
 import AlertaModal from './AlertaModal';
-import { X, UploadCloud, Download, Plus, Trash2, CheckCircle2, Type, CheckSquare, Shuffle, AlertCircle, Image as ImageIcon, Link2, ShieldAlert, Calendar, RotateCcw, Lightbulb, Users, Sliders, ChevronDown, Award, BookOpen, Sparkles, Check, Search, Layers, Clock } from 'lucide-react';
+import { X, UploadCloud, Download, Plus, Trash2, CheckCircle2, Type, CheckSquare, Shuffle, AlertCircle, Image as ImageIcon, Link2, ShieldAlert, Calendar, RotateCcw, Lightbulb, Users, ChevronDown, Award, BookOpen, Sparkles, Check, Search, Layers, Clock } from 'lucide-react';
 
 const ToggleSwitch = ({ checked, onChange, activeColor = '#2563eb' }) => (
     <div
@@ -64,7 +64,13 @@ const formatDateTimeForInput = (dateVal) => {
     }
 };
 
-export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionarioCreado, cuestionarioAEditar = null }) {
+export default function CrearCuestionarioModal({
+    isOpen,
+    onClose,
+    onCuestionarioCreado,
+    cuestionarioAEditar = null,
+    onIrAConfiguracion = null
+}) {
     const [tabActiva, setTabActiva] = useState('manual'); // 'manual' o 'importar'
 
     // Campos del cuestionario
@@ -255,21 +261,22 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                 ]);
             }
         } else {
-            // Valores limpios por defecto para nuevo cuestionario
+            // Cargar preferencias predeterminadas configuradas por el profesor en Configuración
+            const defaultPrefs = JSON.parse(localStorage.getItem('configuracion_examenes_default') || localStorage.getItem('preferencias_profesor') || '{}');
             setTitulo('');
             setMateria('Matemáticas');
             setDescripcion('');
-            setTiempoLimiteMinutos(0);
-            setOrdenAleatorio(false);
-            setModoSeguro(false);
-            setLimiteAdvertencias(3);
+            setTiempoLimiteMinutos(defaultPrefs.tiempoLimiteMinutos || 0);
+            setOrdenAleatorio(defaultPrefs.ordenAleatorio ?? false);
+            setModoSeguro(defaultPrefs.modoSeguro ?? false);
+            setLimiteAdvertencias(defaultPrefs.limiteAdvertencias || 3);
             setProgramarFechas(false);
             setFechaInicio('');
             setFechaFin('');
-            setLimiteIntentos(1);
-            setTipoCalificacionIntentos('MEJOR_NOTA');
-            setMostrarRetroalimentacion(true);
-            setGruposPermitidos('');
+            setLimiteIntentos(defaultPrefs.limiteIntentos ?? (defaultPrefs.permitirReintentos ? 2 : 1));
+            setTipoCalificacionIntentos(defaultPrefs.tipoCalificacionIntentos || 'MEJOR_NOTA');
+            setMostrarRetroalimentacion(defaultPrefs.mostrarRetroalimentacion ?? (defaultPrefs.mostrarCalificacion ?? true));
+            setGruposPermitidos(defaultPrefs.gruposPermitidos || '');
             setExpandirConfiguracion(false);
             setResumenImportacion(null);
             setPreguntasImportadasPendientes([]);
@@ -781,7 +788,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
     const esFormularioValido = titulo.trim().length > 0;
 
     return (
-        <div 
+        <div
             onClick={onClose}
             style={{
                 position: 'fixed',
@@ -799,7 +806,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                 backdropFilter: 'blur(6px)'
             }}
         >
-            <div 
+            <div
                 onClick={(e) => e.stopPropagation()}
                 className="animate-scale-up"
                 style={{
@@ -817,95 +824,82 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
             >
 
                 {/* ENCABEZADO DEL MODAL */}
-                <div style={{ backgroundColor: '#0f172a', color: '#ffffff', padding: '22px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-                            <h2 style={{ margin: 0, fontSize: '19px', fontWeight: '800', letterSpacing: '-0.02em', color: '#ffffff' }}>
-                                {esModoEdicion ? 'Editar cuestionario' : 'Nuevo cuestionario'}
-                            </h2>
-                            <span style={{
-                                fontSize: '11px',
-                                fontWeight: '700',
-                                padding: '2px 8px',
-                                borderRadius: '6px',
-                                backgroundColor: esModoEdicion ? 'rgba(59, 130, 246, 0.2)' : 'rgba(16, 185, 129, 0.2)',
-                                color: esModoEdicion ? '#93c5fd' : '#6ee7b7',
-                                border: `1px solid ${esModoEdicion ? 'rgba(59, 130, 246, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`
-                            }}>
-                                {esModoEdicion ? 'Modo edición' : 'Borrador'}
-                            </span>
-                        </div>
-                        <span style={{ fontSize: '13px', color: '#94a3b8' }}>
-                            {esModoEdicion
-                                ? 'Modifica el contenido, preguntas y parámetros de seguridad de tu examen'
-                                : 'Diseña y programa tu evaluación académica con parámetros personalizados'}
-                        </span>
+                <div style={{ backgroundColor: '#0f172a', color: '#ffffff', padding: '18px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <h2 style={{ margin: 0, fontSize: '19px', fontWeight: '800', letterSpacing: '-0.02em', color: '#ffffff' }}>
+                            {esModoEdicion ? 'Editar cuestionario' : 'Nuevo cuestionario'}
+                        </h2>
                     </div>
-                    <button
-                        onClick={onClose}
-                        title="Cerrar ventana"
-                        type="button"
-                        style={{
-                            background: 'rgba(255, 255, 255, 0.08)',
-                            border: 'none',
-                            color: '#cbd5e1',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '8px',
-                            borderRadius: '10px',
-                            transition: 'all 0.15s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.18)';
-                            e.currentTarget.style.color = '#ffffff';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-                            e.currentTarget.style.color = '#cbd5e1';
-                        }}
-                    >
-                        <X size={18} />
-                    </button>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <button
+                            onClick={onClose}
+                            title="Cerrar ventana"
+                            type="button"
+                            style={{
+                                background: 'rgba(255, 255, 255, 0.08)',
+                                border: 'none',
+                                color: '#cbd5e1',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '8px',
+                                borderRadius: '10px',
+                                transition: 'all 0.15s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.18)';
+                                e.currentTarget.style.color = '#ffffff';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                                e.currentTarget.style.color = '#cbd5e1';
+                            }}
+                        >
+                            <X size={18} />
+                        </button>
+                    </div>
                 </div>
 
                 {/* PESTAÑAS (Creación manual / Importar archivo) */}
                 <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', padding: '0 28px', backgroundColor: '#f8fafc' }}>
-                    <button
-                        type="button"
-                        onClick={() => setTabActiva('manual')}
-                        style={{
-                            padding: '13px 18px',
-                            background: 'transparent',
-                            border: 'none',
-                            borderBottom: tabActiva === 'manual' ? '2.5px solid #2563eb' : '2.5px solid transparent',
-                            fontWeight: tabActiva === 'manual' ? '700' : '600',
-                            fontSize: '13.5px',
-                            color: tabActiva === 'manual' ? '#1d4ed8' : '#64748b',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease'
-                        }}
-                    >
-                        Creación manual
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setTabActiva('importar')}
-                        style={{
-                            padding: '13px 18px',
-                            background: 'transparent',
-                            border: 'none',
-                            borderBottom: tabActiva === 'importar' ? '2.5px solid #2563eb' : '2.5px solid transparent',
-                            fontWeight: tabActiva === 'importar' ? '700' : '600',
-                            fontSize: '13.5px',
-                            color: tabActiva === 'importar' ? '#1d4ed8' : '#64748b',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease'
-                        }}
-                    >
-                        Importar archivo Excel / CSV
-                    </button>
+                    <div style={{ display: 'flex' }}>
+                        <button
+                            type="button"
+                            onClick={() => setTabActiva('manual')}
+                            style={{
+                                padding: '13px 18px',
+                                background: 'transparent',
+                                border: 'none',
+                                borderBottom: tabActiva === 'manual' ? '2.5px solid #2563eb' : '2.5px solid transparent',
+                                fontWeight: tabActiva === 'manual' ? '700' : '600',
+                                fontSize: '13.5px',
+                                color: tabActiva === 'manual' ? '#1d4ed8' : '#64748b',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease'
+                            }}
+                        >
+                            Creación manual
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setTabActiva('importar')}
+                            style={{
+                                padding: '13px 18px',
+                                background: 'transparent',
+                                border: 'none',
+                                borderBottom: tabActiva === 'importar' ? '2.5px solid #2563eb' : '2.5px solid transparent',
+                                fontWeight: tabActiva === 'importar' ? '700' : '600',
+                                fontSize: '13.5px',
+                                color: tabActiva === 'importar' ? '#1d4ed8' : '#64748b',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease'
+                            }}
+                        >
+                            Importar archivo Excel / CSV
+                        </button>
+                    </div>
                 </div>
 
                 {error && (
@@ -942,7 +936,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                         type="text"
                                         value={titulo}
                                         onChange={(e) => setTitulo(e.target.value)}
-                                        placeholder="Ej: Álgebra Lineal — Evaluación de Unidad 3"
+                                        placeholder="Nuevo cuestionario"
                                         required
                                         style={{
                                             width: '100%',
@@ -970,15 +964,15 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                     />
                                 </div>
 
-                                {/* DESCRIPCIÓN E INSTRUCCIONES (POSICIONADA INMEDIATAMENTE DESPUÉS DEL TÍTULO) */}
+                                {/* DESCRIPCIÓN */}
                                 <div>
                                     <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#0f172a', marginBottom: '8px' }}>
-                                        Descripción o instrucciones para el alumno
+                                        Descripción (Opcional)
                                     </label>
                                     <textarea
                                         value={descripcion}
                                         onChange={(e) => setDescripcion(e.target.value)}
-                                        placeholder="Indicaciones para el estudiante (ej: Lee atentamente cada enunciado antes de contestar. Cada respuesta correcta sumará puntos al puntaje final)..."
+                                        placeholder=""
                                         rows={2}
                                         style={{
                                             width: '100%',
@@ -1076,521 +1070,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                 </div>
                             </div>
 
-                            {/* SECCIÓN DESPLEGABLE: PARÁMETROS Y REGLAS DE EVALUACIÓN (DISEÑO SAAS NEUTRO Y EQUILIBRADO) */}
-                            <div style={{
-                                backgroundColor: '#ffffff',
-                                border: '1px solid #e2e8f0',
-                                borderRadius: '14px',
-                                overflow: 'hidden',
-                                transition: 'all 0.2s ease',
-                                boxShadow: expandirConfiguracion ? '0 4px 12px rgba(15, 23, 42, 0.04)' : 'none'
-                            }}>
-                                {/* CABECERA INTERACTIVA CLICABLE */}
-                                <div
-                                    onClick={() => setExpandirConfiguracion(!expandirConfiguracion)}
-                                    role="button"
-                                    aria-expanded={expandirConfiguracion}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        padding: '13px 18px',
-                                        cursor: 'pointer',
-                                        userSelect: 'none',
-                                        backgroundColor: expandirConfiguracion ? '#f8fafc' : '#ffffff',
-                                        borderBottom: expandirConfiguracion ? '1px solid #e2e8f0' : 'none',
-                                        transition: 'background-color 0.15s ease'
-                                    }}
-                                >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                        <div style={{
-                                            width: '32px',
-                                            height: '32px',
-                                            borderRadius: '8px',
-                                            backgroundColor: '#f1f5f9',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            border: '1px solid #e2e8f0'
-                                        }}>
-                                            <Sliders size={16} color="#334155" />
-                                        </div>
-                                        <div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <span style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
-                                                    Reglas y Parámetros del Examen
-                                                </span>
-                                                <span style={{
-                                                    fontSize: '11px',
-                                                    fontWeight: '600',
-                                                    padding: '2px 8px',
-                                                    borderRadius: '10px',
-                                                    backgroundColor: (ordenAleatorio || modoSeguro || programarFechas || limiteIntentos !== 1 || (gruposPermitidos && gruposPermitidos.trim())) ? '#eff6ff' : '#f1f5f9',
-                                                    color: (ordenAleatorio || modoSeguro || programarFechas || limiteIntentos !== 1 || (gruposPermitidos && gruposPermitidos.trim())) ? '#1d4ed8' : '#64748b',
-                                                    border: '1px solid',
-                                                    borderColor: (ordenAleatorio || modoSeguro || programarFechas || limiteIntentos !== 1 || (gruposPermitidos && gruposPermitidos.trim())) ? '#bfdbfe' : '#e2e8f0'
-                                                }}>
-                                                    {[ordenAleatorio, modoSeguro, programarFechas, limiteIntentos !== 1, Boolean(gruposPermitidos && gruposPermitidos.trim())].filter(Boolean).length > 0
-                                                        ? `${[ordenAleatorio, modoSeguro, programarFechas, limiteIntentos !== 1, Boolean(gruposPermitidos && gruposPermitidos.trim())].filter(Boolean).length} personalizada(s)`
-                                                        : 'Predeterminadas'}
-                                                </span>
-                                            </div>
-                                            <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
-                                                {expandirConfiguracion
-                                                    ? 'Haz clic para contraer las configuraciones adicionales'
-                                                    : 'Aleatorio, Modo Seguro Anti-Copia, Intentos, Ventana de Fechas y Grupos'}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <span style={{ fontSize: '12px', fontWeight: '600', color: '#475569' }}>
-                                            {expandirConfiguracion ? 'Contraer' : 'Configurar'}
-                                        </span>
-                                        <div style={{
-                                            transform: expandirConfiguracion ? 'rotate(180deg)' : 'rotate(0deg)',
-                                            transition: 'transform 0.2s ease',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center'
-                                        }}>
-                                            <ChevronDown size={16} color="#475569" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* CONTENIDO DEL DESPLEGABLE CON DISEÑO PROFESIONAL Y SUTIL */}
-                                {expandirConfiguracion && (
-                                    <div style={{ padding: '16px', backgroundColor: '#fafafa', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                        <div style={{
-                                            display: 'grid',
-                                            gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))',
-                                            gap: '12px'
-                                        }}>
-                                            {/* 1. PREGUNTAS EN ORDEN ALEATORIO */}
-                                            <div
-                                                onClick={() => setOrdenAleatorio(!ordenAleatorio)}
-                                                style={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'space-between',
-                                                    padding: '12px 14px',
-                                                    backgroundColor: '#ffffff',
-                                                    border: ordenAleatorio ? '1.5px solid #93c5fd' : '1px solid #e2e8f0',
-                                                    borderRadius: '10px',
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.15s ease',
-                                                    boxSizing: 'border-box'
-                                                }}
-                                            >
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1, paddingRight: '8px' }}>
-                                                    <div style={{
-                                                        width: '32px',
-                                                        height: '32px',
-                                                        borderRadius: '8px',
-                                                        backgroundColor: ordenAleatorio ? '#eff6ff' : '#f1f5f9',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        flexShrink: 0
-                                                    }}>
-                                                        <Shuffle size={16} color={ordenAleatorio ? '#2563eb' : '#64748b'} />
-                                                    </div>
-                                                    <div style={{ minWidth: 0 }}>
-                                                        <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
-                                                            Preguntas aleatorias
-                                                        </div>
-                                                        <div style={{ fontSize: '11px', color: '#64748b' }}>
-                                                            Orden distinto para cada alumno
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <ToggleSwitch
-                                                    checked={ordenAleatorio}
-                                                    onChange={setOrdenAleatorio}
-                                                    activeColor="#2563eb"
-                                                />
-                                            </div>
-
-                                            {/* 2. RETROALIMENTACIÓN PEDAGÓGICA */}
-                                            <div
-                                                onClick={() => setMostrarRetroalimentacion(!mostrarRetroalimentacion)}
-                                                style={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'space-between',
-                                                    padding: '12px 14px',
-                                                    backgroundColor: '#ffffff',
-                                                    border: mostrarRetroalimentacion ? '1.5px solid #93c5fd' : '1px solid #e2e8f0',
-                                                    borderRadius: '10px',
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.15s ease',
-                                                    boxSizing: 'border-box'
-                                                }}
-                                            >
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1, paddingRight: '8px' }}>
-                                                    <div style={{
-                                                        width: '32px',
-                                                        height: '32px',
-                                                        borderRadius: '8px',
-                                                        backgroundColor: mostrarRetroalimentacion ? '#eff6ff' : '#f1f5f9',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        flexShrink: 0
-                                                    }}>
-                                                        <Lightbulb size={16} color={mostrarRetroalimentacion ? '#2563eb' : '#64748b'} />
-                                                    </div>
-                                                    <div style={{ minWidth: 0 }}>
-                                                        <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
-                                                            Retroalimentación
-                                                        </div>
-                                                        <div style={{ fontSize: '11px', color: '#64748b' }}>
-                                                            Muestra explicaciones al finalizar
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <ToggleSwitch
-                                                    checked={mostrarRetroalimentacion}
-                                                    onChange={setMostrarRetroalimentacion}
-                                                    activeColor="#2563eb"
-                                                />
-                                            </div>
-
-                                            {/* 3. MODO SEGURO / ANTI-COPIA */}
-                                            <div
-                                                onClick={() => setModoSeguro(!modoSeguro)}
-                                                style={{
-                                                    backgroundColor: '#ffffff',
-                                                    border: modoSeguro ? '1.5px solid #93c5fd' : '1px solid #e2e8f0',
-                                                    borderRadius: '10px',
-                                                    padding: '12px 14px',
-                                                    transition: 'all 0.15s ease',
-                                                    boxSizing: 'border-box',
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    justifyContent: 'center'
-                                                }}
-                                            >
-                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1, paddingRight: '8px' }}>
-                                                        <div style={{
-                                                            width: '32px',
-                                                            height: '32px',
-                                                            borderRadius: '8px',
-                                                            backgroundColor: modoSeguro ? '#eff6ff' : '#f1f5f9',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            flexShrink: 0
-                                                        }}>
-                                                            <ShieldAlert size={16} color={modoSeguro ? '#2563eb' : '#64748b'} />
-                                                        </div>
-                                                        <div style={{ minWidth: 0 }}>
-                                                            <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
-                                                                Modo seguro (Anti-copia)
-                                                            </div>
-                                                            <div style={{ fontSize: '11px', color: '#64748b' }}>
-                                                                Supervisa cambio de pestaña
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <ToggleSwitch
-                                                        checked={modoSeguro}
-                                                        onChange={setModoSeguro}
-                                                        activeColor="#2563eb"
-                                                    />
-                                                </div>
-
-                                                {modoSeguro && (
-                                                    <div
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        style={{
-                                                            marginTop: '10px',
-                                                            paddingTop: '8px',
-                                                            borderTop: '1px solid #e2e8f0',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'space-between',
-                                                            gap: '8px'
-                                                        }}
-                                                    >
-                                                        <span style={{ fontSize: '11px', fontWeight: '600', color: '#475569' }}>
-                                                            Tolerancia de avisos:
-                                                        </span>
-                                                        <select
-                                                            value={limiteAdvertencias}
-                                                            onChange={(e) => setLimiteAdvertencias(Number(e.target.value))}
-                                                            style={{
-                                                                padding: '4px 8px',
-                                                                borderRadius: '6px',
-                                                                border: '1px solid #cbd5e1',
-                                                                fontSize: '11px',
-                                                                fontWeight: '600',
-                                                                backgroundColor: '#f8fafc',
-                                                                color: '#0f172a',
-                                                                outline: 'none',
-                                                                cursor: 'pointer'
-                                                            }}
-                                                        >
-                                                            <option value={1}>1 advertencia (Estricto)</option>
-                                                            <option value={2}>2 advertencias</option>
-                                                            <option value={3}>3 advertencias (Recomendado)</option>
-                                                            <option value={5}>5 advertencias (Flexible)</option>
-                                                        </select>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* 4. LÍMITE DE INTENTOS */}
-                                            <div style={{
-                                                backgroundColor: '#ffffff',
-                                                border: limiteIntentos !== 1 ? '1.5px solid #93c5fd' : '1px solid #e2e8f0',
-                                                borderRadius: '10px',
-                                                padding: '12px 14px',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                justifyContent: 'center',
-                                                gap: '8px',
-                                                boxSizing: 'border-box'
-                                            }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-                                                        <div style={{
-                                                            width: '32px',
-                                                            height: '32px',
-                                                            borderRadius: '8px',
-                                                            backgroundColor: '#f1f5f9',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            flexShrink: 0
-                                                        }}>
-                                                            <RotateCcw size={16} color="#64748b" />
-                                                        </div>
-                                                        <div style={{ minWidth: 0 }}>
-                                                            <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
-                                                                Límite de intentos
-                                                            </div>
-                                                            <div style={{ fontSize: '11px', color: '#64748b' }}>
-                                                                Evaluación o práctica
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <select
-                                                        value={limiteIntentos}
-                                                        onChange={(e) => setLimiteIntentos(Number(e.target.value))}
-                                                        style={{
-                                                            padding: '5px 8px',
-                                                            borderRadius: '6px',
-                                                            border: '1px solid #cbd5e1',
-                                                            fontSize: '12px',
-                                                            fontWeight: '600',
-                                                            backgroundColor: '#f8fafc',
-                                                            color: '#1e293b',
-                                                            outline: 'none',
-                                                            cursor: 'pointer',
-                                                            maxWidth: '120px'
-                                                        }}
-                                                    >
-                                                        <option value={1}>1 intento</option>
-                                                        <option value={2}>2 intentos</option>
-                                                        <option value={3}>3 intentos</option>
-                                                        <option value={5}>5 intentos</option>
-                                                        <option value={0}>Ilimitados</option>
-                                                    </select>
-                                                </div>
-
-                                                {limiteIntentos !== 1 && (
-                                                    <div style={{
-                                                        paddingTop: '6px',
-                                                        borderTop: '1px solid #e2e8f0',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'space-between',
-                                                        gap: '8px'
-                                                    }}>
-                                                        <span style={{ fontSize: '11px', fontWeight: '600', color: '#475569' }}>
-                                                            Criterio de nota:
-                                                        </span>
-                                                        <select
-                                                            value={tipoCalificacionIntentos}
-                                                            onChange={(e) => setTipoCalificacionIntentos(e.target.value)}
-                                                            style={{
-                                                                padding: '4px 8px',
-                                                                borderRadius: '6px',
-                                                                border: '1px solid #cbd5e1',
-                                                                fontSize: '11px',
-                                                                fontWeight: '600',
-                                                                backgroundColor: '#fff',
-                                                                color: '#0f172a',
-                                                                outline: 'none',
-                                                                cursor: 'pointer'
-                                                            }}
-                                                        >
-                                                            <option value="MEJOR_NOTA">Nota más alta</option>
-                                                            <option value="ULTIMO_INTENTO">Último intento</option>
-                                                        </select>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* 5. VENTANA DE DISPONIBILIDAD - OCUPA TODA LA FILA */}
-                                            <div style={{
-                                                gridColumn: '1 / -1',
-                                                backgroundColor: '#ffffff',
-                                                border: programarFechas ? '1.5px solid #93c5fd' : '1px solid #e2e8f0',
-                                                borderRadius: '10px',
-                                                padding: '12px 14px',
-                                                transition: 'all 0.15s ease',
-                                                boxSizing: 'border-box'
-                                            }}>
-                                                <div
-                                                    onClick={() => setProgramarFechas(!programarFechas)}
-                                                    style={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'space-between',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                >
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                        <div style={{
-                                                            width: '32px',
-                                                            height: '32px',
-                                                            borderRadius: '8px',
-                                                            backgroundColor: programarFechas ? '#eff6ff' : '#f1f5f9',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            flexShrink: 0
-                                                        }}>
-                                                            <Calendar size={16} color={programarFechas ? '#2563eb' : '#64748b'} />
-                                                        </div>
-                                                        <div>
-                                                            <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
-                                                                Programar ventana de disponibilidad
-                                                            </div>
-                                                            <div style={{ fontSize: '11px', color: '#64748b' }}>
-                                                                Apertura y cierre automático según fecha y hora
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <ToggleSwitch
-                                                        checked={programarFechas}
-                                                        onChange={setProgramarFechas}
-                                                        activeColor="#2563eb"
-                                                    />
-                                                </div>
-
-                                                {programarFechas && (
-                                                    <div style={{
-                                                        marginTop: '12px',
-                                                        paddingTop: '10px',
-                                                        borderTop: '1px solid #e2e8f0',
-                                                        display: 'grid',
-                                                        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                                                        gap: '12px'
-                                                    }}>
-                                                        <div>
-                                                            <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#334155', marginBottom: '4px' }}>
-                                                                Fecha y hora de inicio:
-                                                            </label>
-                                                            <input
-                                                                type="datetime-local"
-                                                                value={fechaInicio}
-                                                                onChange={(e) => setFechaInicio(e.target.value)}
-                                                                style={{
-                                                                    width: '100%',
-                                                                    padding: '8px 10px',
-                                                                    borderRadius: '6px',
-                                                                    border: '1px solid #cbd5e1',
-                                                                    backgroundColor: '#fff',
-                                                                    fontSize: '12px',
-                                                                    outline: 'none',
-                                                                    boxSizing: 'border-box'
-                                                                }}
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#334155', marginBottom: '4px' }}>
-                                                                Fecha y hora de cierre:
-                                                            </label>
-                                                            <input
-                                                                type="datetime-local"
-                                                                value={fechaFin}
-                                                                onChange={(e) => setFechaFin(e.target.value)}
-                                                                style={{
-                                                                    width: '100%',
-                                                                    padding: '8px 10px',
-                                                                    borderRadius: '6px',
-                                                                    border: '1px solid #cbd5e1',
-                                                                    backgroundColor: '#fff',
-                                                                    fontSize: '12px',
-                                                                    outline: 'none',
-                                                                    boxSizing: 'border-box'
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* 6. GRUPOS / SECCIONES ACADÉMICAS */}
-                                            <div style={{
-                                                gridColumn: '1 / -1',
-                                                backgroundColor: '#ffffff',
-                                                border: '1px solid #e2e8f0',
-                                                borderRadius: '10px',
-                                                padding: '12px 14px',
-                                                boxSizing: 'border-box'
-                                            }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                                                    <div style={{
-                                                        width: '32px',
-                                                        height: '32px',
-                                                        borderRadius: '8px',
-                                                        backgroundColor: '#f1f5f9',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        flexShrink: 0
-                                                    }}>
-                                                        <Users size={16} color="#64748b" />
-                                                    </div>
-                                                    <div>
-                                                        <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
-                                                            Grupos o secciones permitidas (Opcional)
-                                                        </div>
-                                                        <div style={{ fontSize: '11px', color: '#64748b' }}>
-                                                            Separa por comas las secciones para segmentar las notas (ej: 5to A, 5to B, Aula 102)
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <input
-                                                    type="text"
-                                                    value={gruposPermitidos}
-                                                    onChange={(e) => setGruposPermitidos(e.target.value)}
-                                                    placeholder="Ej: 5to A, 5to B, Sección 1"
-                                                    style={{
-                                                        width: '100%',
-                                                        padding: '8px 12px',
-                                                        borderRadius: '6px',
-                                                        border: '1px solid #cbd5e1',
-                                                        backgroundColor: '#fff',
-                                                        fontSize: '13px',
-                                                        outline: 'none',
-                                                        boxSizing: 'border-box'
-                                                    }}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* PREGUNTAS */}
+                            {/* SECCIÓN DE PREGUNTAS */}
                             <div>
                                 {/* NOTIFICACIÓN DE ÉXITO AL GUARDAR EN EL BANCO */}
                                 {mensajeBancoExito && (
@@ -1611,119 +1091,104 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                     </div>
                                 )}
 
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#0f172a' }}>
-                                        Preguntas del examen ({preguntas.length})
-                                    </div>
-                                    <span style={{ fontSize: '12px', color: '#64748b' }}>
-                                        Formatos: Opción Múltiple, V/F o Respuesta Escrita
-                                    </span>
-                                </div>
-
-                                {/* BARRA DE PUNTOS PONDERADOS Y ACCESO AL BANCO CENTRALIZADO */}
+                                {/* BARRA COMPACTA DE ACCIONES Y PUNTAJE */}
                                 <div style={{
-                                    backgroundColor: '#ffffff',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '14px',
-                                    padding: '14px 18px',
-                                    marginBottom: '16px',
                                     display: 'flex',
                                     justifyContent: 'space-between',
                                     alignItems: 'center',
+                                    marginBottom: '16px',
                                     flexWrap: 'wrap',
-                                    gap: '12px',
-                                    boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)'
+                                    gap: '10px',
+                                    backgroundColor: '#ffffff',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '12px',
+                                    padding: '10px 14px'
                                 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                        <div style={{
-                                            width: '36px',
-                                            height: '36px',
-                                            borderRadius: '10px',
-                                            backgroundColor: sumaPuntosRedondeada === 20.0 ? '#ecfdf5' : '#f8fafc',
-                                            border: `1px solid ${sumaPuntosRedondeada === 20.0 ? '#a7f3d0' : '#e2e8f0'}`,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center'
-                                        }}>
-                                            <Award size={18} color={sumaPuntosRedondeada === 20.0 ? '#10b981' : '#64748b'} />
+                                    {/* Izquierda: Título y Badge de Puntos */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                                        <div style={{ fontSize: '14px', fontWeight: '800', color: '#0f172a' }}>
+                                            Preguntas del examen ({preguntas.length})
                                         </div>
-                                        <div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                                <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a' }}>
-                                                    Puntaje ponderado:
-                                                </span>
-                                                <span style={{
-                                                    fontSize: '13px',
-                                                    fontWeight: '800',
-                                                    color: sumaPuntosRedondeada === 20.0 ? '#15803d' : '#b45309',
-                                                    backgroundColor: sumaPuntosRedondeada === 20.0 ? '#f0fdf4' : '#fffbeb',
-                                                    padding: '2px 8px',
-                                                    borderRadius: '6px',
-                                                    border: `1px solid ${sumaPuntosRedondeada === 20.0 ? '#bbf7d0' : '#fde68a'}`
-                                                }}>
-                                                    {sumaPuntosRedondeada.toFixed(1)} / 20.0 pts
-                                                </span>
-                                                {sumaPuntosRedondeada === 20.0 ? (
-                                                    <span style={{ fontSize: '11px', color: '#16a34a', fontWeight: '600' }}>✓ Balanceado exacto</span>
-                                                ) : (
-                                                    <span style={{ fontSize: '11px', color: '#64748b' }}>
-                                                        (Escala normalizada sobre 20 pts)
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
-                                                Ajusta los puntos de cada pregunta o distribuye los 20 pts automáticamente.
-                                            </div>
+                                        <div
+                                            title={sumaPuntosRedondeada === 20.0 ? "Puntaje balanceado (20 pts)" : "El examen debe totalizar 20 pts"}
+                                            style={{
+                                                fontSize: '12px',
+                                                fontWeight: '700',
+                                                color: sumaPuntosRedondeada === 20.0 ? '#15803d' : '#b45309',
+                                                backgroundColor: sumaPuntosRedondeada === 20.0 ? '#f0fdf4' : '#fffbeb',
+                                                border: `1px solid ${sumaPuntosRedondeada === 20.0 ? '#bbf7d0' : '#fde68a'}`,
+                                                padding: '2px 8px',
+                                                borderRadius: '6px',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '4px'
+                                            }}
+                                        >
+                                            <Award size={13} color={sumaPuntosRedondeada === 20.0 ? '#16a34a' : '#d97706'} />
+                                            {sumaPuntosRedondeada.toFixed(1)} / 20.0 pts
                                         </div>
                                     </div>
 
-                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                    {/* Derecha: Botones compactos */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                                         <button
                                             type="button"
                                             onClick={distribuirPuntosEquitativamente}
                                             style={{
-                                                display: 'flex',
+                                                display: 'inline-flex',
                                                 alignItems: 'center',
-                                                gap: '6px',
-                                                backgroundColor: '#f8fafc',
+                                                gap: '5px',
+                                                backgroundColor: '#ffffff',
                                                 border: '1px solid #cbd5e1',
                                                 borderRadius: '8px',
-                                                padding: '7px 12px',
+                                                padding: '6px 11px',
                                                 fontSize: '12px',
                                                 fontWeight: '600',
                                                 color: '#334155',
                                                 cursor: 'pointer',
                                                 transition: 'all 0.15s ease'
                                             }}
-                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f1f5f9'}
-                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.backgroundColor = '#f8fafc';
+                                                e.currentTarget.style.borderColor = '#94a3b8';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.backgroundColor = '#ffffff';
+                                                e.currentTarget.style.borderColor = '#cbd5e1';
+                                            }}
                                             title="Dividir 20 puntos de manera equilibrada entre todas las preguntas"
                                         >
-                                            <Sparkles size={14} color="#f59e0b" /> Distribuir 20 pts equitativamente
+                                            <Sparkles size={13} color="#f59e0b" /> Distribuir 20 pts
                                         </button>
 
                                         <button
                                             type="button"
                                             onClick={abrirModalBanco}
                                             style={{
-                                                display: 'flex',
+                                                display: 'inline-flex',
                                                 alignItems: 'center',
-                                                gap: '6px',
+                                                gap: '5px',
                                                 backgroundColor: '#eff6ff',
                                                 border: '1px solid #bfdbfe',
                                                 borderRadius: '8px',
-                                                padding: '7px 12px',
+                                                padding: '6px 11px',
                                                 fontSize: '12px',
                                                 fontWeight: '600',
                                                 color: '#1d4ed8',
                                                 cursor: 'pointer',
                                                 transition: 'all 0.15s ease'
                                             }}
-                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#dbeafe'}
-                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#eff6ff'}
-                                            title="Importar preguntas ya guardadas en el Banco Centralizado"
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.backgroundColor = '#dbeafe';
+                                                e.currentTarget.style.borderColor = '#93c5fd';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.backgroundColor = '#eff6ff';
+                                                e.currentTarget.style.borderColor = '#bfdbfe';
+                                            }}
+                                            title="Importar preguntas guardadas en el Banco Centralizado"
                                         >
-                                            <BookOpen size={14} /> Importar del Banco
+                                            <BookOpen size={13} /> Importar del Banco
                                         </button>
                                     </div>
                                 </div>
@@ -2242,14 +1707,13 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
                                                 <Lightbulb size={14} color="#64748b" />
                                                 <label style={{ fontSize: '12px', fontWeight: '600', color: '#475569' }}>
-                                                    Explicación o retroalimentación formativa (Opcional)
+                                                    Explicación (Opcional)
                                                 </label>
                                             </div>
                                             <textarea
                                                 value={pregunta.explicacion || ''}
                                                 onChange={(e) => handleExplicacionChange(pIndex, e.target.value)}
                                                 rows={2}
-                                                placeholder="Justificación pedagógica o resolución paso a paso que el alumno verá al terminar su evaluación..."
                                                 style={{
                                                     width: '100%',
                                                     padding: '8px 12px',
@@ -2470,7 +1934,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                             </div>
 
                             {/* GUÍA DE COLUMNAS */}
-                            <div style={{ backgroundColor: '#f1f5f9', padding: '16px', borderRadius: '10px', fontSize: '13px', color: '#475569', lineHeight: '1.5' }}>
+                            {/*<div style={{ backgroundColor: '#f1f5f9', padding: '16px', borderRadius: '10px', fontSize: '13px', color: '#475569', lineHeight: '1.5' }}>
                                 <strong style={{ color: '#0f172a' }}>Columnas de la plantilla Excel:</strong>
                                 <ul style={{ margin: '8px 0 0 0', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                     <li><strong>Columna A (Tipo):</strong> <code>multiple</code>, <code>truefalse</code>, o <code>short</code>.</li>
@@ -2479,7 +1943,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                     <li><strong>Columna G (Respuesta correcta):</strong> Letra (A, B, C, D), texto de la opción o "Verdadero"/"Falso".</li>
                                     <li><strong>Columna H (URL Imagen - Opcional):</strong> Enlace web directo (https://...) a foto, gráfico o diagrama ilustrativo.</li>
                                 </ul>
-                            </div>
+                            </div>*/}
                         </div>
                     )}
 
@@ -2524,7 +1988,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
 
             {/* MODAL PARA IMPORTAR PREGUNTAS DESDE EL BANCO CENTRALIZADO */}
             {modalBancoAbierto && (
-                <div 
+                <div
                     onClick={() => setModalBancoAbierto(false)}
                     style={{
                         position: 'fixed',
@@ -2541,7 +2005,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                         padding: '20px'
                     }}
                 >
-                    <div 
+                    <div
                         onClick={(e) => e.stopPropagation()}
                         style={{
                             backgroundColor: '#ffffff',
@@ -2685,7 +2149,7 @@ export default function CrearCuestionarioModal({ isOpen, onClose, onCuestionario
                                                 type="checkbox"
                                                 checked={seleccionada && !yaEnExamen}
                                                 disabled={yaEnExamen}
-                                                onChange={() => {}} // handled by div onClick
+                                                onChange={() => { }} // handled by div onClick
                                                 style={{ marginTop: '3px', width: '18px', height: '18px', cursor: yaEnExamen ? 'not-allowed' : 'pointer', accentColor: '#10b981' }}
                                             />
                                             <div style={{ flex: 1 }}>

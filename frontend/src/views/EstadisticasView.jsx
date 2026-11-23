@@ -328,9 +328,6 @@ export default function EstadisticasView() {
                     <h1 style={{ margin: '0 0 4px 0', fontSize: isMobile ? '22px' : '26px', color: '#0f172a', fontWeight: '800', letterSpacing: '-0.02em' }}>
                         Estadísticas y Rendimiento
                     </h1>
-                    <span style={{ fontSize: '13px', color: '#64748b' }}>
-                        Analítica académica simplificada para toma de decisiones pedagógicas
-                    </span>
                 </div>
 
                 {/* SELECTOR DE PESTAÑAS (SOLO 2 VISTAS CLARAS) */}

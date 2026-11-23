@@ -24,7 +24,8 @@ import {
     Shuffle,
     ShieldAlert,
     Download,
-    RotateCcw
+    RotateCcw,
+    Sliders
 } from 'lucide-react';
 
 const obtenerEstadoDisponibilidadBadge = (c) => {
@@ -75,7 +76,7 @@ const formatearRangoFechas = (c) => {
     return `Cierra: ${formatF(c.fechaFin)}`;
 };
 
-export default function CuestionariosView({ cuestionarios, estadisticas, onRecargarCuestionarios }) {
+export default function CuestionariosView({ cuestionarios, estadisticas, onRecargarCuestionarios, onConfigurarCuestionario }) {
     const { isMobile } = useResponsive();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [cuestionarioAEditar, setCuestionarioAEditar] = useState(null);
@@ -199,9 +200,6 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                     <h2 style={{ margin: '0 0 4px 0', fontSize: isMobile ? '22px' : '26px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em' }}>
                         Mis Cuestionarios
                     </h2>
-                    <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>
-                        Gestión académica y control de evaluaciones
-                    </span>
                 </div>
 
                 <div style={{
@@ -286,7 +284,6 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                     </div>
                     <div>
                         <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em' }}>{cuestionarios.length}</div>
-                        <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>Activos en plataforma</div>
                     </div>
                 </div>
 
@@ -314,7 +311,6 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                         <div style={{ fontSize: '28px', fontWeight: '800', color: '#d97706', letterSpacing: '-0.02em' }}>
                             {totalRespuestasTexto}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>Entregas recibidas</div>
                     </div>
                 </div>
 
@@ -342,7 +338,6 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                         <div style={{ fontSize: '28px', fontWeight: '800', color: '#7c3aed', letterSpacing: '-0.02em' }}>
                             {alumnosUnicosTexto}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>Estudiantes evaluados</div>
                     </div>
                 </div>
 
@@ -370,7 +365,6 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                         <div style={{ fontSize: '28px', fontWeight: '800', color: '#059669', letterSpacing: '-0.02em' }}>
                             {promedioGeneralTexto}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>Escala vigesimal (0-20)</div>
                     </div>
                 </div>
             </div>
@@ -539,125 +533,206 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                                     </div>
                                 </div>
 
-                                {/* Botones de Acción Reorganizados e Intuitivos */}
+                                {/* Botones de Acción Distribuidos Uniformemente */}
                                 <div style={{
                                     borderTop: '1px solid #f1f5f9',
                                     paddingTop: '14px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    gap: '6px'
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(6, 1fr)',
+                                    gap: '6px',
+                                    alignItems: 'center'
                                 }}>
-                                    {/* Acción Principal: Compartir */}
+                                    {/* 1. Compartir */}
                                     <button
                                         onClick={() => setCuestionarioParaCompartir(cuestionario)}
                                         title="Compartir enlace o código QR con los alumnos"
                                         style={{
+                                            width: '100%',
+                                            height: '36px',
                                             backgroundColor: '#ecfdf5',
                                             color: '#059669',
                                             border: '1px solid #a7f3d0',
-                                            borderRadius: '8px',
-                                            padding: '7px 12px',
+                                            borderRadius: '9px',
                                             cursor: 'pointer',
                                             display: 'flex',
                                             alignItems: 'center',
-                                            gap: '5px',
-                                            fontWeight: '700',
-                                            fontSize: '12px',
-                                            transition: 'all 0.2s ease'
+                                            justifyContent: 'center',
+                                            transition: 'all 0.15s ease',
+                                            boxSizing: 'border-box'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#d1fae5';
+                                            e.currentTarget.style.transform = 'translateY(-1px)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#ecfdf5';
+                                            e.currentTarget.style.transform = 'translateY(0)';
                                         }}
                                     >
-                                        <Share2 size={14} /> Compartir
+                                        <Share2 size={15} />
                                     </button>
 
-                                    {/* Acciones Secundarias agrupadas */}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                        {/* Descargar Excel */}
-                                        <button
-                                            onClick={() => handleDescargarExcelDirecto(cuestionario)}
-                                            disabled={descargandoExcelId === cuestionario.id}
-                                            title="Exportar notas a Excel (.xlsx)"
-                                            style={{
-                                                backgroundColor: '#f8fafc',
-                                                border: '1px solid #e2e8f0',
-                                                color: '#047857',
-                                                borderRadius: '8px',
-                                                padding: '7px 10px',
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '4px',
-                                                fontWeight: '600',
-                                                fontSize: '12px',
-                                                opacity: descargandoExcelId === cuestionario.id ? 0.6 : 1,
-                                                transition: 'all 0.2s ease'
-                                            }}
-                                        >
-                                            <Download size={13} /> {descargandoExcelId === cuestionario.id ? '...' : 'Excel'}
-                                        </button>
+                                    {/* 2. Configurar Examen */}
+                                    <button
+                                        onClick={() => onConfigurarCuestionario && onConfigurarCuestionario(cuestionario)}
+                                        title="Configurar reglas, modo seguro y disponibilidad de este examen"
+                                        style={{
+                                            width: '100%',
+                                            height: '36px',
+                                            backgroundColor: '#eff6ff',
+                                            border: '1px solid #bfdbfe',
+                                            color: '#1d4ed8',
+                                            borderRadius: '9px',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            transition: 'all 0.15s ease',
+                                            boxSizing: 'border-box'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#dbeafe';
+                                            e.currentTarget.style.transform = 'translateY(-1px)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#eff6ff';
+                                            e.currentTarget.style.transform = 'translateY(0)';
+                                        }}
+                                    >
+                                        <Sliders size={15} color="#2563eb" />
+                                    </button>
 
-                                        {/* Auditar Resultados */}
-                                        <button
-                                            onClick={() => setCuestionarioParaAuditar(cuestionario)}
-                                            title="Ver respuestas detalladas y auditoría de participantes"
-                                            style={{
-                                                backgroundColor: '#f8fafc',
-                                                border: '1px solid #e2e8f0',
-                                                color: '#334155',
-                                                borderRadius: '8px',
-                                                padding: '7px 10px',
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '4px',
-                                                fontWeight: '600',
-                                                fontSize: '12px',
-                                                transition: 'all 0.2s ease'
-                                            }}
-                                        >
-                                            <ClipboardCheck size={14} color="#6366f1" /> Auditar
-                                        </button>
+                                    {/* 3. Auditar Resultados */}
+                                    <button
+                                        onClick={() => setCuestionarioParaAuditar(cuestionario)}
+                                        title="Ver respuestas detalladas y auditoría de participantes"
+                                        style={{
+                                            width: '100%',
+                                            height: '36px',
+                                            backgroundColor: '#f8fafc',
+                                            border: '1px solid #e2e8f0',
+                                            color: '#4f46e5',
+                                            borderRadius: '9px',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            transition: 'all 0.15s ease',
+                                            boxSizing: 'border-box'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#eef2ff';
+                                            e.currentTarget.style.borderColor = '#c7d2fe';
+                                            e.currentTarget.style.transform = 'translateY(-1px)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#f8fafc';
+                                            e.currentTarget.style.borderColor = '#e2e8f0';
+                                            e.currentTarget.style.transform = 'translateY(0)';
+                                        }}
+                                    >
+                                        <ClipboardCheck size={15} color="#6366f1" />
+                                    </button>
 
-                                        {/* Editar */}
-                                        <button
-                                            onClick={() => handleEditarCuestionario(cuestionario)}
-                                            disabled={cargandoEdicionId === cuestionario.id}
-                                            title="Modificar preguntas y configuración"
-                                            style={{
-                                                backgroundColor: '#f8fafc',
-                                                border: '1px solid #e2e8f0',
-                                                color: '#475569',
-                                                borderRadius: '8px',
-                                                padding: '7px 9px',
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                opacity: cargandoEdicionId === cuestionario.id ? 0.6 : 1,
-                                                transition: 'all 0.2s ease'
-                                            }}
-                                        >
-                                            <Edit3 size={14} />
-                                        </button>
+                                    {/* 4. Descargar Excel */}
+                                    <button
+                                        onClick={() => handleDescargarExcelDirecto(cuestionario)}
+                                        disabled={descargandoExcelId === cuestionario.id}
+                                        title="Exportar notas a Excel (.xlsx)"
+                                        style={{
+                                            width: '100%',
+                                            height: '36px',
+                                            backgroundColor: '#f8fafc',
+                                            border: '1px solid #e2e8f0',
+                                            color: '#15803d',
+                                            borderRadius: '9px',
+                                            cursor: descargandoExcelId === cuestionario.id ? 'not-allowed' : 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            opacity: descargandoExcelId === cuestionario.id ? 0.6 : 1,
+                                            transition: 'all 0.15s ease',
+                                            boxSizing: 'border-box'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#f0fdf4';
+                                            e.currentTarget.style.borderColor = '#bbf7d0';
+                                            e.currentTarget.style.transform = 'translateY(-1px)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#f8fafc';
+                                            e.currentTarget.style.borderColor = '#e2e8f0';
+                                            e.currentTarget.style.transform = 'translateY(0)';
+                                        }}
+                                    >
+                                        <Download size={15} color="#16a34a" />
+                                    </button>
 
-                                        {/* Eliminar */}
-                                        <button
-                                            onClick={() => setCuestionarioParaEliminar(cuestionario)}
-                                            title="Eliminar este cuestionario"
-                                            style={{
-                                                backgroundColor: '#fff1f2',
-                                                border: '1px solid #fecdd3',
-                                                color: '#e11d48',
-                                                borderRadius: '8px',
-                                                padding: '7px 9px',
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                transition: 'all 0.2s ease'
-                                            }}
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
+                                    {/* 5. Modificar preguntas */}
+                                    <button
+                                        onClick={() => handleEditarCuestionario(cuestionario)}
+                                        disabled={cargandoEdicionId === cuestionario.id}
+                                        title="Modificar contenido y preguntas del examen"
+                                        style={{
+                                            width: '100%',
+                                            height: '36px',
+                                            backgroundColor: '#f8fafc',
+                                            border: '1px solid #e2e8f0',
+                                            color: '#475569',
+                                            borderRadius: '9px',
+                                            cursor: cargandoEdicionId === cuestionario.id ? 'not-allowed' : 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            opacity: cargandoEdicionId === cuestionario.id ? 0.6 : 1,
+                                            transition: 'all 0.15s ease',
+                                            boxSizing: 'border-box'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#f1f5f9';
+                                            e.currentTarget.style.borderColor = '#cbd5e1';
+                                            e.currentTarget.style.transform = 'translateY(-1px)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#f8fafc';
+                                            e.currentTarget.style.borderColor = '#e2e8f0';
+                                            e.currentTarget.style.transform = 'translateY(0)';
+                                        }}
+                                    >
+                                        <Edit3 size={15} />
+                                    </button>
+
+                                    {/* 6. Eliminar */}
+                                    <button
+                                        onClick={() => setCuestionarioParaEliminar(cuestionario)}
+                                        title="Eliminar este cuestionario"
+                                        style={{
+                                            width: '100%',
+                                            height: '36px',
+                                            backgroundColor: '#fff1f2',
+                                            border: '1px solid #fecdd3',
+                                            color: '#e11d48',
+                                            borderRadius: '9px',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            transition: 'all 0.15s ease',
+                                            boxSizing: 'border-box'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#ffe4e6';
+                                            e.currentTarget.style.borderColor = '#fda4af';
+                                            e.currentTarget.style.transform = 'translateY(-1px)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#fff1f2';
+                                            e.currentTarget.style.borderColor = '#fecdd3';
+                                            e.currentTarget.style.transform = 'translateY(0)';
+                                        }}
+                                    >
+                                        <Trash2 size={15} />
+                                    </button>
                                 </div>
                             </div>
                         );
@@ -734,6 +809,12 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                 isOpen={isModalOpen}
                 onClose={handleCerrarModal}
                 cuestionarioAEditar={cuestionarioAEditar}
+                onIrAConfiguracion={(cuestionario) => {
+                    handleCerrarModal();
+                    if (onConfigurarCuestionario) {
+                        onConfigurarCuestionario(cuestionario);
+                    }
+                }}
                 onCuestionarioCreado={(resultado) => {
                     if (onRecargarCuestionarios) {
                         onRecargarCuestionarios();

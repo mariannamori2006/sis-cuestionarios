@@ -118,9 +118,15 @@ public class CuestionarioService {
     @org.springframework.transaction.annotation.Transactional
     public Optional<Cuestionario> actualizarCuestionario(UUID id, Cuestionario modificado) {
         return cuestionarioRepository.findById(id).map(existente -> {
-            existente.setTitulo(modificado.getTitulo());
-            existente.setDescripcion(modificado.getDescripcion());
-            existente.setTiempoLimiteMinutos(modificado.getTiempoLimiteMinutos());
+            if (modificado.getTitulo() != null) {
+                existente.setTitulo(modificado.getTitulo());
+            }
+            if (modificado.getDescripcion() != null) {
+                existente.setDescripcion(modificado.getDescripcion());
+            }
+            if (modificado.getTiempoLimiteMinutos() != null) {
+                existente.setTiempoLimiteMinutos(modificado.getTiempoLimiteMinutos());
+            }
             if (modificado.getOrdenAleatorio() != null) {
                 existente.setOrdenAleatorio(modificado.getOrdenAleatorio());
             }

@@ -52,6 +52,7 @@ export default function DashboardComponent() {
         alumnosUnicos: 0
     });
     const [vistaActiva, setVistaActiva] = useState('panel');
+    const [cuestionarioAConfigurarId, setCuestionarioAConfigurarId] = useState(null);
     const [mostrarModalLogout, setMostrarModalLogout] = useState(false);
 
     const cargarDatos = () => {
@@ -150,6 +151,15 @@ export default function DashboardComponent() {
 
     const cambiarVista = (vista) => {
         setVistaActiva(vista);
+        if (vista !== 'configuracion') {
+            setCuestionarioAConfigurarId(null);
+        }
+        if (isMobile) setMenuAbierto(false);
+    };
+
+    const handleConfigurarCuestionario = (cuestionario) => {
+        setCuestionarioAConfigurarId(cuestionario?.id || null);
+        setVistaActiva('configuracion');
         if (isMobile) setMenuAbierto(false);
     };
 
@@ -263,7 +273,7 @@ export default function DashboardComponent() {
                                 transition: 'all 0.2s ease'
                             }}
                         >
-                            <LayoutDashboard size={18} /> <span>Panel principal</span>
+                            <LayoutDashboard size={18} /> <span >Panel principal</span>
                         </button>
                         <button
                             onClick={() => cambiarVista('cuestionarios')}
@@ -378,24 +388,26 @@ export default function DashboardComponent() {
             {/* CONTENIDO PRINCIPAL */}
             <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '18px 14px' : '30px 40px', boxSizing: 'border-box' }}>
 
-                {/* BARRA SUPERIOR GLOBAL PARA ESCRITORIO (NOTIFICACIONES Y ESTADO) */}
-                {!isMobile && (
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                        alignItems: 'center',
-                        marginBottom: '16px',
-                        gap: '12px'
-                    }}>
-                        <NotificationCenter onNavegar={cambiarVista} />
-                    </div>
-                )}
-
                 {/* TÍTULO DINÁMICO SEGÚN LA VISTA ACTIVA */}
                 {vistaActiva === 'panel' && (
-                    <div style={{ marginBottom: '24px' }}>
-                        <h1 style={{ margin: '0 0 4px 0', fontSize: isMobile ? '20px' : '24px', color: '#0f172a' }}>Panel principal</h1>
-                        <span style={{ fontSize: '13px', color: '#64748b' }}>Resumen general</span>
+                    <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'row' }}>
+                            <h2 style={{ margin: '0 0 4px 0', fontSize: isMobile ? '22px' : '26px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em' }}>Panel principal</h2>
+                        </div>
+                        <div>
+                            {/* BARRA SUPERIOR GLOBAL PARA ESCRITORIO (NOTIFICACIONES Y ESTADO) */}
+                            {!isMobile && (
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'flex-end',
+                                    alignItems: 'center',
+                                    marginBottom: '16px',
+                                    gap: '12px'
+                                }}>
+                                    <NotificationCenter onNavegar={cambiarVista} />
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
 
@@ -447,9 +459,6 @@ export default function DashboardComponent() {
                                 <h2 style={{ margin: '0 0 6px 0', fontSize: isMobile ? '22px' : '26px', fontWeight: '800', letterSpacing: '-0.5px' }}>
                                     ¡Hola, {userName}!
                                 </h2>
-                                <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8', maxWidth: '520px', lineHeight: '1.5' }}>
-                                    Supervisa el rendimiento académico de tus estudiantes, gestiona reactivos en el banco y administra evaluaciones con ponderación automática.
-                                </p>
                             </div>
                             <button
                                 onClick={() => cambiarVista('cuestionarios')}
@@ -496,9 +505,6 @@ export default function DashboardComponent() {
                                     <div style={{ fontSize: '30px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.5px', marginBottom: '4px' }}>
                                         {cuestionarios.length}
                                     </div>
-                                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
-                                        Exámenes activos este ciclo
-                                    </div>
                                 </div>
                             </div>
 
@@ -513,9 +519,6 @@ export default function DashboardComponent() {
                                 <div>
                                     <div style={{ fontSize: '30px', fontWeight: '800', color: '#059669', letterSpacing: '-0.5px', marginBottom: '4px' }}>
                                         {estadisticas.totalRespuestas}
-                                    </div>
-                                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
-                                        Intentos calificados
                                     </div>
                                 </div>
                             </div>
@@ -532,9 +535,6 @@ export default function DashboardComponent() {
                                     <div style={{ fontSize: '30px', fontWeight: '800', color: '#7c3aed', letterSpacing: '-0.5px', marginBottom: '4px' }}>
                                         {estadisticas.alumnosUnicos}
                                     </div>
-                                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
-                                        Estudiantes únicos participantes
-                                    </div>
                                 </div>
                             </div>
 
@@ -549,9 +549,6 @@ export default function DashboardComponent() {
                                 <div>
                                     <div style={{ fontSize: '30px', fontWeight: '800', color: '#d97706', letterSpacing: '-0.5px', marginBottom: '4px' }}>
                                         {promedioTexto} <span style={{ fontSize: '16px', fontWeight: '600', color: '#94a3b8' }}>/ 20</span>
-                                    </div>
-                                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
-                                        Escala vigesimal de rendimiento
                                     </div>
                                 </div>
                             </div>
@@ -806,6 +803,7 @@ export default function DashboardComponent() {
                         cuestionarios={cuestionarios}
                         estadisticas={estadisticas}
                         onRecargarCuestionarios={cargarDatos}
+                        onConfigurarCuestionario={handleConfigurarCuestionario}
                     />
                 )}
 
@@ -818,7 +816,12 @@ export default function DashboardComponent() {
                 )}
 
                 {vistaActiva === 'configuracion' && (
-                    <ConfiguracionView onUserUpdated={(u) => setCurrentUser(u)} />
+                    <ConfiguracionView
+                        cuestionarios={cuestionarios}
+                        cuestionarioInicialId={cuestionarioAConfigurarId}
+                        onCuestionarioActualizado={cargarDatos}
+                        onUserUpdated={(u) => setCurrentUser(u)}
+                    />
                 )}
             </div>
 
