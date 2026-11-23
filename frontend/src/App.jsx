@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginComponent from './views/LoginComponent';
+import LoginComponentV2 from './views/LoginComponentV2';
 import DashboardComponent from './views/DashboardComponent';
 import AdminDashboardComponent from './views/AdminDashboardComponent';
 import ParticipanteLogin from './views/ParticipanteLogin';
@@ -13,6 +14,7 @@ function App() {
             <Routes>
                 {/* Rutas de autenticación */}
                 <Route path="/login" element={<LoginComponent />} />
+                <Route path="/login-v2" element={<LoginComponentV2 />} />
 
                 {/* Panel exclusivo para Profesores */}
                 <Route

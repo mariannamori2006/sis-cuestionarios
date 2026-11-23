@@ -8,6 +8,7 @@ import ConfiguracionView from './ConfiguracionView';
 import BancoPreguntasView from './BancoPreguntasView';
 import NotificationCenter from '../components/common/NotificationCenter';
 import ConfirmarLogoutModal from '../components/modals/ConfirmarLogoutModal';
+import Sidebar from '../components/common/Sidebar';
 import logoNativa from '../images/logoNativa.jpeg';
 import useResponsive from '../hooks/useResponsive';
 import {
@@ -219,337 +220,173 @@ export default function DashboardComponent() {
                 </div>
             )}
 
-            {/* BARRA LATERAL (SIDEBAR) */}
-            <div style={{
-                width: isMobile ? '280px' : '260px',
-                backgroundColor: '#0f172a',
-                color: '#ffffff',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                padding: '24px 16px',
-                position: isMobile ? 'fixed' : 'relative',
-                top: 0,
-                bottom: 0,
-                left: isMobile ? (menuAbierto ? 0 : '-300px') : 0,
-                zIndex: isMobile ? 1200 : 10,
-                transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: isMobile && menuAbierto ? '0 0 35px rgba(0,0,0,0.5)' : 'none',
-                boxSizing: 'border-box'
-            }}>
-                <div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '32px', padding: '4px' }}>
-                        <div style={{ background: '#ffffff', padding: '5px 8px', borderRadius: '8px', display: 'flex', alignItems: 'center', flex: 1 }}>
-                            <img src={logoNativa} alt="NativaTec" style={{ height: '24px', maxWidth: '100%', objectFit: 'contain' }} />
-                        </div>
-                        {isMobile && (
-                            <button
-                                onClick={() => setMenuAbierto(false)}
-                                style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}
-                            >
-                                <X size={22} />
-                            </button>
-                        )}
-                    </div>
-
-                    <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <button
-                            onClick={() => cambiarVista('panel')}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px',
-                                width: '100%',
-                                padding: '12px 14px',
-                                background: vistaActiva === 'panel' ? 'linear-gradient(90deg, rgba(37, 99, 235, 0.18) 0%, rgba(37, 99, 235, 0.05) 100%)' : 'transparent',
-                                color: vistaActiva === 'panel' ? '#60a5fa' : '#94a3b8',
-                                border: 'none',
-                                borderLeft: vistaActiva === 'panel' ? '3px solid #3b82f6' : '3px solid transparent',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                fontWeight: vistaActiva === 'panel' ? '600' : '500',
-                                textAlign: 'left',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            <LayoutDashboard size={18} /> <span >Panel principal</span>
-                        </button>
-                        <button
-                            onClick={() => cambiarVista('cuestionarios')}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px',
-                                width: '100%',
-                                padding: '12px 14px',
-                                background: vistaActiva === 'cuestionarios' ? 'linear-gradient(90deg, rgba(37, 99, 235, 0.18) 0%, rgba(37, 99, 235, 0.05) 100%)' : 'transparent',
-                                color: vistaActiva === 'cuestionarios' ? '#60a5fa' : '#94a3b8',
-                                border: 'none',
-                                borderLeft: vistaActiva === 'cuestionarios' ? '3px solid #3b82f6' : '3px solid transparent',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                fontWeight: vistaActiva === 'cuestionarios' ? '600' : '500',
-                                textAlign: 'left',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            <FileText size={18} /> <span>Cuestionarios</span>
-                            {cuestionarios.length > 0 && (
-                                <span style={{ marginLeft: 'auto', backgroundColor: vistaActiva === 'cuestionarios' ? '#2563eb' : '#1e293b', color: '#ffffff', fontSize: '11px', fontWeight: '700', padding: '2px 8px', borderRadius: '12px' }}>
-                                    {cuestionarios.length}
-                                </span>
-                            )}
-                        </button>
-                        <button
-                            onClick={() => cambiarVista('banco')}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px',
-                                width: '100%',
-                                padding: '12px 14px',
-                                background: vistaActiva === 'banco' ? 'linear-gradient(90deg, rgba(37, 99, 235, 0.18) 0%, rgba(37, 99, 235, 0.05) 100%)' : 'transparent',
-                                color: vistaActiva === 'banco' ? '#60a5fa' : '#94a3b8',
-                                border: 'none',
-                                borderLeft: vistaActiva === 'banco' ? '3px solid #3b82f6' : '3px solid transparent',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                fontWeight: vistaActiva === 'banco' ? '600' : '500',
-                                textAlign: 'left',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            <BookOpen size={18} /> <span>Banco de Preguntas</span>
-                        </button>
-                        <button
-                            onClick={() => cambiarVista('estadisticas')}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px',
-                                width: '100%',
-                                padding: '12px 14px',
-                                background: vistaActiva === 'estadisticas' ? 'linear-gradient(90deg, rgba(37, 99, 235, 0.18) 0%, rgba(37, 99, 235, 0.05) 100%)' : 'transparent',
-                                color: vistaActiva === 'estadisticas' ? '#60a5fa' : '#94a3b8',
-                                border: 'none',
-                                borderLeft: vistaActiva === 'estadisticas' ? '3px solid #3b82f6' : '3px solid transparent',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                fontWeight: vistaActiva === 'estadisticas' ? '600' : '500',
-                                textAlign: 'left',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            <BarChart3 size={18} /> <span>Estadísticas</span>
-                        </button>
-                        <button
-                            onClick={() => cambiarVista('configuracion')}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px',
-                                width: '100%',
-                                padding: '12px 14px',
-                                background: vistaActiva === 'configuracion' ? 'linear-gradient(90deg, rgba(37, 99, 235, 0.18) 0%, rgba(37, 99, 235, 0.05) 100%)' : 'transparent',
-                                color: vistaActiva === 'configuracion' ? '#60a5fa' : '#94a3b8',
-                                border: 'none',
-                                borderLeft: vistaActiva === 'configuracion' ? '3px solid #3b82f6' : '3px solid transparent',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                fontWeight: vistaActiva === 'configuracion' ? '600' : '500',
-                                textAlign: 'left',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            <Settings size={18} /> <span>Configuración</span>
-                        </button>
-                    </nav>
-                </div>
-
-                <div style={{ borderTop: '1px solid #1e293b', paddingTop: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
-                        <div style={{ background: '#3b82f6', color: '#fff', width: '35px', height: '35px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold', flexShrink: '0' }}>{userInitials}</div>
-                        <div style={{ overflow: 'hidden' }}>
-                            <div style={{ fontSize: '13px', fontWeight: '600', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{userName}</div>
-                            <div style={{ fontSize: '11px', color: '#94a3b8', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{userEmail}</div>
-                        </div>
-                    </div>
-                    <button onClick={() => setMostrarModalLogout(true)} title="Cerrar sesión" style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px', borderRadius: '6px' }}>
-                        <LogOut size={18} />
-                    </button>
-                </div>
-            </div>
+            {/* BARRA LATERAL DINÁMICA (SIDEBAR V2) */}
+            <Sidebar
+                vistaActiva={vistaActiva}
+                cambiarVista={cambiarVista}
+                cuestionariosCount={cuestionarios.length}
+                userName={userName}
+                userEmail={userEmail}
+                userInitials={userInitials}
+                onLogout={() => setMostrarModalLogout(true)}
+                isMobile={isMobile}
+                menuAbierto={menuAbierto}
+                setMenuAbierto={setMenuAbierto}
+            />
 
             {/* CONTENIDO PRINCIPAL */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '18px 14px' : '30px 40px', boxSizing: 'border-box' }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '18px 14px' : '28px 36px', boxSizing: 'border-box' }}>
 
-                {/* TÍTULO DINÁMICO SEGÚN LA VISTA ACTIVA */}
-                {vistaActiva === 'panel' && (
-                    <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'row' }}>
-                            <h2 style={{ margin: '0 0 4px 0', fontSize: isMobile ? '22px' : '26px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em' }}>Panel principal</h2>
-                        </div>
-                        <div>
-                            {/* BARRA SUPERIOR GLOBAL PARA ESCRITORIO (NOTIFICACIONES Y ESTADO) */}
-                            {!isMobile && (
-                                <div style={{
-                                    display: 'flex',
-                                    justifyContent: 'flex-end',
-                                    alignItems: 'center',
-                                    marginBottom: '16px',
-                                    gap: '12px'
-                                }}>
-                                    <NotificationCenter onNavegar={cambiarVista} />
-                                </div>
-                            )}
-                        </div>
+                {/* BARRA SUPERIOR GLOBAL PARA ESCRITORIO (NOTIFICACIONES) */}
+                {!isMobile && (
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '14px' }}>
+                        <NotificationCenter onNavegar={cambiarVista} />
                     </div>
                 )}
 
+                {/* VISTA: PANEL PRINCIPAL */}
                 {vistaActiva === 'panel' && (
                     <>
+                        <div style={{ marginBottom: '22px' }}>
+                            <h1 style={{ margin: '0 0 4px 0', fontSize: isMobile ? '22px' : '26px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em' }}>
+                                Panel principal
+                            </h1>
+                            <p style={{ margin: 0, fontSize: '13.5px', color: '#64748b' }}>
+                                Resumen general del ciclo académico y actividad en tiempo real.
+                            </p>
+                        </div>
                         <div style={{
-                            background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 55%, #0f172a 100%)',
+                            background: '#0f172a',
                             color: '#ffffff',
-                            borderRadius: '20px',
-                            padding: isMobile ? '22px 18px' : '32px 36px',
+                            borderRadius: '16px',
+                            padding: isMobile ? '22px 18px' : '26px 30px',
                             display: 'flex',
                             flexDirection: isMobile ? 'column' : 'row',
                             justifyContent: 'space-between',
                             alignItems: isMobile ? 'flex-start' : 'center',
                             gap: isMobile ? '16px' : '0',
-                            marginBottom: '28px',
-                            boxShadow: '0 12px 30px -10px rgba(15, 23, 42, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08)',
-                            position: 'relative',
-                            overflow: 'hidden'
+                            marginBottom: '24px',
+                            border: '1px solid #1e293b',
+                            boxShadow: '0 4px 12px rgba(15, 23, 42, 0.06)'
                         }}>
-                            {/* Brillo radial decorativo de fondo */}
-                            <div style={{
-                                position: 'absolute',
-                                right: '-40px',
-                                top: '-40px',
-                                width: '240px',
-                                height: '240px',
-                                background: 'radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, rgba(99, 102, 241, 0) 70%)',
-                                pointerEvents: 'none'
-                            }} />
-
-                            <div style={{ zIndex: 1 }}>
+                            <div>
                                 <div style={{
                                     display: 'inline-flex',
                                     alignItems: 'center',
                                     gap: '6px',
-                                    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                                    border: '1px solid rgba(16, 185, 129, 0.3)',
-                                    color: '#34d399',
-                                    fontSize: '12px',
-                                    fontWeight: '700',
-                                    padding: '4px 12px',
+                                    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                                    border: '1px solid rgba(56, 189, 248, 0.25)',
+                                    color: '#38bdf8',
+                                    fontSize: '11.5px',
+                                    fontWeight: '600',
+                                    padding: '3px 10px',
                                     borderRadius: '20px',
                                     marginBottom: '10px'
                                 }}>
-                                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
-                                    Ciclo Académico
+                                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#38bdf8' }} />
+                                    Ciclo Académico Activo
                                 </div>
-                                <h2 style={{ margin: '0 0 6px 0', fontSize: isMobile ? '22px' : '26px', fontWeight: '800', letterSpacing: '-0.5px' }}>
+                                <h2 style={{ margin: '0 0 6px 0', fontSize: isMobile ? '22px' : '25px', fontWeight: '800', letterSpacing: '-0.02em', color: '#ffffff' }}>
                                     ¡Hola, {userName}!
                                 </h2>
+                                <p style={{ margin: 0, fontSize: '13.5px', color: '#94a3b8', fontWeight: '400' }}>
+                                    Supervisa las entregas en tiempo real y gestiona las evaluaciones de tus estudiantes.
+                                </p>
                             </div>
                             <button
                                 onClick={() => cambiarVista('cuestionarios')}
                                 style={{
-                                    backgroundColor: '#10b981',
-                                    backgroundImage: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                    backgroundColor: '#2563eb',
                                     color: '#ffffff',
                                     border: 'none',
-                                    padding: '13px 24px',
-                                    borderRadius: '12px',
-                                    fontWeight: '700',
+                                    padding: '11px 20px',
+                                    borderRadius: '10px',
+                                    fontWeight: '600',
                                     cursor: 'pointer',
-                                    fontSize: '14px',
+                                    fontSize: '13.5px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '8px',
                                     width: isMobile ? '100%' : 'auto',
                                     justifyContent: isMobile ? 'center' : 'flex-start',
-                                    boxShadow: '0 10px 20px -5px rgba(16, 185, 129, 0.4)',
-                                    transition: 'all 0.2s ease',
-                                    zIndex: 1
+                                    transition: 'all 0.15s ease',
+                                    flexShrink: 0
                                 }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
                             >
-                                <Plus size={18} /> Nuevo cuestionario
+                                <FileText size={16} /> Gestionar cuestionarios
                             </button>
                         </div>
 
-                        {/* Tarjetas de Métricas Dinámicas desde Base de Datos (Auto-fit responsivo) */}
+                        {/* Tarjetas de Métricas Clave */}
                         <div style={{
                             display: 'grid',
                             gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                            gap: '18px',
-                            marginBottom: '30px'
+                            gap: '16px',
+                            marginBottom: '26px'
                         }}>
                             {/* Tarjeta 1: Cuestionarios */}
-                            <div className="interactive-card" style={{ background: '#ffffff', padding: '22px', borderRadius: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', borderTop: '4px solid #3b82f6', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '700', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Cuestionarios</span>
-                                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <ClipboardList size={20} color="#3b82f6" />
+                            <div style={{ background: '#ffffff', padding: '20px 22px', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                    <span style={{ fontSize: '12.5px', color: '#64748b', fontWeight: '600' }}>Cuestionarios</span>
+                                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <ClipboardList size={18} color="#2563eb" />
                                     </div>
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '30px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.5px', marginBottom: '4px' }}>
+                                    <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '2px' }}>
                                         {cuestionarios.length}
                                     </div>
+                                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>Total creados en plataforma</span>
                                 </div>
                             </div>
 
                             {/* Tarjeta 2: Respuestas totales */}
-                            <div className="interactive-card" style={{ background: '#ffffff', padding: '22px', borderRadius: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', borderTop: '4px solid #10b981', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '700', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Entregas Realizadas</span>
-                                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <Edit3 size={19} color="#10b981" />
+                            <div style={{ background: '#ffffff', padding: '20px 22px', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                    <span style={{ fontSize: '12.5px', color: '#64748b', fontWeight: '600' }}>Entregas Realizadas</span>
+                                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Edit3 size={18} color="#059669" />
                                     </div>
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '30px', fontWeight: '800', color: '#059669', letterSpacing: '-0.5px', marginBottom: '4px' }}>
+                                    <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '2px' }}>
                                         {estadisticas.totalRespuestas}
                                     </div>
+                                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>Intentos completados</span>
                                 </div>
                             </div>
 
                             {/* Tarjeta 3: Alumnos únicos */}
-                            <div className="interactive-card" style={{ background: '#ffffff', padding: '22px', borderRadius: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', borderTop: '4px solid #8b5cf6', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '700', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Alumnos Evaluados</span>
-                                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <Users size={19} color="#7c3aed" />
+                            <div style={{ background: '#ffffff', padding: '20px 22px', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                    <span style={{ fontSize: '12.5px', color: '#64748b', fontWeight: '600' }}>Alumnos Evaluados</span>
+                                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Users size={18} color="#0f172a" />
                                     </div>
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '30px', fontWeight: '800', color: '#7c3aed', letterSpacing: '-0.5px', marginBottom: '4px' }}>
+                                    <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '2px' }}>
                                         {estadisticas.alumnosUnicos}
                                     </div>
+                                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>Estudiantes únicos evaluados</span>
                                 </div>
                             </div>
 
                             {/* Tarjeta 4: Promedio general */}
-                            <div className="interactive-card" style={{ background: '#ffffff', padding: '22px', borderRadius: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', borderTop: '4px solid #f59e0b', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '700', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Promedio General</span>
-                                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: '#fffbeb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <Star size={19} color="#d97706" />
+                            <div style={{ background: '#ffffff', padding: '20px 22px', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                    <span style={{ fontSize: '12.5px', color: '#64748b', fontWeight: '600' }}>Promedio General</span>
+                                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#fffbeb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Star size={18} color="#d97706" />
                                     </div>
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '30px', fontWeight: '800', color: '#d97706', letterSpacing: '-0.5px', marginBottom: '4px' }}>
-                                        {promedioTexto} <span style={{ fontSize: '16px', fontWeight: '600', color: '#94a3b8' }}>/ 20</span>
+                                    <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '2px' }}>
+                                        {promedioTexto} <span style={{ fontSize: '15px', fontWeight: '600', color: '#94a3b8' }}>/ 20</span>
                                     </div>
+                                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>Escala vigesimal</span>
                                 </div>
                             </div>
                         </div>
@@ -821,6 +658,15 @@ export default function DashboardComponent() {
                         cuestionarioInicialId={cuestionarioAConfigurarId}
                         onCuestionarioActualizado={cargarDatos}
                         onUserUpdated={(u) => setCurrentUser(u)}
+                        modo="examenes"
+                    />
+                )}
+
+                {vistaActiva === 'perfil' && (
+                    <ConfiguracionView
+                        cuestionarios={cuestionarios}
+                        onUserUpdated={(u) => setCurrentUser(u)}
+                        modo="perfil"
                     />
                 )}
             </div>

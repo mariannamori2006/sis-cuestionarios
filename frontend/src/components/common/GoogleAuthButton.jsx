@@ -9,14 +9,14 @@ let isGoogleIdInitialized = false;
  * Componente que renderiza el botón oficial de Google Identity (OAuth 2.0).
  * Maneja la inicialización única del SDK de Google y el renderizado dinámico del botón.
  */
-export default function GoogleAuthButton({ onGoogleSuccess, onError, text = 'continue_with', disabled = false }) {
+export default function GoogleAuthButton({ onGoogleSuccess, onSuccess, onError, text = 'continue_with', disabled = false }) {
     const buttonRef = useRef(null);
 
     // Mantener callbacks siempre sincronizados sin necesidad de re-inicializar el SDK
     useEffect(() => {
-        googleCallbackSuccess = onGoogleSuccess;
+        googleCallbackSuccess = onGoogleSuccess || onSuccess;
         googleCallbackError = onError;
-    }, [onGoogleSuccess, onError]);
+    }, [onGoogleSuccess, onSuccess, onError]);
 
     // Obtiene el Client ID de las variables de entorno de Vite o el valor por defecto
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'TU_CLIENT_ID_DE_GOOGLE.apps.googleusercontent.com';

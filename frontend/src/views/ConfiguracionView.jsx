@@ -88,10 +88,21 @@ export default function ConfiguracionView({
     onUserUpdated,
     cuestionarios: cuestionariosProp = [],
     cuestionarioInicialId = null,
-    onCuestionarioActualizado = null
+    onCuestionarioActualizado = null,
+    tabInicial = null,
+    modo = null // 'examenes' | 'perfil'
 }) {
     const currentUser = getCurrentUser() || {};
-    const [tabActiva, setTabActiva] = useState(cuestionarioInicialId ? 'examenes' : 'examenes');
+    const [tabActiva, setTabActiva] = useState(modo || tabInicial || (cuestionarioInicialId ? 'examenes' : 'examenes'));
+    const seccionActiva = modo || tabActiva;
+
+    useEffect(() => {
+        if (modo) {
+            setTabActiva(modo);
+        } else if (tabInicial) {
+            setTabActiva(tabInicial);
+        }
+    }, [modo, tabInicial]);
 
     // -------------------------------------------------------------------------
     // 1. ESTADOS DEL PERFIL DEL PROFESOR
@@ -390,84 +401,92 @@ export default function ConfiguracionView({
     };
 
     return (
-        <div style={{ maxWidth: '980px', margin: '0 auto' }}>
-            {/* CABECERA */}
-            <div style={{ marginBottom: '24px' }}>
-                <h1 style={{ margin: '0 0 6px 0', fontSize: '26px', color: '#0f172a', fontWeight: '800', letterSpacing: '-0.02em' }}>
-                    Configuración
+        <div style={{ maxWidth: '1050px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* CABECERA DINÁMICA SEGÚN EL MODO */}
+            <div>
+                <h1 style={{ margin: '0 0 4px 0', fontSize: '26px', color: '#0f172a', fontWeight: '800', letterSpacing: '-0.02em' }}>
+                    {modo === 'perfil'
+                        ? 'Mi Perfil y Cuenta'
+                        : (modo === 'examenes' ? 'Configuración de Exámenes' : 'Configuración')}
                 </h1>
-                <p style={{ margin: 0, fontSize: '13.5px', color: '#64748b', fontWeight: '500' }}>
-                    Ajusta los parámetros de seguridad, reglas de evaluación de los exámenes y tu perfil institucional
+                <p style={{ margin: 0, fontSize: '13.5px', color: '#64748b', fontWeight: '400' }}>
+                    {modo === 'perfil'
+                        ? 'Administra tus datos personales, correo institucional y credenciales de acceso'
+                        : (modo === 'examenes'
+                            ? 'Ajusta los parámetros de seguridad, reglas de evaluación y tiempo de los cuestionarios'
+                            : 'Ajusta los parámetros de seguridad, reglas de evaluación de los exámenes y tu perfil institucional')}
                 </p>
             </div>
 
-            {/* PESTAÑAS PRINCIPALES DE CONFIGURACIÓN */}
-            <div style={{
-                display: 'flex',
-                gap: '8px',
-                borderBottom: '1px solid #e2e8f0',
-                marginBottom: '26px',
-                paddingBottom: '2px'
-            }}>
-                <button
-                    type="button"
-                    onClick={() => setTabActiva('examenes')}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '10px 18px',
-                        borderRadius: '10px 10px 0 0',
-                        border: 'none',
-                        borderBottom: tabActiva === 'examenes' ? '3px solid #2563eb' : '3px solid transparent',
-                        backgroundColor: tabActiva === 'examenes' ? '#eff6ff' : 'transparent',
-                        color: tabActiva === 'examenes' ? '#1d4ed8' : '#64748b',
-                        fontWeight: tabActiva === 'examenes' ? '700' : '600',
-                        fontSize: '14px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                    }}
-                >
-                    <Sliders size={17} color={tabActiva === 'examenes' ? '#1d4ed8' : '#64748b'} />
-                    <span>Configuración de Exámenes</span>
-                </button>
+            {/* PESTAÑAS PRINCIPALES DE CONFIGURACIÓN (Solo se muestran si no viene un modo fijo desde el sidebar) */}
+            {!modo && (
+                <div style={{
+                    display: 'flex',
+                    gap: '8px',
+                    borderBottom: '1px solid #e2e8f0',
+                    marginBottom: '26px',
+                    paddingBottom: '2px'
+                }}>
+                    <button
+                        type="button"
+                        onClick={() => setTabActiva('examenes')}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '10px 18px',
+                            borderRadius: '10px 10px 0 0',
+                            border: 'none',
+                            borderBottom: tabActiva === 'examenes' ? '3px solid #2563eb' : '3px solid transparent',
+                            backgroundColor: tabActiva === 'examenes' ? '#eff6ff' : 'transparent',
+                            color: tabActiva === 'examenes' ? '#1d4ed8' : '#64748b',
+                            fontWeight: tabActiva === 'examenes' ? '700' : '600',
+                            fontSize: '14px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                        }}
+                    >
+                        <Sliders size={17} color={tabActiva === 'examenes' ? '#1d4ed8' : '#64748b'} />
+                        <span>Configuración de Exámenes</span>
+                    </button>
 
-                <button
-                    type="button"
-                    onClick={() => setTabActiva('perfil')}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '10px 18px',
-                        borderRadius: '10px 10px 0 0',
-                        border: 'none',
-                        borderBottom: tabActiva === 'perfil' ? '3px solid #2563eb' : '3px solid transparent',
-                        backgroundColor: tabActiva === 'perfil' ? '#eff6ff' : 'transparent',
-                        color: tabActiva === 'perfil' ? '#1d4ed8' : '#64748b',
-                        fontWeight: tabActiva === 'perfil' ? '700' : '600',
-                        fontSize: '14px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                    }}
-                >
-                    <User size={17} color={tabActiva === 'perfil' ? '#1d4ed8' : '#64748b'} />
-                    <span>Perfil del Profesor</span>
-                </button>
-            </div>
+                    <button
+                        type="button"
+                        onClick={() => setTabActiva('perfil')}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '10px 18px',
+                            borderRadius: '10px 10px 0 0',
+                            border: 'none',
+                            borderBottom: tabActiva === 'perfil' ? '3px solid #2563eb' : '3px solid transparent',
+                            backgroundColor: tabActiva === 'perfil' ? '#eff6ff' : 'transparent',
+                            color: tabActiva === 'perfil' ? '#1d4ed8' : '#64748b',
+                            fontWeight: tabActiva === 'perfil' ? '700' : '600',
+                            fontSize: '14px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                        }}
+                    >
+                        <User size={17} color={tabActiva === 'perfil' ? '#1d4ed8' : '#64748b'} />
+                        <span>Perfil del Profesor</span>
+                    </button>
+                </div>
+            )}
 
             {/* ========================================================================= */}
             {/* PESTAÑA 1: CONFIGURACIÓN Y PARÁMETROS DE EXÁMENES                         */}
             {/* ========================================================================= */}
-            {tabActiva === 'examenes' && (
+            {seccionActiva === 'examenes' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
 
                     {/* TARJETA A: CONFIGURACIÓN POR EXAMEN ESPECÍFICO (DESLIZANTE / DESPLEGABLE) */}
                     <div style={{
                         background: '#ffffff',
-                        borderRadius: '18px',
-                        border: '1.5px solid #dbeafe',
-                        boxShadow: '0 4px 16px rgba(37, 99, 235, 0.05)',
+                        borderRadius: '14px',
+                        border: '1px solid #e2e8f0',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
                         overflow: 'hidden',
                         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                     }}>
@@ -490,17 +509,16 @@ export default function ConfiguracionView({
                         >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
                                 <div style={{
-                                    width: '40px',
-                                    height: '40px',
-                                    borderRadius: '12px',
+                                    width: '38px',
+                                    height: '38px',
+                                    borderRadius: '10px',
                                     backgroundColor: '#eff6ff',
-                                    border: '1px solid #bfdbfe',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     flexShrink: 0
                                 }}>
-                                    <Sliders size={20} color="#2563eb" />
+                                    <Sliders size={18} color="#2563eb" />
                                 </div>
                                 <div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
@@ -572,8 +590,8 @@ export default function ConfiguracionView({
                                                 style={{
                                                     width: '100%',
                                                     padding: '10px 36px 10px 14px',
-                                                    borderRadius: '10px',
-                                                    border: '1.5px solid #93c5fd',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #cbd5e1',
                                                     backgroundColor: '#f8fafc',
                                                     color: '#0f172a',
                                                     fontSize: '13.5px',
@@ -1133,24 +1151,25 @@ export default function ConfiguracionView({
                                                 type="button"
                                                 onClick={handleGuardarExamen}
                                                 disabled={guardandoExamen}
-                                                className="interactive-card"
                                                 style={{
-                                                    background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                                                    background: '#0f172a',
                                                     color: '#ffffff',
                                                     border: 'none',
-                                                    padding: '11px 24px',
-                                                    borderRadius: '10px',
-                                                    fontSize: '13.5px',
-                                                    fontWeight: '700',
+                                                    padding: '10px 22px',
+                                                    borderRadius: '8px',
+                                                    fontSize: '13px',
+                                                    fontWeight: '600',
                                                     cursor: guardandoExamen ? 'not-allowed' : 'pointer',
-                                                    boxShadow: '0 4px 12px rgba(37,99,235,0.3)',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     gap: '8px',
-                                                    opacity: guardandoExamen ? 0.7 : 1
+                                                    opacity: guardandoExamen ? 0.7 : 1,
+                                                    transition: 'all 0.15s ease'
                                                 }}
+                                                onMouseEnter={(e) => { if (!guardandoExamen) e.currentTarget.style.backgroundColor = '#1e293b'; }}
+                                                onMouseLeave={(e) => { if (!guardandoExamen) e.currentTarget.style.backgroundColor = '#0f172a'; }}
                                             >
-                                                <Save size={16} />
+                                                <Save size={15} />
                                                 <span>{guardandoExamen ? 'Guardando...' : 'Guardar Parámetros de este Examen'}</span>
                                             </button>
                                         </div>
@@ -1351,23 +1370,25 @@ export default function ConfiguracionView({
                                 type="button"
                                 onClick={handleGuardarDefault}
                                 disabled={guardandoDefault}
-                                className="interactive-card"
                                 style={{
                                     background: '#0f172a',
                                     color: '#ffffff',
                                     border: 'none',
-                                    padding: '11px 22px',
-                                    borderRadius: '10px',
-                                    fontSize: '13.5px',
-                                    fontWeight: '700',
+                                    padding: '10px 22px',
+                                    borderRadius: '8px',
+                                    fontSize: '13px',
+                                    fontWeight: '600',
                                     cursor: guardandoDefault ? 'not-allowed' : 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '8px',
-                                    opacity: guardandoDefault ? 0.7 : 1
+                                    opacity: guardandoDefault ? 0.7 : 1,
+                                    transition: 'all 0.15s ease'
                                 }}
+                                onMouseEnter={(e) => { if (!guardandoDefault) e.currentTarget.style.backgroundColor = '#1e293b'; }}
+                                onMouseLeave={(e) => { if (!guardandoDefault) e.currentTarget.style.backgroundColor = '#0f172a'; }}
                             >
-                                <Save size={16} />
+                                <Save size={15} />
                                 <span>{guardandoDefault ? 'Guardando...' : 'Guardar Reglas Predeterminadas'}</span>
                             </button>
                         </div>
@@ -1378,7 +1399,7 @@ export default function ConfiguracionView({
             {/* ========================================================================= */}
             {/* PESTAÑA 2: PERFIL DEL PROFESOR                                            */}
             {/* ========================================================================= */}
-            {tabActiva === 'perfil' && (
+            {seccionActiva === 'perfil' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
                     {mensajeExitoPerfil && (
@@ -1602,19 +1623,20 @@ export default function ConfiguracionView({
                                 type="button"
                                 onClick={handleGuardarPerfil}
                                 disabled={guardandoPerfil}
-                                className="interactive-card"
                                 style={{
-                                    background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                                    background: '#0f172a',
                                     color: '#ffffff',
                                     border: 'none',
-                                    padding: '12px 28px',
-                                    borderRadius: '12px',
-                                    fontSize: '14px',
-                                    fontWeight: '700',
+                                    padding: '10px 22px',
+                                    borderRadius: '8px',
+                                    fontSize: '13.5px',
+                                    fontWeight: '600',
                                     cursor: guardandoPerfil ? 'not-allowed' : 'pointer',
-                                    boxShadow: '0 4px 14px rgba(37,99,235,0.3)',
-                                    opacity: guardandoPerfil ? 0.7 : 1
+                                    opacity: guardandoPerfil ? 0.7 : 1,
+                                    transition: 'all 0.15s ease'
                                 }}
+                                onMouseEnter={(e) => { if (!guardandoPerfil) e.currentTarget.style.backgroundColor = '#1e293b'; }}
+                                onMouseLeave={(e) => { if (!guardandoPerfil) e.currentTarget.style.backgroundColor = '#0f172a'; }}
                             >
                                 {guardandoPerfil ? 'Guardando...' : 'Guardar Perfil'}
                             </button>

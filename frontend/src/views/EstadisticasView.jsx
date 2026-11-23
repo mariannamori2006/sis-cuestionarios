@@ -314,7 +314,7 @@ export default function EstadisticasView() {
     }
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
             {/* ENCABEZADO Y SELECTOR PRINCIPAL */}
             <div style={{
@@ -328,14 +328,17 @@ export default function EstadisticasView() {
                     <h1 style={{ margin: '0 0 4px 0', fontSize: isMobile ? '22px' : '26px', color: '#0f172a', fontWeight: '800', letterSpacing: '-0.02em' }}>
                         Estadísticas y Rendimiento
                     </h1>
+                    <p style={{ margin: 0, fontSize: '13.5px', color: '#64748b', fontWeight: '400' }}>
+                        Métricas consolidadas de aprobación, promedio vigesimal y diagnóstico de reactivos.
+                    </p>
                 </div>
 
                 {/* SELECTOR DE PESTAÑAS (SOLO 2 VISTAS CLARAS) */}
                 <div style={{
                     display: 'flex',
                     background: '#f1f5f9',
-                    padding: '4px',
-                    borderRadius: '12px'
+                    padding: '3px',
+                    borderRadius: '10px'
                 }}>
                     <button
                         type="button"
@@ -344,19 +347,19 @@ export default function EstadisticasView() {
                             display: 'flex',
                             alignItems: 'center',
                             gap: '8px',
-                            padding: '8px 18px',
+                            padding: '7px 16px',
                             border: 'none',
-                            borderRadius: '9px',
+                            borderRadius: '8px',
                             fontSize: '13px',
-                            fontWeight: '700',
+                            fontWeight: '600',
                             cursor: 'pointer',
-                            background: pestañaActiva === 'resumen' ? '#2563eb' : 'transparent',
-                            color: pestañaActiva === 'resumen' ? '#ffffff' : '#64748b',
-                            boxShadow: pestañaActiva === 'resumen' ? '0 2px 6px rgba(37, 99, 235, 0.25)' : 'none',
-                            transition: 'all 0.2s ease'
+                            background: pestañaActiva === 'resumen' ? '#ffffff' : 'transparent',
+                            color: pestañaActiva === 'resumen' ? '#0f172a' : '#64748b',
+                            boxShadow: pestañaActiva === 'resumen' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                            transition: 'all 0.15s ease'
                         }}
                     >
-                        <BarChart3 size={16} />
+                        <BarChart3 size={15} />
                         Resumen y Materias
                     </button>
 
@@ -367,19 +370,19 @@ export default function EstadisticasView() {
                             display: 'flex',
                             alignItems: 'center',
                             gap: '8px',
-                            padding: '8px 18px',
+                            padding: '7px 16px',
                             border: 'none',
-                            borderRadius: '9px',
+                            borderRadius: '8px',
                             fontSize: '13px',
-                            fontWeight: '700',
+                            fontWeight: '600',
                             cursor: 'pointer',
-                            background: pestañaActiva === 'preguntas' ? '#2563eb' : 'transparent',
-                            color: pestañaActiva === 'preguntas' ? '#ffffff' : '#64748b',
-                            boxShadow: pestañaActiva === 'preguntas' ? '0 2px 6px rgba(37, 99, 235, 0.25)' : 'none',
-                            transition: 'all 0.2s ease'
+                            background: pestañaActiva === 'preguntas' ? '#ffffff' : 'transparent',
+                            color: pestañaActiva === 'preguntas' ? '#0f172a' : '#64748b',
+                            boxShadow: pestañaActiva === 'preguntas' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                            transition: 'all 0.15s ease'
                         }}
                     >
-                        <HelpCircle size={16} />
+                        <HelpCircle size={15} />
                         Diagnóstico por Pregunta
                     </button>
                 </div>
@@ -432,103 +435,99 @@ export default function EstadisticasView() {
                     </div>
 
                     {/* 4 TARJETAS DE INSIGHTS CLAVE */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '18px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
                         {/* 1. TASA DE APROBACIÓN */}
-                        <div className="interactive-card" style={{
+                        <div style={{
                             background: '#ffffff',
-                            padding: '22px',
-                            borderRadius: '16px',
+                            padding: '20px 22px',
+                            borderRadius: '14px',
                             border: '1px solid #e2e8f0',
-                            borderTop: '3px solid #10b981',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
                         }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                                <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                <span style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>
                                     Tasa de Aprobación
                                 </span>
-                                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <CheckCircle2 size={16} color="#059669" />
+                                <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <CheckCircle2 size={17} color="#059669" />
                                 </div>
                             </div>
-                            <div style={{ fontSize: '28px', fontWeight: '800', color: '#059669' }}>
+                            <div style={{ fontSize: '26px', fontWeight: '800', color: '#059669', letterSpacing: '-0.02em' }}>
                                 {tasaAprobacion}%
                             </div>
-                            <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
+                            <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>
                                 {totalRespuestas} evaluaciones recibidas
                             </div>
                         </div>
 
                         {/* 2. PROMEDIO GENERAL */}
-                        <div className="interactive-card" style={{
+                        <div style={{
                             background: '#ffffff',
-                            padding: '22px',
-                            borderRadius: '16px',
+                            padding: '20px 22px',
+                            borderRadius: '14px',
                             border: '1px solid #e2e8f0',
-                            borderTop: '3px solid #f59e0b',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
                         }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                                <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                <span style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>
                                     Promedio General
                                 </span>
-                                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#fffbeb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <Award size={16} color="#d97706" />
+                                <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#fffbeb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Award size={17} color="#d97706" />
                                 </div>
                             </div>
-                            <div style={{ fontSize: '28px', fontWeight: '800', color: '#d97706' }}>
-                                {promedioGeneral} <span style={{ fontSize: '16px', fontWeight: '600', color: '#94a3b8' }}>/ 20</span>
+                            <div style={{ fontSize: '26px', fontWeight: '800', color: '#d97706', letterSpacing: '-0.02em' }}>
+                                {promedioGeneral} <span style={{ fontSize: '15px', fontWeight: '600', color: '#94a3b8' }}>/ 20</span>
                             </div>
-                            <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
+                            <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>
                                 Escala vigesimal
                             </div>
                         </div>
 
                         {/* 3. MATERIA LÍDER */}
-                        <div className="interactive-card" style={{
+                        <div style={{
                             background: '#ffffff',
-                            padding: '22px',
-                            borderRadius: '16px',
+                            padding: '20px 22px',
+                            borderRadius: '14px',
                             border: '1px solid #e2e8f0',
-                            borderTop: '3px solid #2563eb',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
                         }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                                <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                <span style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>
                                     Materia Líder
                                 </span>
-                                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <ArrowUpRight size={16} color="#2563eb" />
+                                <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <ArrowUpRight size={17} color="#2563eb" />
                                 </div>
                             </div>
                             <div style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                 {kpis.lider?.materia || 'Sin datos'}
                             </div>
-                            <div style={{ fontSize: '12px', color: '#2563eb', fontWeight: '700', marginTop: '4px' }}>
+                            <div style={{ fontSize: '12px', color: '#2563eb', fontWeight: '600', marginTop: '2px' }}>
                                 {kpis.lider ? `${kpis.lider.tasaAciertos}% de efectividad` : '—'}
                             </div>
                         </div>
 
                         {/* 4. REQUIERE REFUERZO */}
-                        <div className="interactive-card" style={{
+                        <div style={{
                             background: '#ffffff',
-                            padding: '22px',
-                            borderRadius: '16px',
+                            padding: '20px 22px',
+                            borderRadius: '14px',
                             border: '1px solid #e2e8f0',
-                            borderTop: '3px solid #ef4444',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
                         }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                                <span style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                <span style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>
                                     Requiere Refuerzo
                                 </span>
-                                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <AlertTriangle size={16} color="#ef4444" />
+                                <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <AlertTriangle size={17} color="#dc2626" />
                                 </div>
                             </div>
                             <div style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                 {kpis.rezagada?.materia || 'Todo al día'}
                             </div>
-                            <div style={{ fontSize: '12px', color: '#dc2626', fontWeight: '700', marginTop: '4px' }}>
+                            <div style={{ fontSize: '12px', color: '#dc2626', fontWeight: '600', marginTop: '2px' }}>
                                 {kpis.rezagada ? `${kpis.rezagada.tasaAciertos}% de efectividad` : 'Rendimiento parejo'}
                             </div>
                         </div>

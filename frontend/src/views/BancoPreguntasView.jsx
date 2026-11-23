@@ -350,50 +350,47 @@ export default function BancoPreguntasView() {
     const totalDificiles = preguntas.filter(p => p.dificultad === 'DIFICIL').length;
 
     return (
-        <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '18px 14px' : '32px 40px', backgroundColor: '#f8fafc' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* ENCABEZADO */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
                 <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ backgroundColor: '#eff6ff', color: '#2563eb', padding: '10px', borderRadius: '14px', boxShadow: '0 2px 6px rgba(37,99,235,0.15)' }}>
-                            <BookOpen size={24} />
-                        </div>
-                        <div>
-                            <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
-                                Banco Centralizado de Preguntas
-                            </h1>
-                        </div>
-                    </div>
+                    <h1 style={{ fontSize: isMobile ? '22px' : '26px', fontWeight: '800', color: '#0f172a', margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>
+                        Banco de Preguntas
+                    </h1>
+                    <p style={{ margin: 0, fontSize: '13.5px', color: '#64748b', fontWeight: '400' }}>
+                        Repositorio central de reactivos clasificados por materia, tema y nivel para reutilizar en tus exámenes.
+                    </p>
                 </div>
 
                 <button
                     onClick={abrirCrearModal}
-                    className="interactive-card"
                     style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
-                        background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                        backgroundColor: '#0f172a',
                         color: '#ffffff',
                         padding: '11px 20px',
-                        borderRadius: '12px',
+                        borderRadius: '10px',
                         border: 'none',
-                        fontWeight: '700',
-                        fontSize: '13px',
+                        fontWeight: '600',
+                        fontSize: '13.5px',
                         cursor: 'pointer',
-                        boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)'
+                        transition: 'all 0.15s ease'
                     }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1e293b'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0f172a'}
                 >
-                    <Plus size={18} /> Nueva Pregunta en el Banco
+                    <Plus size={17} /> Nueva pregunta
                 </button>
             </div>
 
             {/* FILTROS Y BÚSQUEDA */}
-            <div style={{ background: '#ffffff', borderRadius: '18px', border: '1px solid #e2e8f0', padding: '18px 22px', marginBottom: '26px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-                <form onSubmit={handleBuscar} style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ background: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '14px 18px', marginBottom: '22px', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                <form onSubmit={handleBuscar} style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
                     {/* Búsqueda por texto */}
                     <div style={{ flex: '1 1 240px', position: 'relative' }}>
-                        <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+                        <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
                         <input
                             type="text"
                             placeholder="Buscar por pregunta, tema o contenido..."
@@ -401,34 +398,32 @@ export default function BancoPreguntasView() {
                             onChange={(e) => setBusqueda(e.target.value)}
                             style={{
                                 width: '100%',
-                                padding: '11px 16px 11px 40px',
-                                borderRadius: '12px',
+                                padding: '9px 14px 9px 38px',
+                                borderRadius: '8px',
                                 border: '1px solid #e2e8f0',
                                 fontSize: '13px',
                                 outline: 'none',
                                 color: '#0f172a',
-                                boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
                                 boxSizing: 'border-box'
                             }}
                         />
                     </div>
 
                     {/* Filtro por Materia */}
-                    <div style={{ minWidth: '180px' }}>
+                    <div style={{ minWidth: '170px' }}>
                         <select
                             value={filtroMateria}
                             onChange={(e) => setFiltroMateria(e.target.value)}
                             style={{
                                 width: '100%',
-                                padding: '11px 14px',
-                                borderRadius: '12px',
+                                padding: '9px 12px',
+                                borderRadius: '8px',
                                 border: '1px solid #e2e8f0',
                                 fontSize: '13px',
                                 backgroundColor: '#ffffff',
                                 color: '#0f172a',
                                 outline: 'none',
-                                cursor: 'pointer',
-                                boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
+                                cursor: 'pointer'
                             }}
                         >
                             <option value="">Todas las materias</option>
@@ -439,7 +434,7 @@ export default function BancoPreguntasView() {
                     </div>
 
                     {/* Tabs de Dificultad */}
-                    <div style={{ display: 'flex', gap: '4px', backgroundColor: '#f1f5f9', padding: '4px', borderRadius: '12px' }}>
+                    <div style={{ display: 'flex', gap: '4px', backgroundColor: '#f1f5f9', padding: '3px', borderRadius: '8px' }}>
                         {DIFICULTADES.map((d) => {
                             const activa = filtroDificultad === d.key;
                             return (
@@ -450,13 +445,13 @@ export default function BancoPreguntasView() {
                                     style={{
                                         border: 'none',
                                         background: activa ? '#ffffff' : 'transparent',
-                                        color: activa ? (d.color !== '#64748b' ? d.color : '#0f172a') : '#64748b',
-                                        fontWeight: activa ? '700' : '500',
-                                        fontSize: '12px',
-                                        padding: '7px 12px',
-                                        borderRadius: '8px',
+                                        color: activa ? '#0f172a' : '#64748b',
+                                        fontWeight: activa ? '600' : '500',
+                                        fontSize: '12.5px',
+                                        padding: '6px 12px',
+                                        borderRadius: '6px',
                                         cursor: 'pointer',
-                                        boxShadow: activa ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                                        boxShadow: activa ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
                                         transition: 'all 0.15s ease'
                                     }}
                                 >
@@ -468,15 +463,14 @@ export default function BancoPreguntasView() {
 
                     <button
                         type="submit"
-                        className="interactive-card"
                         style={{
-                            padding: '11px 18px',
+                            padding: '9px 16px',
                             background: '#0f172a',
                             color: '#ffffff',
                             border: 'none',
-                            borderRadius: '12px',
+                            borderRadius: '8px',
                             fontSize: '13px',
-                            fontWeight: '700',
+                            fontWeight: '600',
                             cursor: 'pointer'
                         }}
                     >
@@ -486,44 +480,44 @@ export default function BancoPreguntasView() {
             </div>
 
             {/* TARJETAS RESUMEN */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '18px', marginBottom: '26px' }}>
-                <div className="interactive-card" style={{ background: '#ffffff', borderRadius: '18px', padding: '20px 22px', border: '1px solid #e2e8f0', borderTop: '4px solid #2563eb', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ background: '#eff6ff', color: '#2563eb', padding: '10px', borderRadius: '12px' }}>
-                        <Layers size={22} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                <div style={{ background: '#ffffff', borderRadius: '14px', padding: '18px 20px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ background: '#eff6ff', color: '#2563eb', padding: '10px', borderRadius: '10px' }}>
+                        <Layers size={20} />
                     </div>
                     <div>
-                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Total en Banco</div>
-                        <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.5px' }}>{preguntas.length}</div>
+                        <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>Total en Banco</div>
+                        <div style={{ fontSize: '26px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em' }}>{preguntas.length}</div>
                     </div>
                 </div>
 
-                <div className="interactive-card" style={{ background: '#ffffff', borderRadius: '18px', padding: '20px 22px', border: '1px solid #e2e8f0', borderTop: '4px solid #10b981', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ background: '#ecfdf5', color: '#059669', padding: '10px', borderRadius: '12px' }}>
-                        <CheckCircle2 size={22} />
+                <div style={{ background: '#ffffff', borderRadius: '14px', padding: '18px 20px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ background: '#ecfdf5', color: '#059669', padding: '10px', borderRadius: '10px' }}>
+                        <CheckCircle2 size={20} />
                     </div>
                     <div>
-                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Nivel Fácil</div>
-                        <div style={{ fontSize: '28px', fontWeight: '800', color: '#059669', letterSpacing: '-0.5px' }}>{totalFaciles}</div>
+                        <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>Nivel Fácil</div>
+                        <div style={{ fontSize: '26px', fontWeight: '800', color: '#059669', letterSpacing: '-0.02em' }}>{totalFaciles}</div>
                     </div>
                 </div>
 
-                <div className="interactive-card" style={{ background: '#ffffff', borderRadius: '18px', padding: '20px 22px', border: '1px solid #e2e8f0', borderTop: '4px solid #f59e0b', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ background: '#fffbeb', color: '#d97706', padding: '10px', borderRadius: '12px' }}>
-                        <Sparkles size={22} />
+                <div style={{ background: '#ffffff', borderRadius: '14px', padding: '18px 20px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ background: '#fffbeb', color: '#d97706', padding: '10px', borderRadius: '10px' }}>
+                        <Sparkles size={20} />
                     </div>
                     <div>
-                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Nivel Medio</div>
-                        <div style={{ fontSize: '28px', fontWeight: '800', color: '#d97706', letterSpacing: '-0.5px' }}>{totalMedias}</div>
+                        <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>Nivel Medio</div>
+                        <div style={{ fontSize: '26px', fontWeight: '800', color: '#d97706', letterSpacing: '-0.02em' }}>{totalMedias}</div>
                     </div>
                 </div>
 
-                <div className="interactive-card" style={{ background: '#ffffff', borderRadius: '18px', padding: '20px 22px', border: '1px solid #e2e8f0', borderTop: '4px solid #f43f5e', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ background: '#fff1f2', color: '#e11d48', padding: '10px', borderRadius: '12px' }}>
-                        <Award size={22} />
+                <div style={{ background: '#ffffff', borderRadius: '14px', padding: '18px 20px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ background: '#fef2f2', color: '#dc2626', padding: '10px', borderRadius: '10px' }}>
+                        <Award size={20} />
                     </div>
                     <div>
-                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Nivel Difícil</div>
-                        <div style={{ fontSize: '28px', fontWeight: '800', color: '#e11d48', letterSpacing: '-0.5px' }}>{totalDificiles}</div>
+                        <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>Nivel Difícil</div>
+                        <div style={{ fontSize: '26px', fontWeight: '800', color: '#dc2626', letterSpacing: '-0.02em' }}>{totalDificiles}</div>
                     </div>
                 </div>
             </div>
@@ -567,47 +561,61 @@ export default function BancoPreguntasView() {
                         return (
                             <div
                                 key={p.id || idx}
-                                className="interactive-card"
                                 style={{
                                     background: '#ffffff',
-                                    borderRadius: '16px',
+                                    borderRadius: '14px',
                                     border: '1px solid #e2e8f0',
-                                    borderLeft: `4px solid ${difInfo.key === 'FACIL' ? '#10b981' : difInfo.key === 'MEDIA' ? '#f59e0b' : '#f43f5e'}`,
-                                    padding: '22px',
-                                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                                    padding: '20px 22px',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
                                     display: 'flex',
                                     flexDirection: 'column',
                                     gap: '14px',
-                                    transition: 'all 0.2s ease'
+                                    transition: 'all 0.15s ease'
                                 }}
                             >
                                 {/* HEADER DE TARJETA */}
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                                         {/* Chip Materia */}
-                                        <span className="badge-pill badge-blue">
+                                        <span style={{ background: '#f1f5f9', color: '#0f172a', fontSize: '11.5px', fontWeight: '700', padding: '3px 10px', borderRadius: '6px' }}>
                                             {p.materia || 'General'}
                                         </span>
 
                                         {/* Chip Tema si existe */}
                                         {p.tema && (
-                                            <span className="badge-pill badge-slate">
+                                            <span style={{ background: '#f8fafc', color: '#475569', fontSize: '11.5px', fontWeight: '500', padding: '3px 9px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
                                                 {p.tema}
                                             </span>
                                         )}
 
                                         {/* Chip Dificultad */}
-                                        <span className={`badge-pill ${difInfo.key === 'FACIL' ? 'badge-emerald' : difInfo.key === 'MEDIA' ? 'badge-amber' : 'badge-rose'}`}>
-                                            ● {difInfo.label}
+                                        <span style={{
+                                            background: difInfo.key === 'FACIL' ? '#ecfdf5' : difInfo.key === 'MEDIA' ? '#fffbeb' : '#fef2f2',
+                                            color: difInfo.key === 'FACIL' ? '#059669' : difInfo.key === 'MEDIA' ? '#d97706' : '#dc2626',
+                                            fontSize: '11.5px',
+                                            fontWeight: '700',
+                                            padding: '3px 10px',
+                                            borderRadius: '6px',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '5px'
+                                        }}>
+                                            <span style={{
+                                                width: '6px',
+                                                height: '6px',
+                                                borderRadius: '50%',
+                                                backgroundColor: difInfo.key === 'FACIL' ? '#10b981' : difInfo.key === 'MEDIA' ? '#f59e0b' : '#ef4444'
+                                            }} />
+                                            {difInfo.label}
                                         </span>
 
                                         {/* Chip Tipo */}
-                                        <span style={{ background: '#f8fafc', color: '#475569', fontSize: '11px', fontWeight: '600', padding: '3px 8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                                        <span style={{ background: '#f8fafc', color: '#64748b', fontSize: '11.5px', fontWeight: '500', padding: '3px 8px', borderRadius: '6px' }}>
                                             {p.tipo === 'VERDADERO_FALSO' ? 'Verdadero / Falso' : p.tipo === 'RESPUESTA_CORTA' ? 'Respuesta escrita' : 'Opción múltiple'}
                                         </span>
 
                                         {/* Chip Ponderación */}
-                                        <span style={{ background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', fontSize: '11px', fontWeight: '800', padding: '3px 9px', borderRadius: '6px' }}>
+                                        <span style={{ background: '#f1f5f9', color: '#334155', fontSize: '11.5px', fontWeight: '700', padding: '3px 9px', borderRadius: '6px' }}>
                                             {puntosVal.toFixed(1)} pts
                                         </span>
                                     </div>
@@ -617,19 +625,21 @@ export default function BancoPreguntasView() {
                                         <button
                                             onClick={() => abrirEditarModal(p)}
                                             style={{
-                                                background: '#eff6ff',
-                                                border: '1px solid #bfdbfe',
+                                                background: '#f8fafc',
+                                                border: '1px solid #e2e8f0',
                                                 borderRadius: '8px',
                                                 padding: '6px 12px',
-                                                color: '#1d4ed8',
+                                                color: '#0f172a',
                                                 fontSize: '12px',
-                                                fontWeight: '700',
+                                                fontWeight: '600',
                                                 cursor: 'pointer',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 gap: '5px',
                                                 transition: 'all 0.15s ease'
                                             }}
+                                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#eff6ff'; e.currentTarget.style.color = '#2563eb'; }}
+                                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#f8fafc'; e.currentTarget.style.color = '#0f172a'; }}
                                             title="Editar pregunta"
                                         >
                                             <Edit3 size={13} /> Editar
@@ -637,19 +647,21 @@ export default function BancoPreguntasView() {
                                         <button
                                             onClick={() => handleEliminar(p.id)}
                                             style={{
-                                                background: '#fff1f2',
-                                                border: '1px solid #fecdd3',
+                                                background: '#f8fafc',
+                                                border: '1px solid #e2e8f0',
                                                 borderRadius: '8px',
                                                 padding: '6px 10px',
-                                                color: '#e11d48',
+                                                color: '#64748b',
                                                 fontSize: '12px',
-                                                fontWeight: '600',
+                                                fontWeight: '500',
                                                 cursor: 'pointer',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 gap: '4px',
                                                 transition: 'all 0.15s ease'
                                             }}
+                                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#fef2f2'; e.currentTarget.style.color = '#dc2626'; }}
+                                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#f8fafc'; e.currentTarget.style.color = '#64748b'; }}
                                             title="Eliminar del banco"
                                         >
                                             <Trash2 size={13} />
@@ -1025,7 +1037,19 @@ export default function BancoPreguntasView() {
                                 <button
                                     type="submit"
                                     disabled={guardando}
-                                    style={{ padding: '9px 20px', borderRadius: '8px', border: 'none', background: '#10b981', color: '#ffffff', fontSize: '13px', fontWeight: '600', cursor: guardando ? 'not-allowed' : 'pointer' }}
+                                    style={{
+                                        padding: '9px 20px',
+                                        borderRadius: '8px',
+                                        border: 'none',
+                                        background: '#0f172a',
+                                        color: '#ffffff',
+                                        fontSize: '13px',
+                                        fontWeight: '600',
+                                        cursor: guardando ? 'not-allowed' : 'pointer',
+                                        transition: 'all 0.15s ease'
+                                    }}
+                                    onMouseEnter={(e) => { if (!guardando) e.currentTarget.style.backgroundColor = '#1e293b'; }}
+                                    onMouseLeave={(e) => { if (!guardando) e.currentTarget.style.backgroundColor = '#0f172a'; }}
                                 >
                                     {guardando ? 'Guardando...' : preguntaEditando ? 'Actualizar Pregunta' : 'Guardar en Banco'}
                                 </button>
