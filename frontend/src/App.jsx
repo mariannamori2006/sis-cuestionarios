@@ -13,7 +13,8 @@ function App() {
         <BrowserRouter>
             <Routes>
                 {/* Rutas de autenticación */}
-                <Route path="/login" element={<LoginComponent />} />
+                <Route path="/login" element={<LoginComponentV2 />} />
+                <Route path="/login-v1" element={<LoginComponent />} />
                 <Route path="/login-v2" element={<LoginComponentV2 />} />
 
                 {/* Panel exclusivo para Profesores */}
