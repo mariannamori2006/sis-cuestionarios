@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { logout, getCurrentUser } from '../services/authService';
-import { obtenerCuestionarios, obtenerEstadisticas, obtenerActividadReciente } from '../services/cuestionarioService';
+import { obtenerCuestionarios, obtenerEstadisticas, obtenerActividadReciente, obtenerEstadisticasDetalladas } from '../services/cuestionarioService';
 import CuestionariosView from './CuestionariosView';
 import EstadisticasView from './EstadisticasView';
 import ConfiguracionView from './ConfiguracionView';
@@ -27,7 +27,8 @@ import {
     BookOpen,
     Menu,
     X,
-    Activity
+    Activity,
+    TrendingUp
 } from 'lucide-react';
 
 export default function DashboardComponent() {
@@ -50,7 +51,10 @@ export default function DashboardComponent() {
         promedioGeneral: 0.0,
         totalCuestionarios: 0,
         totalRespuestas: 0,
-        alumnosUnicos: 0
+        alumnosUnicos: 0,
+        tasaAprobacion: 0.0,
+        totalAprobados: 0,
+        totalDesaprobados: 0
     });
     const [vistaActiva, setVistaActiva] = useState('panel');
     const [cuestionarioAConfigurarId, setCuestionarioAConfigurarId] = useState(null);
@@ -62,8 +66,29 @@ export default function DashboardComponent() {
             .catch(err => console.error("Error al cargar cuestionarios:", err));
 
         obtenerEstadisticas()
-            .then(stats => setEstadisticas(stats))
+            .then(stats => {
+                if (stats) {
+                    setEstadisticas(prev => ({ ...prev, ...stats }));
+                }
+            })
             .catch(err => console.error("Error al cargar estadísticas:", err));
+
+        obtenerEstadisticasDetalladas()
+            .then(detalladas => {
+                if (detalladas) {
+                    const aprobados = (detalladas.distribucion?.rango18_20 || 0) + 
+                                     (detalladas.distribucion?.rango15_17 || 0) + 
+                                     (detalladas.distribucion?.rango11_14 || 0);
+                    const desaprobados = detalladas.distribucion?.rango0_10 || 0;
+                    setEstadisticas(prev => ({
+                        ...prev,
+                        tasaAprobacion: detalladas.tasaAprobacion !== undefined ? detalladas.tasaAprobacion : prev.tasaAprobacion,
+                        totalAprobados: aprobados,
+                        totalDesaprobados: desaprobados
+                    }));
+                }
+            })
+            .catch(err => console.error("Error al cargar estadísticas detalladas:", err));
 
         obtenerActividadReciente()
             .then(act => setActividadReciente(act))
@@ -82,6 +107,16 @@ export default function DashboardComponent() {
     const promedioTexto = (estadisticas.promedioGeneral > 0)
         ? `${estadisticas.promedioGeneral.toFixed(1)}`
         : '0.0';
+
+    const tasaAprobacionTexto = (estadisticas.tasaAprobacion !== undefined && estadisticas.tasaAprobacion !== null)
+        ? `${Number(estadisticas.tasaAprobacion).toFixed(1)}%`
+        : '0.0%';
+
+    const aprobadosCount = estadisticas.totalAprobados || 0;
+    const desaprobadosCount = estadisticas.totalDesaprobados || 0;
+    const subtituloAprobacion = (aprobadosCount > 0 || desaprobadosCount > 0)
+        ? `${aprobadosCount} aprobados · ${desaprobadosCount} en riesgo`
+        : 'Calificaciones registradas (≥ 11/20)';
 
     // Cuestionarios ordenados por mayor cantidad de respuestas para la tarjeta "Más respondidos"
     const masRespondidos = [...cuestionarios]
@@ -346,8 +381,8 @@ export default function DashboardComponent() {
                             <div style={{ background: '#ffffff', padding: '20px 22px', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                                     <span style={{ fontSize: '12.5px', color: '#64748b', fontWeight: '600' }}>Entregas Realizadas</span>
-                                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <Edit3 size={18} color="#059669" />
+                                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#f0f9ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Edit3 size={18} color="#0284c7" />
                                     </div>
                                 </div>
                                 <div>
@@ -358,19 +393,19 @@ export default function DashboardComponent() {
                                 </div>
                             </div>
 
-                            {/* Tarjeta 3: Alumnos únicos */}
+                            {/* Tarjeta 3: Tasa de Aprobación */}
                             <div style={{ background: '#ffffff', padding: '20px 22px', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                                    <span style={{ fontSize: '12.5px', color: '#64748b', fontWeight: '600' }}>Alumnos Evaluados</span>
-                                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <Users size={18} color="#0f172a" />
+                                    <span style={{ fontSize: '12.5px', color: '#64748b', fontWeight: '600' }}>Tasa de Aprobación</span>
+                                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <TrendingUp size={18} color="#059669" />
                                     </div>
                                 </div>
                                 <div>
                                     <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '2px' }}>
-                                        {estadisticas.alumnosUnicos}
+                                        {tasaAprobacionTexto}
                                     </div>
-                                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>Estudiantes únicos evaluados</span>
+                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>{subtituloAprobacion}</span>
                                 </div>
                             </div>
 

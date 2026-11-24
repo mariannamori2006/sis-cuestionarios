@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import logoNativa from '../../images/logoNativa.jpeg';
 import {
     LayoutDashboard,
     FileText,
@@ -8,8 +7,6 @@ import {
     Sliders,
     User,
     LogOut,
-    ChevronLeft,
-    ChevronRight,
     X
 } from 'lucide-react';
 
@@ -25,17 +22,13 @@ export default function Sidebar({
     menuAbierto = false,
     setMenuAbierto = () => {}
 }) {
-    const [colapsado, setColapsado] = useState(() => {
-        return localStorage.getItem('nativatec_sidebar_collapsed') === 'true';
-    });
+    // Estado de hover: se expande al entrar el mouse y se contrae al salir
+    const [isHovered, setIsHovered] = useState(false);
 
-    const toggleColapso = () => {
-        const nuevoEstado = !colapsado;
-        setColapsado(nuevoEstado);
-        localStorage.setItem('nativatec_sidebar_collapsed', String(nuevoEstado));
-    };
+    // En escritorio se expande cuando el cursor entra; en móvil se rige por menuAbierto
+    const isExpanded = isMobile ? menuAbierto : isHovered;
 
-    // Ítems de navegación principal (la configuración ahora es exclusiva de cuestionarios/exámenes)
+    // Ítems de navegación del docente
     const navItems = [
         { id: 'panel', label: 'Panel principal', icon: LayoutDashboard },
         { id: 'cuestionarios', label: 'Cuestionarios', icon: FileText, count: cuestionariosCount },
@@ -44,122 +37,164 @@ export default function Sidebar({
         { id: 'configuracion', label: 'Configuración de exámenes', icon: Sliders },
     ];
 
-    // Ancho cómodo: 320px expandido, 80px colapsado
-    const ancho = isMobile ? '320px' : (colapsado ? '80px' : '320px');
+    // Ancho: 68px colapsado (solo iconos), 260px expandido al hacer hover
+    const ancho = isMobile ? '280px' : (isExpanded ? '260px' : '68px');
 
     return (
         <>
+            {/* Overlay para móvil */}
             {isMobile && menuAbierto && (
                 <div
                     onClick={() => setMenuAbierto(false)}
                     style={{
                         position: 'fixed',
                         inset: 0,
-                        backgroundColor: 'rgba(0, 0, 0, 0.45)',
-                        backdropFilter: 'blur(3px)',
+                        backgroundColor: 'rgba(7, 9, 20, 0.75)',
+                        backdropFilter: 'blur(6px)',
                         zIndex: 1100
                     }}
                 />
             )}
 
             <aside
+                onMouseEnter={() => {
+                    if (!isMobile) setIsHovered(true);
+                }}
+                onMouseLeave={() => {
+                    if (!isMobile) setIsHovered(false);
+                }}
                 style={{
                     width: ancho,
                     minWidth: ancho,
-                    backgroundColor: '#090d16',
+                    background: 'linear-gradient(180deg, #070914 0%, #0a0d1e 50%, #060814 100%)',
                     color: '#e2e8f0',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    padding: isMobile ? '24px 18px' : (colapsado ? '22px 14px' : '26px 18px'),
+                    padding: isExpanded ? '22px 14px' : '22px 10px',
                     position: isMobile ? 'fixed' : 'relative',
                     top: 0,
                     bottom: 0,
-                    left: isMobile ? (menuAbierto ? 0 : '-330px') : 0,
-                    zIndex: isMobile ? 1200 : 20,
-                    borderRight: '1px solid #1e293b',
+                    left: isMobile ? (menuAbierto ? 0 : '-300px') : 0,
+                    zIndex: isMobile ? 1200 : 30,
+                    borderRight: '1px solid rgba(99, 102, 241, 0.18)',
                     boxSizing: 'border-box',
-                    transition: 'width 0.22s cubic-bezier(0.4, 0, 0.2, 1), left 0.25s ease'
+                    transition: 'width 0.26s cubic-bezier(0.25, 1, 0.5, 1), padding 0.26s ease, left 0.25s ease, box-shadow 0.26s ease',
+                    boxShadow: isExpanded ? '6px 0 30px rgba(0, 0, 0, 0.55), 2px 0 15px rgba(99, 102, 241, 0.12)' : 'none',
+                    overflow: 'hidden',
+                    userSelect: 'none'
                 }}
             >
-                {/* PARTE SUPERIOR */}
-                <div>
-                    {/* Header: Logo institucional y Botón colapsar */}
+                {/* RESPLANDORES CÓSMICOS DE FONDO (PALETA LOGIN NEXUS) */}
+                <div style={{
+                    position: 'absolute',
+                    top: '-45px',
+                    left: '-45px',
+                    width: '150px',
+                    height: '150px',
+                    borderRadius: '50%',
+                    background: 'radial-gradient(circle, rgba(99, 102, 241, 0.22) 0%, transparent 70%)',
+                    pointerEvents: 'none',
+                    zIndex: 0
+                }} />
+                <div style={{
+                    position: 'absolute',
+                    bottom: '-35px',
+                    right: '-35px',
+                    width: '130px',
+                    height: '130px',
+                    borderRadius: '50%',
+                    background: 'radial-gradient(circle, rgba(56, 189, 248, 0.16) 0%, transparent 70%)',
+                    pointerEvents: 'none',
+                    zIndex: 0
+                }} />
+
+                {/* SECCIÓN SUPERIOR: LOGO Y NAVEGACIÓN */}
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                    {/* Header: Logo squircle con neón Nexus */}
                     <div style={{
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: colapsado && !isMobile ? 'center' : 'space-between',
-                        marginBottom: '30px',
-                        padding: '0 2px'
+                        justifyContent: isExpanded ? 'space-between' : 'center',
+                        marginBottom: '28px',
+                        padding: isExpanded ? '0 6px' : '0',
+                        height: '36px'
                     }}>
-                        {colapsado && !isMobile ? (
-                            <button
-                                onClick={toggleColapso}
-                                title="Expandir menú"
-                                style={{
-                                    width: '40px',
-                                    height: '40px',
-                                    borderRadius: '10px',
-                                    background: '#1e293b',
-                                    color: '#ffffff',
-                                    border: '1px solid #334155',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    cursor: 'pointer',
-                                    fontWeight: '800',
-                                    fontSize: '15px'
-                                }}
-                            >
-                                N
-                            </button>
-                        ) : (
-                            <div style={{
+                        <div
+                            style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '8px',
-                                background: '#ffffff',
-                                padding: '6px 14px',
-                                borderRadius: '10px',
-                                maxWidth: '190px'
+                                gap: '12px',
+                                overflow: 'hidden',
+                                cursor: 'pointer'
+                            }}
+                            onClick={() => cambiarVista('panel')}
+                            title="NativaTec"
+                        >
+                            {/* Squircle icono con gradiente cósmico y borde cian neón */}
+                            <div style={{
+                                width: '28px',
+                                height: '26px',
+                                background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(99, 102, 241, 0.35) 100%)',
+                                border: '1.5px solid rgba(56, 189, 248, 0.65)',
+                                borderRadius: '8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                                boxShadow: '0 0 14px rgba(56, 189, 248, 0.35), inset 0 0 8px rgba(99, 102, 241, 0.25)'
                             }}>
-                                <img src={logoNativa} alt="NativaTec" style={{ height: '22px', objectFit: 'contain' }} />
+                                <span style={{
+                                    color: '#ffffff',
+                                    fontWeight: '900',
+                                    fontSize: '13px',
+                                    lineHeight: 1,
+                                    filter: 'drop-shadow(0 0 4px #38bdf8)'
+                                }}>
+                                    N
+                                </span>
                             </div>
-                        )}
 
-                        {isMobile ? (
+                            {/* Nombre de la marca con gradiente neón como en el Login */}
+                            <span style={{
+                                background: 'linear-gradient(90deg, #ffffff 0%, #cbd5e1 45%, #38bdf8 100%)',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                fontWeight: '700',
+                                fontSize: '15px',
+                                letterSpacing: '-0.02em',
+                                whiteSpace: 'nowrap',
+                                opacity: isExpanded ? 1 : 0,
+                                transform: isExpanded ? 'translateX(0)' : 'translateX(-8px)',
+                                transition: 'opacity 0.2s ease 0.04s, transform 0.2s ease 0.04s',
+                                overflow: 'hidden',
+                                filter: 'drop-shadow(0 0 10px rgba(56, 189, 248, 0.25))'
+                            }}>
+                                NativaTec
+                            </span>
+                        </div>
+
+                        {/* Botón cerrar en móvil */}
+                        {isMobile && (
                             <button
                                 onClick={() => setMenuAbierto(false)}
-                                style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '6px' }}
+                                style={{
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: '#94a3b8',
+                                    cursor: 'pointer',
+                                    padding: '4px',
+                                    display: 'flex',
+                                    alignItems: 'center'
+                                }}
                             >
                                 <X size={20} />
                             </button>
-                        ) : (
-                            !colapsado && (
-                                <button
-                                    onClick={toggleColapso}
-                                    title="Colapsar menú"
-                                    style={{
-                                        background: 'transparent',
-                                        border: 'none',
-                                        color: '#64748b',
-                                        cursor: 'pointer',
-                                        padding: '6px',
-                                        borderRadius: '8px',
-                                        display: 'flex',
-                                        alignItems: 'center'
-                                    }}
-                                    onMouseEnter={(e) => { e.currentTarget.style.color = '#ffffff'; e.currentTarget.style.background = '#1e293b'; }}
-                                    onMouseLeave={(e) => { e.currentTarget.style.color = '#64748b'; e.currentTarget.style.background = 'transparent'; }}
-                                >
-                                    <ChevronLeft size={18} />
-                                </button>
-                            )
                         )}
                     </div>
 
-                    {/* Menú de navegación con botones cómodos y bien espaciados */}
-                    <nav style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {/* Menú de navegación */}
+                    <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         {navItems.map((item) => {
                             const Icon = item.icon;
                             const isActive = vistaActiva === item.id;
@@ -167,58 +202,87 @@ export default function Sidebar({
                             return (
                                 <button
                                     key={item.id}
-                                    onClick={() => cambiarVista(item.id)}
-                                    title={colapsado ? item.label : undefined}
+                                    onClick={() => {
+                                        cambiarVista(item.id);
+                                        if (isMobile) setMenuAbierto(false);
+                                    }}
+                                    title={!isExpanded ? item.label : undefined}
                                     style={{
                                         display: 'flex',
                                         alignItems: 'center',
-                                        justifyContent: colapsado && !isMobile ? 'center' : 'flex-start',
+                                        justifyContent: isExpanded ? 'flex-start' : 'center',
                                         gap: '12px',
                                         width: '100%',
-                                        padding: colapsado && !isMobile ? '12px' : '12px 16px',
-                                        borderRadius: '10px',
+                                        padding: isExpanded ? '10px 12px' : '10px 0',
+                                        borderRadius: '8px',
                                         cursor: 'pointer',
-                                        border: 'none',
-                                        fontSize: '14px',
+                                        fontSize: '13.5px',
                                         fontWeight: isActive ? '600' : '500',
-                                        backgroundColor: isActive ? '#1e293b' : 'transparent',
+                                        background: isActive
+                                            ? 'linear-gradient(90deg, rgba(99, 102, 241, 0.24) 0%, rgba(168, 85, 247, 0.14) 100%)'
+                                            : 'transparent',
+                                        border: isActive
+                                            ? '1px solid rgba(99, 102, 241, 0.45)'
+                                            : '1px solid transparent',
+                                        boxShadow: isActive
+                                            ? '0 0 16px rgba(99, 102, 241, 0.22), inset 0 0 8px rgba(99, 102, 241, 0.1)'
+                                            : 'none',
                                         color: isActive ? '#ffffff' : '#94a3b8',
-                                        transition: 'all 0.15s ease'
+                                        transition: 'all 0.18s ease',
+                                        position: 'relative'
                                     }}
                                     onMouseEnter={(e) => {
                                         if (!isActive) {
-                                            e.currentTarget.style.backgroundColor = 'rgba(30, 41, 59, 0.55)';
+                                            e.currentTarget.style.background = 'rgba(99, 102, 241, 0.08)';
+                                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
                                             e.currentTarget.style.color = '#ffffff';
                                         }
                                     }}
                                     onMouseLeave={(e) => {
                                         if (!isActive) {
-                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                            e.currentTarget.style.background = 'transparent';
+                                            e.currentTarget.style.borderColor = 'transparent';
                                             e.currentTarget.style.color = '#94a3b8';
                                         }
                                     }}
                                 >
                                     <Icon
-                                        size={20}
+                                        size={19}
                                         strokeWidth={isActive ? 2.2 : 1.8}
-                                        style={{ color: isActive ? '#38bdf8' : 'currentColor', flexShrink: 0 }}
+                                        style={{
+                                            color: isActive ? '#38bdf8' : 'currentColor',
+                                            filter: isActive ? 'drop-shadow(0 0 6px rgba(56, 189, 248, 0.6))' : 'none',
+                                            flexShrink: 0,
+                                            transition: 'color 0.18s ease'
+                                        }}
                                     />
 
-                                    {(!colapsado || isMobile) && (
-                                        <span style={{ whiteSpace: 'nowrap' }}>
-                                            {item.label}
-                                        </span>
-                                    )}
+                                    {/* Texto del ítem con transición suave */}
+                                    <span style={{
+                                        whiteSpace: 'nowrap',
+                                        opacity: isExpanded ? 1 : 0,
+                                        transform: isExpanded ? 'translateX(0)' : 'translateX(-8px)',
+                                        transition: 'opacity 0.2s ease 0.04s, transform 0.2s ease 0.04s',
+                                        overflow: 'hidden',
+                                        maxWidth: isExpanded ? '180px' : '0px',
+                                        display: 'inline-block'
+                                    }}>
+                                        {item.label}
+                                    </span>
 
-                                    {item.count !== undefined && item.count > 0 && (!colapsado || isMobile) && (
+                                    {/* Contador de cuestionarios con estilo neón */}
+                                    {item.count !== undefined && item.count > 0 && isExpanded && (
                                         <span style={{
                                             marginLeft: 'auto',
-                                            background: '#1e293b',
-                                            color: '#94a3b8',
-                                            fontSize: '12px',
+                                            background: 'rgba(99, 102, 241, 0.25)',
+                                            border: '1px solid rgba(99, 102, 241, 0.45)',
+                                            color: '#38bdf8',
+                                            fontSize: '11px',
                                             fontWeight: '600',
-                                            padding: '2px 8px',
-                                            borderRadius: '6px'
+                                            padding: '2px 7px',
+                                            borderRadius: '6px',
+                                            whiteSpace: 'nowrap',
+                                            boxShadow: '0 0 8px rgba(99, 102, 241, 0.25)'
                                         }}>
                                             {item.count}
                                         </span>
@@ -226,108 +290,145 @@ export default function Sidebar({
                                 </button>
                             );
                         })}
+
+                        {/* BOTÓN CERRAR SESIÓN EN EL MENÚ SUPERIOR */}
+                        <button
+                            onClick={() => {
+                                onLogout();
+                                if (isMobile) setMenuAbierto(false);
+                            }}
+                            title={!isExpanded ? 'Cerrar sesión' : undefined}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: isExpanded ? 'flex-start' : 'center',
+                                gap: '12px',
+                                width: '100%',
+                                padding: isExpanded ? '10px 12px' : '10px 0',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                border: '1px solid transparent',
+                                fontSize: '13.5px',
+                                fontWeight: '500',
+                                background: 'transparent',
+                                color: '#94a3b8',
+                                transition: 'all 0.18s ease',
+                                marginTop: '4px'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)';
+                                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.35)';
+                                e.currentTarget.style.color = '#f87171';
+                                e.currentTarget.style.boxShadow = '0 0 14px rgba(239, 68, 68, 0.2)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'transparent';
+                                e.currentTarget.style.borderColor = 'transparent';
+                                e.currentTarget.style.color = '#94a3b8';
+                                e.currentTarget.style.boxShadow = 'none';
+                            }}
+                        >
+                            <LogOut
+                                size={19}
+                                strokeWidth={1.8}
+                                style={{ flexShrink: 0 }}
+                            />
+                            <span style={{
+                                whiteSpace: 'nowrap',
+                                opacity: isExpanded ? 1 : 0,
+                                transform: isExpanded ? 'translateX(0)' : 'translateX(-8px)',
+                                transition: 'opacity 0.2s ease 0.04s, transform 0.2s ease 0.04s',
+                                overflow: 'hidden',
+                                maxWidth: isExpanded ? '180px' : '0px',
+                                display: 'inline-block'
+                            }}>
+                                Cerrar sesión
+                            </span>
+                        </button>
                     </nav>
                 </div>
 
-                {/* TARJETA DE PERFIL DEL USUARIO REGISTRADO (MÁS PEGADO A ABAJO QUE A ARRIBA) */}
+                {/* SECCIÓN INFERIOR: SOLO AVATAR Y NOMBRE (PALETA CÓSMICA NEXUS) */}
                 <div style={{
+                    position: 'relative',
+                    zIndex: 1,
                     marginTop: 'auto',
-                    marginBottom: '16px',
-                    borderTop: '1px solid #1e293b',
-                    paddingTop: '16px'
+                    borderTop: '1px solid rgba(99, 102, 241, 0.18)',
+                    paddingTop: '14px'
                 }}>
                     <div
-                        onClick={() => cambiarVista('perfil')}
-                        title={colapsado ? 'Mi Perfil y Cuenta' : undefined}
+                        onClick={() => {
+                            cambiarVista('perfil');
+                            if (isMobile) setMenuAbierto(false);
+                        }}
+                        title={!isExpanded ? `${userName} (Mi Perfil)` : undefined}
                         style={{
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: colapsado && !isMobile ? 'center' : 'space-between',
+                            justifyContent: isExpanded ? 'flex-start' : 'center',
                             gap: '12px',
-                            padding: colapsado && !isMobile ? '8px 0' : '9px 12px',
-                            borderRadius: '10px',
+                            padding: isExpanded ? '6px 8px' : '6px 0',
+                            borderRadius: '8px',
                             cursor: 'pointer',
-                            backgroundColor: vistaActiva === 'perfil' ? '#1e293b' : 'rgba(15, 23, 42, 0.45)',
-                            border: vistaActiva === 'perfil' ? '1px solid #334155' : '1px solid transparent',
-                            transition: 'all 0.15s ease'
+                            background: vistaActiva === 'perfil'
+                                ? 'linear-gradient(90deg, rgba(99, 102, 241, 0.24) 0%, rgba(168, 85, 247, 0.14) 100%)'
+                                : 'transparent',
+                            border: vistaActiva === 'perfil'
+                                ? '1px solid rgba(99, 102, 241, 0.45)'
+                                : '1px solid transparent',
+                            boxShadow: vistaActiva === 'perfil'
+                                ? '0 0 14px rgba(99, 102, 241, 0.22)'
+                                : 'none',
+                            transition: 'all 0.18s ease'
                         }}
                         onMouseEnter={(e) => {
                             if (vistaActiva !== 'perfil') {
-                                e.currentTarget.style.backgroundColor = 'rgba(30, 41, 59, 0.55)';
+                                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+                                e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.25)';
                             }
                         }}
                         onMouseLeave={(e) => {
                             if (vistaActiva !== 'perfil') {
-                                e.currentTarget.style.backgroundColor = 'rgba(15, 23, 42, 0.45)';
+                                e.currentTarget.style.background = 'transparent';
+                                e.currentTarget.style.borderColor = 'transparent';
                             }
                         }}
                     >
-                        <div
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px',
-                                overflow: 'hidden',
-                                flex: 1,
-                                minWidth: 0
-                            }}
-                        >
-                            {/* Avatar con iniciales */}
-                            <div style={{
-                                width: '38px',
-                                height: '38px',
-                                borderRadius: '10px',
-                                backgroundColor: '#2563eb',
-                                color: '#ffffff',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '13.5px',
-                                fontWeight: '700',
-                                flexShrink: 0,
-                                boxShadow: vistaActiva === 'perfil' ? '0 0 0 2px #38bdf8' : 'none',
-                                transition: 'all 0.15s ease'
-                            }}>
-                                {userInitials}
-                            </div>
-
-                            {(!colapsado || isMobile) && (
-                                <div style={{ overflow: 'hidden', lineHeight: 1.35, minWidth: 0, flex: 1 }}>
-                                    <div style={{ fontSize: '13.5px', fontWeight: '600', color: '#f1f5f9', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                                        {userName}
-                                    </div>
-                                    <div style={{ fontSize: '11.5px', color: '#94a3b8', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                                        {userEmail}
-                                    </div>
-                                </div>
-                            )}
+                        {/* Avatar circular con el gradiente cósmico oficial de Nexus */}
+                        <div style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #38bdf8 100%)',
+                            color: '#ffffff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            flexShrink: 0,
+                            boxShadow: '0 0 12px rgba(99, 102, 241, 0.45)',
+                            border: '1.5px solid rgba(56, 189, 248, 0.55)'
+                        }}>
+                            {userInitials}
                         </div>
 
-                        {(!colapsado || isMobile) && (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onLogout();
-                                }}
-                                title="Cerrar sesión"
-                                style={{
-                                    background: 'transparent',
-                                    border: 'none',
-                                    color: '#64748b',
-                                    cursor: 'pointer',
-                                    padding: '8px',
-                                    borderRadius: '8px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    flexShrink: 0,
-                                    transition: 'all 0.15s ease'
-                                }}
-                                onMouseEnter={(e) => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)'; }}
-                                onMouseLeave={(e) => { e.currentTarget.style.color = '#64748b'; e.currentTarget.style.background = 'transparent'; }}
-                            >
-                                <LogOut size={17} />
-                            </button>
-                        )}
+                        {/* SOLO EL NOMBRE (ESTILO MANU ARORA) */}
+                        <span style={{
+                            fontSize: '13.5px',
+                            fontWeight: '600',
+                            color: '#f8fafc',
+                            whiteSpace: 'nowrap',
+                            textOverflow: 'ellipsis',
+                            overflow: 'hidden',
+                            maxWidth: isExpanded ? '180px' : '0px',
+                            opacity: isExpanded ? 1 : 0,
+                            transform: isExpanded ? 'translateX(0)' : 'translateX(-8px)',
+                            transition: 'opacity 0.2s ease 0.04s, transform 0.2s ease 0.04s, max-width 0.2s ease',
+                            display: 'inline-block'
+                        }}>
+                            {userName}
+                        </span>
                     </div>
                 </div>
             </aside>

@@ -397,7 +397,23 @@ public class IntentoCuestionarioService {
         if (totalRespuestas == null) totalRespuestas = 0L;
         if (alumnosUnicos == null) alumnosUnicos = 0L;
 
-        return new EstadisticasDashboardDTO(promedioCalculado, totalCuestionarios, totalRespuestas, alumnosUnicos);
+        List<IntentoCuestionario> intentos = intentoRepository.findAll();
+        int totalCalificados = 0;
+        int totalAprobados = 0;
+        for (IntentoCuestionario i : intentos) {
+            if (i.getCalificacion() != null) {
+                totalCalificados++;
+                if (i.getCalificacion() >= 11.0) {
+                    totalAprobados++;
+                }
+            }
+        }
+        double tasaAprobacion = totalCalificados > 0
+                ? Math.round(((double) totalAprobados / totalCalificados * 100.0) * 10.0) / 10.0
+                : 0.0;
+        long totalDesaprobados = totalCalificados - totalAprobados;
+
+        return new EstadisticasDashboardDTO(promedioCalculado, totalCuestionarios, totalRespuestas, alumnosUnicos, tasaAprobacion, (long) totalAprobados, totalDesaprobados);
     }
 
     // Obtener estadísticas filtradas exclusivamente por el profesor autenticado
@@ -413,7 +429,23 @@ public class IntentoCuestionarioService {
         if (totalRespuestas == null) totalRespuestas = 0L;
         if (alumnosUnicos == null) alumnosUnicos = 0L;
 
-        return new EstadisticasDashboardDTO(promedioCalculado, totalCuestionarios, totalRespuestas, alumnosUnicos);
+        List<IntentoCuestionario> intentos = intentoRepository.findByCreadoPorProfesorId(profesorId);
+        int totalCalificados = 0;
+        int totalAprobados = 0;
+        for (IntentoCuestionario i : intentos) {
+            if (i.getCalificacion() != null) {
+                totalCalificados++;
+                if (i.getCalificacion() >= 11.0) {
+                    totalAprobados++;
+                }
+            }
+        }
+        double tasaAprobacion = totalCalificados > 0
+                ? Math.round(((double) totalAprobados / totalCalificados * 100.0) * 10.0) / 10.0
+                : 0.0;
+        long totalDesaprobados = totalCalificados - totalAprobados;
+
+        return new EstadisticasDashboardDTO(promedioCalculado, totalCuestionarios, totalRespuestas, alumnosUnicos, tasaAprobacion, (long) totalAprobados, totalDesaprobados);
     }
 
     // Obtener estadísticas detalladas completas para el módulo de estadísticas

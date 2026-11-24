@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Chart as ChartJS, registerables } from 'chart.js';
 import { obtenerEstadisticasDetalladas } from '../services/cuestionarioService';
 import useResponsive from '../hooks/useResponsive';
+import PulsingLoader from '../components/common/PulsingLoader';
 import {
     BarChart3,
     PieChart as PieIcon,
@@ -299,8 +300,8 @@ export default function EstadisticasView() {
 
     if (loading) {
         return (
-            <div style={{ padding: '60px 0', textAlign: 'center', color: '#64748b', fontSize: '14px' }}>
-                Cargando métricas y análisis de rendimiento...
+            <div style={{ padding: '80px 0', textAlign: 'center', display: 'flex', justifyContent: 'center' }}>
+                <PulsingLoader size="lg" color="primary" text="Cargando métricas y análisis de rendimiento..." textPosition="bottom" />
             </div>
         );
     }

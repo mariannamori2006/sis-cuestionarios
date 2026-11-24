@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { getCurrentUser } from '../services/authService';
 import { actualizarUsuario } from '../services/usuarioService';
 import { obtenerCuestionarios, obtenerCuestionarioPorId, actualizarCuestionario } from '../services/cuestionarioService';
+import PulsingLoader from '../components/common/PulsingLoader';
 import {
     Check,
     Camera,
@@ -659,8 +660,8 @@ export default function ConfiguracionView({
 
                                 {/* CONTENIDO DEL EXAMEN SELECCIONADO */}
                                 {cargandoDetalleExamen ? (
-                                    <div style={{ padding: '40px', textAlign: 'center', color: '#64748b', fontSize: '14px' }}>
-                                        Cargando configuración del examen...
+                                    <div style={{ padding: '50px 20px', textAlign: 'center', display: 'flex', justifyContent: 'center' }}>
+                                        <PulsingLoader size="md" color="primary" text="Cargando configuración del examen..." textPosition="bottom" />
                                     </div>
                                 ) : datosExamen ? (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
@@ -1169,8 +1170,14 @@ export default function ConfiguracionView({
                                                 onMouseEnter={(e) => { if (!guardandoExamen) e.currentTarget.style.backgroundColor = '#1e293b'; }}
                                                 onMouseLeave={(e) => { if (!guardandoExamen) e.currentTarget.style.backgroundColor = '#0f172a'; }}
                                             >
-                                                <Save size={15} />
-                                                <span>{guardandoExamen ? 'Guardando...' : 'Guardar Parámetros de este Examen'}</span>
+                                                {guardandoExamen ? (
+                                                    <PulsingLoader size="sm" color="white" text="Guardando..." />
+                                                ) : (
+                                                    <>
+                                                        <Save size={15} />
+                                                        <span>Guardar Parámetros de este Examen</span>
+                                                    </>
+                                                )}
                                             </button>
                                         </div>
                                     </div>
@@ -1388,8 +1395,14 @@ export default function ConfiguracionView({
                                 onMouseEnter={(e) => { if (!guardandoDefault) e.currentTarget.style.backgroundColor = '#1e293b'; }}
                                 onMouseLeave={(e) => { if (!guardandoDefault) e.currentTarget.style.backgroundColor = '#0f172a'; }}
                             >
-                                <Save size={15} />
-                                <span>{guardandoDefault ? 'Guardando...' : 'Guardar Reglas Predeterminadas'}</span>
+                                {guardandoDefault ? (
+                                    <PulsingLoader size="sm" color="white" text="Guardando..." />
+                                ) : (
+                                    <>
+                                        <Save size={15} />
+                                        <span>Guardar Reglas Predeterminadas</span>
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>
@@ -1638,7 +1651,11 @@ export default function ConfiguracionView({
                                 onMouseEnter={(e) => { if (!guardandoPerfil) e.currentTarget.style.backgroundColor = '#1e293b'; }}
                                 onMouseLeave={(e) => { if (!guardandoPerfil) e.currentTarget.style.backgroundColor = '#0f172a'; }}
                             >
-                                {guardandoPerfil ? 'Guardando...' : 'Guardar Perfil'}
+                                {guardandoPerfil ? (
+                                    <PulsingLoader size="sm" color="white" text="Guardando perfil..." />
+                                ) : (
+                                    'Guardar Perfil'
+                                )}
                             </button>
                         </div>
                     </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import useResponsive from '../hooks/useResponsive';
+import PulsingLoader from '../components/common/PulsingLoader';
 import {
     obtenerPreguntasBanco,
     obtenerMateriasBanco,
@@ -524,8 +525,8 @@ export default function BancoPreguntasView() {
 
             {/* LISTADO DE PREGUNTAS */}
             {cargando ? (
-                <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>
-                    <div style={{ fontSize: '15px', fontWeight: '500' }}>Cargando banco de preguntas...</div>
+                <div style={{ textAlign: 'center', padding: '70px 0' }}>
+                    <PulsingLoader size="lg" color="primary" text="Cargando banco de preguntas..." textPosition="bottom" />
                 </div>
             ) : preguntas.length === 0 ? (
                 <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px dashed #cbd5e1', padding: '60px 20px', textAlign: 'center' }}>
@@ -1051,7 +1052,11 @@ export default function BancoPreguntasView() {
                                     onMouseEnter={(e) => { if (!guardando) e.currentTarget.style.backgroundColor = '#1e293b'; }}
                                     onMouseLeave={(e) => { if (!guardando) e.currentTarget.style.backgroundColor = '#0f172a'; }}
                                 >
-                                    {guardando ? 'Guardando...' : preguntaEditando ? 'Actualizar Pregunta' : 'Guardar en Banco'}
+                                    {guardando ? (
+                                        <PulsingLoader size="sm" color="white" text="Guardando..." />
+                                    ) : (
+                                        preguntaEditando ? 'Actualizar Pregunta' : 'Guardar en Banco'
+                                    )}
                                 </button>
                             </div>
                         </form>

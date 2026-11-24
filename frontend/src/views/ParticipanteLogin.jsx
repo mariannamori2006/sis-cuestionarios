@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import api from '../services/api';
 import logoNativa from '../images/logoNativa.jpeg';
+import PulsingLoader from '../components/common/PulsingLoader';
 import useResponsive from '../hooks/useResponsive';
 import {
     User,
@@ -556,7 +557,7 @@ export default function ParticipanteLogin() {
                             }}
                         >
                             {validando ? (
-                                <>Validando con el servidor...</>
+                                <PulsingLoader size="sm" color="white" text="Validando con el servidor..." />
                             ) : (
                                 <>
                                     Continuar al examen <ArrowRight size={17} />
@@ -783,7 +784,7 @@ export default function ParticipanteLogin() {
                                 }}
                             >
                                 {validando ? (
-                                    <>Preparando examen...</>
+                                    <PulsingLoader size="sm" color="white" text="Preparando examen..." />
                                 ) : (
                                     <>
                                         Comenzar Evaluación <ArrowRight size={17} />

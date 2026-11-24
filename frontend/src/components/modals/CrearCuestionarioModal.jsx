@@ -3,7 +3,9 @@ import { crearCuestionario, actualizarCuestionario } from '../../services/cuesti
 import { descargarPlantillaExcel, procesarArchivoPreguntas } from '../../services/excelService';
 import { obtenerPreguntasBanco, crearPreguntaBanco } from '../../services/bancoPreguntaService';
 import AlertaModal from './AlertaModal';
-import { X, UploadCloud, Download, Plus, Trash2, CheckCircle2, Type, CheckSquare, Shuffle, AlertCircle, Image as ImageIcon, Link2, ShieldAlert, Calendar, RotateCcw, Lightbulb, Users, ChevronDown, Award, BookOpen, Sparkles, Check, Search, Layers, Clock } from 'lucide-react';
+import PulsingLoader from '../common/PulsingLoader';
+import useResponsive from '../../hooks/useResponsive';
+import { ArrowLeft, X, UploadCloud, Download, Plus, Trash2, CheckCircle2, Type, CheckSquare, Shuffle, AlertCircle, Image as ImageIcon, Link2, ShieldAlert, Calendar, RotateCcw, Lightbulb, Users, ChevronDown, Award, BookOpen, Sparkles, Check, Search, Layers, Clock } from 'lucide-react';
 
 const ToggleSwitch = ({ checked, onChange, activeColor = '#2563eb' }) => (
     <div
@@ -71,6 +73,7 @@ export default function CrearCuestionarioModal({
     cuestionarioAEditar = null,
     onIrAConfiguracion = null
 }) {
+    const { isMobile } = useResponsive();
     const [tabActiva, setTabActiva] = useState('manual'); // 'manual' o 'importar'
 
     // Campos del cuestionario
@@ -788,80 +791,114 @@ export default function CrearCuestionarioModal({
     const esFormularioValido = titulo.trim().length > 0;
 
     return (
-        <div
-            onClick={onClose}
-            style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                width: '100vw',
-                height: '100vh',
-                backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                zIndex: 1000,
-                padding: '20px',
-                boxSizing: 'border-box',
-                backdropFilter: 'blur(6px)'
-            }}
-        >
-            <div
-                onClick={(e) => e.stopPropagation()}
-                className="animate-scale-up"
+        <div style={{ maxWidth: '1100px', width: '100%', boxSizing: 'border-box', margin: '0 auto', paddingBottom: '40px' }}>
+            {/* BOTÓN VOLVER ATRÁS */}
+            <button
+                type="button"
+                onClick={onClose}
                 style={{
-                    backgroundColor: '#ffffff',
-                    borderRadius: '24px',
-                    width: '100%',
-                    maxWidth: '740px',
-                    maxHeight: '90vh',
-                    overflowY: 'auto',
-                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    border: '1px solid #e2e8f0'
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    background: 'none',
+                    border: 'none',
+                    color: '#64748b',
+                    fontSize: '13.5px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    padding: '0 0 16px 0',
+                    transition: 'color 0.15s ease'
                 }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#2563eb'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#64748b'}
             >
+                <ArrowLeft size={17} />
+                <span>Volver a la lista de cuestionarios</span>
+            </button>
 
-                {/* ENCABEZADO DEL MODAL */}
-                <div style={{ backgroundColor: '#0f172a', color: '#ffffff', padding: '18px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <h2 style={{ margin: 0, fontSize: '19px', fontWeight: '800', letterSpacing: '-0.02em', color: '#ffffff' }}>
-                            {esModoEdicion ? 'Editar cuestionario' : 'Nuevo cuestionario'}
-                        </h2>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <button
-                            onClick={onClose}
-                            title="Cerrar ventana"
-                            type="button"
-                            style={{
-                                background: 'rgba(255, 255, 255, 0.08)',
-                                border: 'none',
-                                color: '#cbd5e1',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                padding: '8px',
-                                borderRadius: '10px',
-                                transition: 'all 0.15s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.18)';
-                                e.currentTarget.style.color = '#ffffff';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-                                e.currentTarget.style.color = '#cbd5e1';
-                            }}
-                        >
-                            <X size={18} />
-                        </button>
-                    </div>
+            {/* ENCABEZADO DE PÁGINA */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: isMobile ? 'flex-start' : 'center',
+                flexDirection: isMobile ? 'column' : 'row',
+                gap: '16px',
+                marginBottom: '22px'
+            }}>
+                <div>
+                    <h1 style={{ margin: '0 0 6px 0', fontSize: isMobile ? '24px' : '28px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em' }}>
+                        {esModoEdicion ? 'Editar cuestionario' : 'Nuevo cuestionario'}
+                    </h1>
+                    <p style={{ margin: 0, fontSize: '14px', color: '#64748b' }}>
+                        {esModoEdicion
+                            ? 'Modifica las preguntas, opciones de respuesta y parámetros de esta evaluación.'
+                            : 'Diseña las preguntas, opciones de respuesta y parámetros de tu nueva evaluación.'}
+                    </p>
                 </div>
 
+                {/* ACCIONES SUPERIORES */}
+                <div style={{ display: 'flex', gap: '10px', width: isMobile ? '100%' : 'auto' }}>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        style={{
+                            padding: '10px 18px',
+                            borderRadius: '8px',
+                            border: '1px solid #cbd5e1',
+                            background: '#ffffff',
+                            color: '#475569',
+                            fontSize: '13.5px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            flex: isMobile ? 1 : 'unset',
+                            transition: 'all 0.15s ease'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ffffff'}
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        type="submit"
+                        form="form-crear-cuestionario"
+                        disabled={loading || !esFormularioValido}
+                        style={{
+                            padding: '10px 24px',
+                            borderRadius: '8px',
+                            border: 'none',
+                            background: esFormularioValido && !loading ? '#2563eb' : '#94a3b8',
+                            color: '#ffffff',
+                            fontSize: '13.5px',
+                            fontWeight: '700',
+                            cursor: esFormularioValido && !loading ? 'pointer' : 'default',
+                            boxShadow: esFormularioValido && !loading ? '0 4px 14px rgba(37, 99, 235, 0.35)' : 'none',
+                            flex: isMobile ? 1 : 'unset',
+                            transition: 'all 0.15s ease'
+                        }}
+                        onMouseEnter={(e) => { if (esFormularioValido && !loading) e.currentTarget.style.backgroundColor = '#1d4ed8'; }}
+                        onMouseLeave={(e) => { if (esFormularioValido && !loading) e.currentTarget.style.backgroundColor = '#2563eb'; }}
+                    >
+                        {loading ? (
+                            <PulsingLoader size="sm" color="white" text="Guardando..." />
+                        ) : (
+                            esModoEdicion ? 'Guardar cambios' : 'Crear cuestionario'
+                        )}
+                    </button>
+                </div>
+            </div>
+
+            {/* TARJETA PRINCIPAL DEL FORMULARIO */}
+            <div
+                style={{
+                    backgroundColor: '#ffffff',
+                    borderRadius: '16px',
+                    border: '1px solid #e2e8f0',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}
+            >
                 {/* PESTAÑAS (Creación manual / Importar archivo) */}
                 <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', padding: '0 28px', backgroundColor: '#f8fafc' }}>
                     <div style={{ display: 'flex' }}>
@@ -908,8 +945,8 @@ export default function CrearCuestionarioModal({
                     </div>
                 )}
 
-                {/* CONTENIDO DEL MODAL */}
-                <form onSubmit={handleSubmit} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {/* CONTENIDO DEL FORMULARIO */}
+                <form id="form-crear-cuestionario" onSubmit={handleSubmit} style={{ padding: isMobile ? '20px' : '28px', display: 'flex', flexDirection: 'column', gap: '22px' }}>
 
                     {tabActiva === 'manual' ? (
                         <>
@@ -1792,7 +1829,11 @@ export default function CrearCuestionarioModal({
                             >
                                 <UploadCloud size={44} color={arrastrando ? '#2563eb' : '#3b82f6'} style={{ marginBottom: '12px' }} />
                                 <div style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a', marginBottom: '4px' }}>
-                                    {cargandoImportacion ? 'Leyendo y validando archivo...' : 'Arrastra tu archivo aquí o haz clic para seleccionarlo'}
+                                    {cargandoImportacion ? (
+                                        <PulsingLoader size="sm" color="primary" text="Leyendo y validando archivo..." />
+                                    ) : (
+                                        'Arrastra tu archivo aquí o haz clic para seleccionarlo'
+                                    )}
                                 </div>
                                 <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '14px' }}>
                                     Formatos compatibles: Libros de Excel (.xlsx, .xls) o archivos CSV (.csv)
@@ -1980,7 +2021,11 @@ export default function CrearCuestionarioModal({
                                 opacity: loading ? 0.7 : 1
                             }}
                         >
-                            {loading ? 'Guardando...' : 'Guardar cuestionario'}
+                            {loading ? (
+                                <PulsingLoader size="sm" color="white" text="Guardando..." />
+                            ) : (
+                                esModoEdicion ? 'Guardar cambios' : 'Guardar cuestionario'
+                            )}
                         </button>
                     </div>
                 </form>
@@ -2105,8 +2150,8 @@ export default function CrearCuestionarioModal({
                         {/* LISTA DE PREGUNTAS DEL BANCO */}
                         <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             {cargandoBanco ? (
-                                <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b', fontSize: '14px' }}>
-                                    Cargando preguntas disponibles en el banco...
+                                <div style={{ textAlign: 'center', padding: '50px 0' }}>
+                                    <PulsingLoader size="md" color="primary" text="Cargando preguntas disponibles en el banco..." textPosition="bottom" />
                                 </div>
                             ) : preguntasBanco.length === 0 ? (
                                 <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b' }}>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { obtenerAuditoriaCuestionario, calificarIntento } from '../../services/cuestionarioService';
 import { exportarNotasExcel } from '../../services/excelService';
 import GraficasRendimientoAvanzadas from '../charts/GraficasRendimientoAvanzadas';
+import PulsingLoader from '../common/PulsingLoader';
 import { X, ChevronDown, ChevronUp, CheckCircle, XCircle, Edit2, Save, Users, Award, Clock, Download, FileSpreadsheet, ShieldAlert, ShieldCheck, AlertTriangle, BarChart3, Search, Filter, ArrowUpDown, RotateCcw } from 'lucide-react';
 
 export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario, onActualizado }) {
@@ -374,8 +375,8 @@ export default function AuditoriaResultadosModal({ isOpen, onClose, cuestionario
 
                 {/* ESTADO DE CARGA O ERROR */}
                 {loading ? (
-                    <div style={{ padding: '40px 0', textAlign: 'center', color: '#64748b', fontSize: '14px' }}>
-                        Cargando resultados de la base de datos...
+                    <div style={{ padding: '60px 0', textAlign: 'center', display: 'flex', justifyContent: 'center' }}>
+                        <PulsingLoader size="md" color="primary" text="Cargando resultados de la base de datos..." textPosition="bottom" />
                     </div>
                 ) : error ? (
                     <div style={{ backgroundColor: '#fee2e2', color: '#991b1b', padding: '14px', borderRadius: '10px', fontSize: '13px', marginBottom: '16px' }}>

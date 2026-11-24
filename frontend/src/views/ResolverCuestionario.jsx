@@ -5,6 +5,7 @@ import api from '../services/api';
 import logoNativa from '../images/logoNativa.jpeg';
 import useResponsive from '../hooks/useResponsive';
 import useAutosave from '../hooks/useAutosave';
+import PulsingLoader from '../components/common/PulsingLoader';
 import { Award, CheckCircle, LogOut, Clock, AlertTriangle, AlertCircle, Shuffle, ShieldAlert, ShieldCheck, RotateCcw, Calendar, Lightbulb, BookOpen, Check, X, Filter, Users, CloudCheck, WifiOff, RefreshCw, Sparkles, Cloud } from 'lucide-react';
 import { responderCuestionario, verificarDisponibilidadCuestionario } from '../services/cuestionarioService';
 
@@ -652,7 +653,11 @@ export default function ResolverCuestionario() {
     };
 
     if (loading) {
-        return <div style={{ textAlign: 'center', padding: '50px', color: '#64748b' }}>Cargando evaluación...</div>;
+        return (
+            <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <PulsingLoader size="lg" color="primary" text="Cargando evaluación..." textPosition="bottom" />
+            </div>
+        );
     }
 
     if (!cuestionario) {
@@ -2056,7 +2061,13 @@ export default function ResolverCuestionario() {
                                 transition: 'all 0.2s ease'
                             }}
                         >
-                            <CheckCircle size={18} /> {enviando ? 'Enviando y calificando...' : 'Finalizar y Calificar Examen'}
+                        {enviando ? (
+                            <PulsingLoader size="sm" color="white" text="Enviando y calificando..." />
+                        ) : (
+                            <>
+                                <CheckCircle size={18} /> Finalizar y Calificar Examen
+                            </>
+                        )}
                         </button>
                     </form>
                 )}

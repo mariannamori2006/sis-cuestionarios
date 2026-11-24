@@ -156,6 +156,26 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
         }
     };
 
+    if (isModalOpen) {
+        return (
+            <CrearCuestionarioModal
+                isOpen={true}
+                onClose={() => { setIsModalOpen(false); setCuestionarioAEditar(null); }}
+                cuestionarioAEditar={cuestionarioAEditar}
+                onIrAConfiguracion={(c) => {
+                    setIsModalOpen(false);
+                    if (onConfigurarCuestionario) onConfigurarCuestionario(c);
+                }}
+                onCuestionarioCreado={(resultado) => {
+                    if (onRecargarCuestionarios) onRecargarCuestionarios();
+                    if (resultado && !cuestionarioAEditar) setCuestionarioParaCompartir(resultado);
+                    setIsModalOpen(false);
+                    setCuestionarioAEditar(null);
+                }}
+            />
+        );
+    }
+
     return (
         <div style={{ maxWidth: '1280px', boxSizing: 'border-box' }}>
 
@@ -601,22 +621,7 @@ export default function CuestionariosView({ cuestionarios, estadisticas, onRecar
                 </div>
             )}
 
-            {/* MODALES DEL SISTEMA (INTACTOS) */}
-            <CrearCuestionarioModal
-                isOpen={isModalOpen}
-                onClose={() => { setIsModalOpen(false); setCuestionarioAEditar(null); }}
-                cuestionarioAEditar={cuestionarioAEditar}
-                onIrAConfiguracion={(c) => {
-                    setIsModalOpen(false);
-                    if (onConfigurarCuestionario) onConfigurarCuestionario(c);
-                }}
-                onCuestionarioCreado={(resultado) => {
-                    if (onRecargarCuestionarios) onRecargarCuestionarios();
-                    if (resultado && !cuestionarioAEditar) setCuestionarioParaCompartir(resultado);
-                    setIsModalOpen(false);
-                }}
-            />
-
+            {/* MODALES DEL SISTEMA */}
             <CompartirCuestionarioModal
                 isOpen={Boolean(cuestionarioParaCompartir)}
                 onClose={() => setCuestionarioParaCompartir(null)}

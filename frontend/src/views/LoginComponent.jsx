@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login, register, googleLogin, verificarCodigo, reenviarCodigo } from '../services/authService';
 import GoogleAuthButton from '../components/common/GoogleAuthButton';
+import PulsingLoader from '../components/common/PulsingLoader';
 import logoNativa from '../images/logoNativa.jpeg';
 import loginBg from '../images/login-bg.jpg';
 import useResponsive from '../hooks/useResponsive';
@@ -618,7 +619,13 @@ export default function LoginComponent() {
                                     boxShadow: '0 4px 14px rgba(15, 23, 42, 0.2)'
                                 }}
                             >
-                                <LogIn size={16} /> {loading ? 'Verificando...' : 'Entrar al Sistema'}
+                                {loading ? (
+                                    <PulsingLoader size="sm" color="white" text="Iniciando sesión..." />
+                                ) : (
+                                    <>
+                                        <LogIn size={16} /> Entrar al Sistema
+                                    </>
+                                )}
                             </button>
 
                             <div style={{ textAlign: 'center', marginTop: '6px' }}>
@@ -857,7 +864,13 @@ export default function LoginComponent() {
                                     boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)'
                                 }}
                             >
-                                <UserPlus size={16} /> {loading ? 'Creando cuenta...' : 'Crear Cuenta'}
+                                {loading ? (
+                                    <PulsingLoader size="sm" color="white" text="Creando cuenta..." />
+                                ) : (
+                                    <>
+                                        <UserPlus size={16} /> Crear Cuenta
+                                    </>
+                                )}
                             </button>
 
                             <div style={{ textAlign: 'center', marginTop: '6px' }}>

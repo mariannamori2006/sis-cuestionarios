@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login, register, googleLogin, verificarCodigo, reenviarCodigo } from '../services/authService';
 import GoogleAuthButton from '../components/common/GoogleAuthButton';
+import PulsingLoader from '../components/common/PulsingLoader';
 import logoNativa from '../images/logoNativa.jpeg';
 import useResponsive from '../hooks/useResponsive';
 import {
@@ -676,7 +677,11 @@ export default function LoginComponentV2() {
                                     disabled={verificando}
                                     className="nexus-btn-primary"
                                 >
-                                    {verificando ? 'Verificando...' : 'Confirmar y entrar →'}
+                                    {verificando ? (
+                                        <PulsingLoader size="sm" color="white" text="Verificando código..." />
+                                    ) : (
+                                        'Confirmar y entrar →'
+                                    )}
                                 </button>
 
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
@@ -686,7 +691,11 @@ export default function LoginComponentV2() {
                                         disabled={reenviando}
                                         style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '12px', cursor: 'pointer', padding: 0 }}
                                     >
-                                        {reenviando ? 'Reenviando...' : 'Reenviar código'}
+                                        {reenviando ? (
+                                            <PulsingLoader size="xs" color="cyan" text="Reenviando..." />
+                                        ) : (
+                                            'Reenviar código'
+                                        )}
                                     </button>
                                     <button
                                         type="button"
@@ -713,7 +722,7 @@ export default function LoginComponentV2() {
                                 }}>
                                     <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.08)' }} />
                                     <span style={{ fontSize: '10.5px', fontWeight: '700', letterSpacing: '0.12em', color: '#64748b', textTransform: 'uppercase' }}>
-                                        O CONTINUA CON TU CORREO ELECTRÓNICO
+                                        O CONTINUA CON CORREO
                                     </span>
                                     <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.08)' }} />
                                 </div>
@@ -937,8 +946,14 @@ export default function LoginComponentV2() {
                                         className="nexus-btn-primary"
                                         style={{ marginTop: '8px' }}
                                     >
-                                        <span>{loading ? 'Procesando...' : (isRegister ? 'Crear cuenta' : 'Ingresar')}</span>
-                                        {!loading && <ArrowRight size={16} />}
+                                        {loading ? (
+                                            <PulsingLoader size="sm" color="white" text={isRegister ? 'Creando cuenta...' : 'Iniciando sesión...'} />
+                                        ) : (
+                                            <>
+                                                <span>{isRegister ? 'Crear cuenta' : 'Ingresar'}</span>
+                                                <ArrowRight size={16} />
+                                            </>
+                                        )}
                                     </button>
                                 </form>
 
