@@ -21,6 +21,11 @@ public class BancoPregunta {
     @Column(name = "materia", nullable = false, length = 100)
     private String materia = "General";
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "curso_id")
+    @JsonIgnoreProperties({"docente", "secciones", "hibernateLazyInitializer"})
+    private Curso curso;
+
     @Column(name = "tema", length = 150)
     private String tema;
 
@@ -104,6 +109,14 @@ public class BancoPregunta {
 
     public void setMateria(String materia) {
         this.materia = materia;
+    }
+
+    public Curso getCurso() {
+        return curso;
+    }
+
+    public void setCurso(Curso curso) {
+        this.curso = curso;
     }
 
     public String getTema() {

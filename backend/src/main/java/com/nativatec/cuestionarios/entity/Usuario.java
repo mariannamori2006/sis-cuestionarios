@@ -31,6 +31,9 @@ public class Usuario {
     @Column(nullable = false)
     private Boolean activo = true;
 
+    @Column(length = 160)
+    private String institucion;
+
     @Column(name = "codigo_verificacion", length = 10)
     private String codigoVerificacion;
 
@@ -133,6 +136,14 @@ public class Usuario {
         this.activo = activo;
     }
 
+    public String getInstitucion() {
+        return institucion;
+    }
+
+    public void setInstitucion(String institucion) {
+        this.institucion = institucion;
+    }
+
     public String getCodigoVerificacion() {
         return codigoVerificacion;
     }
@@ -166,6 +177,6 @@ public class Usuario {
     }
 
     public enum RolUsuario {
-        PROFESOR, ALUMNO, ADMIN
+        PROFESOR, DOCENTE, ALUMNO, ADMIN
     }
 }

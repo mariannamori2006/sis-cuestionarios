@@ -48,6 +48,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/intentos/**", "/api/usuarios/**").permitAll()
                         .requestMatchers("/api/cuestionarios/resolver/**", "/api/cuestionarios/codigo/**").permitAll()
+                        .requestMatchers("/api/v3/public/**").permitAll()
                         .requestMatchers("/api/cuestionarios", "/api/cuestionarios/**").authenticated()
                         .anyRequest().authenticated());
 
@@ -61,7 +62,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(List.of("*")); // Permite localhost, 127.0.0.1 y cualquier IP de red local (ej: móviles por Wi-Fi)
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 

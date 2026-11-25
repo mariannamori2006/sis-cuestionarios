@@ -49,6 +49,9 @@ public class Pregunta {
     @Column(name = "puntos")
     private Double puntos = 4.0;
 
+    @Column(name = "requerida", nullable = false)
+    private Boolean requerida = true;
+
     @OneToMany(mappedBy = "pregunta", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<OpcionRespuesta> opciones = new ArrayList<>();
@@ -81,6 +84,9 @@ public class Pregunta {
         }
         if (tipo == null) {
             tipo = TipoPregunta.OPCION_MULTIPLE;
+        }
+        if (requerida == null) {
+            requerida = true;
         }
     }
 
@@ -198,8 +204,16 @@ public class Pregunta {
         }
     }
 
+    public Boolean getRequerida() {
+        return requerida;
+    }
+
+    public void setRequerida(Boolean requerida) {
+        this.requerida = requerida != null ? requerida : true;
+    }
+
     public enum TipoPregunta {
-        OPCION_MULTIPLE, VERDADERO_FALSO, RESPUESTA_CORTA;
+        OPCION_MULTIPLE, SELECCION_MULTIPLE, VERDADERO_FALSO, RESPUESTA_CORTA;
 
         @JsonCreator
         public static TipoPregunta fromString(String value) {
@@ -211,6 +225,7 @@ public class Pregunta {
                     .replace("Ó", "O")
                     .replace("Í", "I")
                     .replace("/", "_");
+            if (clean.contains("SELECCION_MULTIPLE") || clean.contains("CASILLAS") || clean.contains("VARIAS")) return SELECCION_MULTIPLE;
             if (clean.contains("MULTIPLE")) return OPCION_MULTIPLE;
             if (clean.contains("VERDADERO") || clean.contains("FALSO")) return VERDADERO_FALSO;
             if (clean.contains("CORTA") || clean.contains("ESCRITA") || clean.contains("ABIERTA") || clean.contains("TEXTO")) return RESPUESTA_CORTA;

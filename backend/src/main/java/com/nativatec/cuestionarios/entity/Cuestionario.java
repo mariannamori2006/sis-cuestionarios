@@ -1,7 +1,9 @@
 package com.nativatec.cuestionarios.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +30,27 @@ public class Cuestionario {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creado_por", nullable = false)
     private Usuario creadoPor;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "curso_id")
+    @JsonIgnoreProperties({"docente", "secciones", "hibernateLazyInitializer"})
+    private Curso curso;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado", nullable = false, length = 20)
+    private EstadoCuestionario estado = EstadoCuestionario.BORRADOR;
+
+    @Column(name = "escala_nota", nullable = false, precision = 6, scale = 2)
+    private BigDecimal escalaNota = new BigDecimal("20.00");
+
+    @Column(name = "nota_aprobatoria", nullable = false, precision = 6, scale = 2)
+    private BigDecimal notaAprobatoria = new BigDecimal("11.00");
+
+    @Column(name = "orden_opciones_aleatorio", nullable = false)
+    private Boolean ordenOpcionesAleatorio = false;
+
+    @Column(name = "mostrar_nota_al_final", nullable = false)
+    private Boolean mostrarNotaAlFinal = true;
 
     @Column(nullable = false)
     private Boolean activo = true;
@@ -111,6 +134,21 @@ public class Cuestionario {
         }
         if (mostrarRetroalimentacion == null) {
             mostrarRetroalimentacion = true;
+        }
+        if (estado == null) {
+            estado = Boolean.FALSE.equals(activo) ? EstadoCuestionario.ARCHIVADO : EstadoCuestionario.PUBLICADO;
+        }
+        if (escalaNota == null) {
+            escalaNota = new BigDecimal("20.00");
+        }
+        if (notaAprobatoria == null) {
+            notaAprobatoria = new BigDecimal("11.00");
+        }
+        if (ordenOpcionesAleatorio == null) {
+            ordenOpcionesAleatorio = false;
+        }
+        if (mostrarNotaAlFinal == null) {
+            mostrarNotaAlFinal = true;
         }
         // Generar un código de acceso de 6 números automáticamente si no viene definido
         if (codigoAcceso == null || codigoAcceso.trim().isEmpty()) {
@@ -313,5 +351,59 @@ public class Cuestionario {
 
     public void setGruposPermitidos(String gruposPermitidos) {
         this.gruposPermitidos = gruposPermitidos;
+    }
+
+    public Curso getCurso() {
+        return curso;
+    }
+
+    public void setCurso(Curso curso) {
+        this.curso = curso;
+    }
+
+    public EstadoCuestionario getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoCuestionario estado) {
+        this.estado = estado;
+    }
+
+    public BigDecimal getEscalaNota() {
+        return escalaNota;
+    }
+
+    public void setEscalaNota(BigDecimal escalaNota) {
+        this.escalaNota = escalaNota;
+    }
+
+    public BigDecimal getNotaAprobatoria() {
+        return notaAprobatoria;
+    }
+
+    public void setNotaAprobatoria(BigDecimal notaAprobatoria) {
+        this.notaAprobatoria = notaAprobatoria;
+    }
+
+    public Boolean getOrdenOpcionesAleatorio() {
+        return ordenOpcionesAleatorio;
+    }
+
+    public void setOrdenOpcionesAleatorio(Boolean ordenOpcionesAleatorio) {
+        this.ordenOpcionesAleatorio = ordenOpcionesAleatorio;
+    }
+
+    public Boolean getMostrarNotaAlFinal() {
+        return mostrarNotaAlFinal;
+    }
+
+    public void setMostrarNotaAlFinal(Boolean mostrarNotaAlFinal) {
+        this.mostrarNotaAlFinal = mostrarNotaAlFinal;
+    }
+
+    public enum EstadoCuestionario {
+        BORRADOR,
+        PUBLICADO,
+        ARCHIVADO
     }
 }

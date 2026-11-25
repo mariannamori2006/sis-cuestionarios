@@ -31,6 +31,9 @@ public class Notificacion {
     @Column(name = "cuestionario_id")
     private UUID cuestionarioId;
 
+    @Column(name = "sesion_id")
+    private UUID sesionId;
+
     @Column(name = "intento_id")
     private UUID intentoId;
 
@@ -119,6 +122,14 @@ public class Notificacion {
 
     public void setCuestionarioId(UUID cuestionarioId) {
         this.cuestionarioId = cuestionarioId;
+    }
+
+    public UUID getSesionId() {
+        return sesionId;
+    }
+
+    public void setSesionId(UUID sesionId) {
+        this.sesionId = sesionId;
     }
 
     public UUID getIntentoId() {

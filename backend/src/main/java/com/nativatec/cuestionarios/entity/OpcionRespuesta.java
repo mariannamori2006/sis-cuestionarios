@@ -25,6 +25,9 @@ public class OpcionRespuesta {
     @Column(name = "es_correcta", nullable = false)
     private Boolean esCorrecta = false;
 
+    @Column(name = "orden", nullable = false)
+    private Integer orden = 1;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -42,6 +45,9 @@ public class OpcionRespuesta {
         }
         if (esCorrecta == null) {
             esCorrecta = false;
+        }
+        if (orden == null) {
+            orden = 1;
         }
     }
 
@@ -95,6 +101,14 @@ public class OpcionRespuesta {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Integer getOrden() {
+        return orden;
+    }
+
+    public void setOrden(Integer orden) {
+        this.orden = orden != null ? orden : 1;
     }
 
     public LocalDateTime getUpdatedAt() {
